@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseGrid | Hospital Command Center</title>
+    <meta name="description" content="Hospital nurse desk for managing bed availability and patient check-ins">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-[#0a0e1a] text-slate-100 min-h-screen font-sans relative">
+
+    <!-- Ambient Glow Orbs -->
+    <div class="glow-orb" style="top: -20%; left: 30%; background: var(--severity-green); opacity: 0.1;"></div>
+    <div class="glow-orb" style="bottom: -20%; right: -10%; background: var(--accent-cyan); opacity: 0.08;"></div>
+
+    <!-- Header -->
+    <header class="px-6 py-4 glass-panel rounded-none border-t-0 border-l-0 border-r-0 flex justify-between items-center mb-8">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Hospital Command Center</h1>
+                <p id="hospital-name-display" class="text-sm text-slate-400">Select a hospital below</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="pulse-badge">System Connected</div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+
+        <!-- Hospital Selector -->
+        <section class="glass-panel p-4 mb-8 fade-in-up flex flex-col sm:flex-row items-center gap-4">
+            <label class="text-sm text-slate-400 flex-shrink-0">Active Hospital:</label>
+            <select id="hospital-selector" class="glass-input w-full sm:w-auto flex-1 text-lg font-semibold cursor-pointer">
+                <option value="">Loading hospitals...</option>
+            </select>
+            <button onclick="refreshDashboard()" class="btn-primary px-6 flex-shrink-0">Refresh Data</button>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column -->
+            <div class="lg:col-span-8 flex flex-col gap-8">
+
+                <!-- OTP Verification Panel -->
+                <section class="glass-panel p-8 fade-in-up delay-100">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        Patient Arrival — Enter OTP
+                    </h2>
+
+                    <div class="flex flex-col sm:flex-row gap-6 items-center">
+                        <div class="flex gap-3" id="otp-inputs">
+                            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                                   class="otp-digit w-16 h-20 text-4xl text-center glass-input font-mono font-bold rounded-xl"
+                                   data-index="0">
+                            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                                   class="otp-digit w-16 h-20 text-4xl text-center glass-input font-mono font-bold rounded-xl"
+                                   data-index="1">
+                            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                                   class="otp-digit w-16 h-20 text-4xl text-center glass-input font-mono font-bold rounded-xl"
+                                   data-index="2">
+                            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                                   class="otp-digit w-16 h-20 text-4xl text-center glass-input font-mono font-bold rounded-xl"
+                                   data-index="3">
+                        </div>
+                        <button id="verify-btn" class="btn-success h-20 px-8 text-lg w-full sm:w-auto" onclick="verifyOTP()">
+                            ✓ Verify & Admit
+                        </button>
+                    </div>
+                    <div id="otp-feedback" class="mt-4 text-sm font-semibold h-6"></div>
+                </section>
+
+                <!-- Ward Counter Grid -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in-up delay-200 ward-counter">
+
+                    <!-- Adult ICU -->
+                    <div class="glass-panel p-6" id="ward-adult_icu">
+                        <h3 class="text-slate-400 font-semibold mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                            Adult ICU
+                        </h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-5xl font-bold count text-emerald-400" id="count-adult_icu-occupied">--</span>
+                                <span class="text-2xl text-slate-500 font-mono">/<span id="count-adult_icu-total">--</span></span>
+                                <p class="text-xs text-slate-500 mt-1">Occupied / Total Staffed</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="ward-btn text-red-400 border-red-500/30 hover:bg-red-500/10" onclick="adjustWard('adult_icu', -1)">−</button>
+                                <button class="ward-btn text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" onclick="adjustWard('adult_icu', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pediatric ICU -->
+                    <div class="glass-panel p-6" id="ward-pediatric_icu">
+                        <h3 class="text-slate-400 font-semibold mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                            Pediatric ICU
+                        </h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-5xl font-bold count text-emerald-400" id="count-pediatric_icu-occupied">--</span>
+                                <span class="text-2xl text-slate-500 font-mono">/<span id="count-pediatric_icu-total">--</span></span>
+                                <p class="text-xs text-slate-500 mt-1">Occupied / Total Staffed</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="ward-btn text-red-400 border-red-500/30 hover:bg-red-500/10" onclick="adjustWard('pediatric_icu', -1)">−</button>
+                                <button class="ward-btn text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" onclick="adjustWard('pediatric_icu', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cardiac ICU -->
+                    <div class="glass-panel p-6" id="ward-cardiac_icu">
+                        <h3 class="text-slate-400 font-semibold mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                            Cardiac ICU
+                        </h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-5xl font-bold count text-emerald-400" id="count-cardiac_icu-occupied">--</span>
+                                <span class="text-2xl text-slate-500 font-mono">/<span id="count-cardiac_icu-total">--</span></span>
+                                <p class="text-xs text-slate-500 mt-1">Occupied / Total Staffed</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="ward-btn text-red-400 border-red-500/30 hover:bg-red-500/10" onclick="adjustWard('cardiac_icu', -1)">−</button>
+                                <button class="ward-btn text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" onclick="adjustWard('cardiac_icu', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- General / Oxygen -->
+                    <div class="glass-panel p-6" id="ward-general_ward">
+                        <h3 class="text-slate-400 font-semibold mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            General / Oxygen
+                        </h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-5xl font-bold count text-emerald-400" id="count-general_ward-occupied">--</span>
+                                <span class="text-2xl text-slate-500 font-mono">/<span id="count-general_ward-total">--</span></span>
+                                <p class="text-xs text-slate-500 mt-1">Occupied / Total Staffed</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="ward-btn text-red-400 border-red-500/30 hover:bg-red-500/10" onclick="adjustWard('general_ward', -1)">−</button>
+                                <button class="ward-btn text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" onclick="adjustWard('general_ward', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Inbound Queue -->
+            <div class="lg:col-span-4 flex flex-col gap-8">
+                <section class="glass-panel p-6 h-full min-h-[500px] flex flex-col fade-in-up delay-300">
+                    <h2 class="text-xl font-bold mb-4 flex justify-between items-center border-b border-white/10 pb-4">
+                        Incoming Patients
+                        <span id="active-holds-count" class="bg-slate-700/50 text-slate-300 px-3 py-1 rounded-full text-sm">0 Active</span>
+                    </h2>
+
+                    <div class="flex-1 overflow-y-auto pr-2 space-y-4" id="inbound-queue">
+                        <div class="text-center py-8 text-slate-500">
+                            <p class="text-lg">No incoming patients</p>
+                            <p class="text-sm mt-1">Holds will appear here when patients reserve beds</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        // ============================================================
+        // Hospital Desk Logic
+        // ============================================================
+
+        let selectedHospitalId = '';
+
+        // ---- Initialization ----
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check URL for hospital_id parameter
+            const params = new URLSearchParams(window.location.search);
+            const urlHospitalId = params.get('hospital_id');
+
+            // Setup OTP input navigation
+            setupOtpInputs();
+
+            // Load hospital list for the selector dropdown
+            const hospitals = await fetchFacilities();
+            const selector = document.getElementById('hospital-selector');
+            selector.innerHTML = '<option value="">— Select Hospital —</option>';
+
+            hospitals.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h.id;
+                opt.textContent = h.name;
+                if (urlHospitalId && h.id === urlHospitalId) opt.selected = true;
+                selector.appendChild(opt);
+            });
+
+            // If hospital was in URL, auto-select it
+            if (urlHospitalId) {
+                selectedHospitalId = urlHospitalId;
+                refreshDashboard();
+            }
+
+            // Listen for dropdown changes
+            selector.addEventListener('change', (e) => {
+                selectedHospitalId = e.target.value;
+                if (selectedHospitalId) {
+                    refreshDashboard();
+                    // Update URL for easy sharing
+                    const newUrl = `${window.location.pathname}?hospital_id=${selectedHospitalId}`;
+                    window.history.replaceState({}, '', newUrl);
+                }
+            });
+
+            // Auto-refresh every 4 seconds
+            startPolling(refreshDashboard, 4000);
+        });
+
+
+        // ---- OTP Input Navigation ----
+        function setupOtpInputs() {
+            const inputs = document.querySelectorAll('.otp-digit');
+            inputs.forEach((input, idx) => {
+                input.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    if (val.length === 1 && idx < inputs.length - 1) {
+                        inputs[idx + 1].focus();
+                    }
+                    // Auto-verify when all 4 digits entered
+                    if (idx === inputs.length - 1 && val.length === 1) {
+                        verifyOTP();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        inputs[idx - 1].focus();
+                    }
+                });
+
+                // Handle paste
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const paste = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+                    paste.split('').forEach((char, i) => {
+                        if (inputs[i]) inputs[i].value = char;
+                    });
+                    if (paste.length === 4) verifyOTP();
+                });
+            });
+        }
+
+
+        // ---- OTP Verification (calls real backend) ----
+        async function verifyOTP() {
+            const inputs = document.querySelectorAll('.otp-digit');
+            let otp = '';
+            inputs.forEach(i => otp += i.value);
+
+            const feedback = document.getElementById('otp-feedback');
+
+            if (otp.length < 4) {
+                feedback.textContent = '⚠️ Please enter the full 4-digit OTP';
+                feedback.className = 'mt-4 text-sm font-semibold text-amber-400';
+                return;
+            }
+
+            if (!selectedHospitalId) {
+                feedback.textContent = '⚠️ Please select a hospital first';
+                feedback.className = 'mt-4 text-sm font-semibold text-amber-400';
+                return;
+            }
+
+            feedback.textContent = '⏳ Verifying...';
+            feedback.className = 'mt-4 text-sm font-semibold text-blue-400';
+
+            const result = await redeemHold(selectedHospitalId, otp);
+
+            if (result && result.success) {
+                feedback.textContent = '✅ Verified! Patient admitted successfully.';
+                feedback.className = 'mt-4 text-sm font-semibold text-emerald-400';
+                inputs.forEach(i => i.value = '');
+                inputs[0].focus();
+                // Refresh dashboard to show updated counts
+                setTimeout(refreshDashboard, 500);
+            } else {
+                const msg = (result && result.message) ? result.message : 'Invalid OTP or no active hold';
+                feedback.textContent = `❌ ${msg}`;
+                feedback.className = 'mt-4 text-sm font-semibold text-red-400';
+            }
+        }
+
+
+        // ---- Ward Counter Adjustment (calls real backend) ----
+        async function adjustWard(wardKey, delta) {
+            if (!selectedHospitalId) {
+                alert('Please select a hospital first');
+                return;
+            }
+
+            // Visual feedback
+            const wardPanel = document.getElementById(`ward-${wardKey}`);
+            if (wardPanel) {
+                wardPanel.style.transform = 'scale(1.02)';
+                setTimeout(() => wardPanel.style.transform = 'scale(1)', 150);
+            }
+
+            const result = await updateCounter(selectedHospitalId, wardKey, delta);
+
+            if (result && result.success) {
+                // Update UI immediately
+                updateWardDisplay(wardKey, result.new_occupied, result.total);
+            } else {
+                console.warn('Counter update failed:', result);
+            }
+        }
+
+
+        // ---- Dashboard Refresh ----
+        async function refreshDashboard() {
+            if (!selectedHospitalId) return;
+
+            // Fetch hospital data
+            const hospitals = await fetchFacilities();
+            const hospital = hospitals.find(h => h.id === selectedHospitalId);
+
+            if (hospital) {
+                // Update header
+                document.getElementById('hospital-name-display').textContent = hospital.name;
+
+                // Update ward counters
+                const wards = ['adult_icu', 'pediatric_icu', 'cardiac_icu', 'general_ward'];
+                wards.forEach(w => {
+                    const occupied = hospital[`${w}_occupied`] || 0;
+                    const total = hospital[`${w}_total`] || 0;
+                    updateWardDisplay(w, occupied, total);
+                });
+            }
+
+            // Fetch and render active holds
+            const holds = await fetchActiveHolds(selectedHospitalId);
+            renderInboundQueue(holds);
+        }
+
+
+        // ---- Update Ward Counter Display ----
+        function updateWardDisplay(wardKey, occupied, total) {
+            const occEl = document.getElementById(`count-${wardKey}-occupied`);
+            const totalEl = document.getElementById(`count-${wardKey}-total`);
+
+            if (occEl) {
+                occEl.textContent = occupied.toString().padStart(2, '0');
+                occEl.className = occupied >= total
+                    ? 'text-5xl font-bold count text-red-400 transition-all duration-300'
+                    : 'text-5xl font-bold count text-emerald-400 transition-all duration-300';
+            }
+            if (totalEl) totalEl.textContent = total.toString().padStart(2, '0');
+        }
+
+
+        // ---- Render Inbound Patient Queue ----
+        function renderInboundQueue(holds) {
+            const container = document.getElementById('inbound-queue');
+            const countBadge = document.getElementById('active-holds-count');
+
+            countBadge.textContent = `${holds.length} Active`;
+            countBadge.className = holds.length > 0
+                ? 'bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-semibold'
+                : 'bg-slate-700/50 text-slate-300 px-3 py-1 rounded-full text-sm';
+
+            if (holds.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <p class="text-lg">No incoming patients</p>
+                        <p class="text-sm mt-1">Holds will appear here when patients reserve beds</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            holds.forEach(hold => {
+                const severity = (hold.severity || 'YELLOW').toUpperCase();
+                const pillClass = severity === 'RED' ? 'status-pill-red'
+                    : severity === 'GREEN' ? 'status-pill-green'
+                    : 'status-pill-amber';
+                const borderColor = severity === 'RED' ? 'border-red-500/30' : 'border-white/10';
+
+                // Calculate time remaining
+                const expiresAt = new Date(hold.expires_at);
+                const now = new Date();
+                const remainMs = Math.max(0, expiresAt - now);
+                const remainMin = Math.floor(remainMs / 60000);
+                const remainSec = Math.floor((remainMs % 60000) / 1000);
+                const timeStr = `${remainMin.toString().padStart(2, '0')}:${remainSec.toString().padStart(2, '0')}`;
+                const timeColor = remainMin < 3 ? 'text-red-400' : severity === 'RED' ? 'text-red-400' : 'text-amber-400';
+
+                // Mask phone number
+                const phone = hold.requester_phone || '';
+                const maskedPhone = phone.length > 4
+                    ? '+91 ' + phone.slice(0, 2) + '***' + phone.slice(-3)
+                    : phone;
+
+                // Ward display name
+                const wardNames = {
+                    adult_icu: 'Adult ICU',
+                    pediatric_icu: 'Pediatric ICU',
+                    cardiac_icu: 'Cardiac ICU',
+                    general_ward: 'General Ward'
+                };
+
+                const div = document.createElement('div');
+                div.className = `bg-black/30 p-4 rounded-xl border ${borderColor} transition-all`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="${pillClass}">${severity}</span>
+                        <span class="font-mono ${timeColor} font-bold text-lg">${timeStr}</span>
+                    </div>
+                    <p class="font-bold text-white mb-1">${wardNames[hold.resource_type] || hold.resource_type} Hold</p>
+                    <p class="text-sm text-slate-400 mb-1">OTP: <span class="font-mono font-bold text-white">${hold.otp_code}</span></p>
+                    <p class="text-sm text-slate-400 mb-3">${maskedPhone}</p>
+                    <button onclick="document.querySelectorAll('.otp-digit').forEach((inp, i) => inp.value = '${hold.otp_code}'[i] || ''); verifyOTP();"
+                            class="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 py-2 rounded-lg text-sm font-semibold transition-colors">
+                        Quick Admit
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>

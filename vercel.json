@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://pulsegrid-api.onrender.com/api/:match*"
+    }
+  ]
+}
