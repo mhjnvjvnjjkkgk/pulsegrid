@@ -7,8 +7,10 @@
 // ============================================================
 
 // Where the Flask backend is running.
-// Change this to your Render URL when deploying.
-const BASE_URL = 'http://localhost:5000';
+// Auto-detects local vs live Render cloud backend
+const BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+    ? 'http://localhost:5000'
+    : 'https://pulsegrid-g979.onrender.com';
 
 
 // ============================================================

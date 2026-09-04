@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://pulsegrid-api.onrender.com/api/:match*"
+      "destination": "https://pulsegrid-g979.onrender.com/api/:match*"
     }
   ]
 }
