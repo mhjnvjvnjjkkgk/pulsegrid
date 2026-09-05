@@ -618,10 +618,38 @@ async function loadQueue() {
   }
 }
 
+let lastHoldCount = 0;
+
+function playInboundAlert() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {
+    // Audio Context muted or uninitialized
+  }
+}
+
 function renderQueue(holds) {
   const container = document.getElementById('queue-list');
   const tag = document.getElementById('queue-count-tag');
-  tag.textContent = `${holds.length} Active Holds`;
+  const count = holds ? holds.length : 0;
+  tag.textContent = `${count} Active Holds`;
+
+  if (count > lastHoldCount) {
+    playInboundAlert();
+    showToast(`🚨 New Inbound Emergency Hold Received!`);
+  }
+  lastHoldCount = count;
 
   if (!holds || !holds.length) {
     container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-3); font-size:0.85rem;">No active holds in queue at this time 🎉</div>`;

@@ -39,6 +39,24 @@ SYMPTOM_DATABASE = {
     "left arm pain":           ("RED", "cardiac_icu", "Left arm pain with possible cardiac origin. Rule out MI urgently."),
     "jaw pain":                ("RED", "cardiac_icu", "Jaw pain can be referred cardiac pain. Rule out MI."),
 
+    # ---- REGIONAL PHRASES & COMMON TYPOS (Hindi / Bengali / Colloquial) ----
+    "haat attack":             ("RED", "cardiac_icu", "Suspected myocardial infarction. Needs immediate cardiac intervention."),
+    "chhati me dard":          ("RED", "cardiac_icu", "Acute chest pain indicating possible cardiac event."),
+    "chhatir byatha":          ("RED", "cardiac_icu", "Chest pain (Bengali). Urgent cardiac evaluation required."),
+    "pet betha":               ("YELLOW", "general_ward", "Acute abdominal pain (Bengali). Assessment required."),
+    "pet dard":                ("YELLOW", "general_ward", "Abdominal pain (Hindi). Clinical evaluation needed."),
+    "matha ghora":             ("YELLOW", "general_ward", "Dizziness/Vertigo (Bengali). Vitals and neuro check needed."),
+    "sar dard":                ("YELLOW", "general_ward", "Headache (Hindi). Clinical evaluation needed."),
+    "headache bad":            ("YELLOW", "general_ward", "Headache requiring medical evaluation."),
+    "shwash koshto":           ("YELLOW", "general_ward", "Respiratory distress (Bengali). Oxygen support needed."),
+    "saas phulna":             ("YELLOW", "general_ward", "Breathlessness (Hindi). Oxygen and respiratory evaluation."),
+    "chest painn":             ("RED", "cardiac_icu", "Acute chest pain (typo). Urgent ECG required."),
+    "stomach acche":           ("YELLOW", "general_ward", "Abdominal pain (typo). Clinical assessment required."),
+    "stomach paining":         ("YELLOW", "general_ward", "Abdominal pain. Clinical evaluation needed."),
+    "vomit blood":             ("RED", "adult_icu", "Haematemesis — upper GI bleed. Urgent endoscopy."),
+    "vomting":                 ("YELLOW", "general_ward", "Vomiting (typo). Assess dehydration and fluids."),
+    "dizzyness":               ("YELLOW", "general_ward", "Dizziness (typo). Vitals and glucose check needed."),
+
     # ---- RED: NEUROLOGICAL / RESPIRATORY → adult_icu ----
     "not breathing":           ("RED", "adult_icu", "Respiratory arrest. Immediate airway management required."),
     "stopped breathing":       ("RED", "adult_icu", "Respiratory failure. Urgent ventilator support needed."),

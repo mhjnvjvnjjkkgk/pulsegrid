@@ -176,11 +176,16 @@
       </div>
 
       <div class="filter-bar" style="flex-shrink:0;">
-        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn active" data-filter="all">All Wards</button>
         <button class="filter-btn" data-filter="cardiac">❤️ Cardiac ICU</button>
         <button class="filter-btn" data-filter="adult_icu">🏥 Adult ICU</button>
         <button class="filter-btn" data-filter="pediatric_icu">👶 Pediatric ICU</button>
         <button class="filter-btn" data-filter="general_ward">🛏 General</button>
+        <span style="opacity:0.3; padding: 0 4px;">|</span>
+        <button class="filter-btn blood-filter-btn" data-blood="O-">🩸 O- Universal</button>
+        <button class="filter-btn blood-filter-btn" data-blood="A+">🩸 A+</button>
+        <button class="filter-btn blood-filter-btn" data-blood="B+">🩸 B+</button>
+        <button class="filter-btn blood-filter-btn" data-blood="O+">🩸 O+</button>
       </div>
 
       <div class="cards-col" id="cards-col">
@@ -667,15 +672,40 @@ function highlightCard(id) {
   }
 }
 
+let activeBloodFilter = null;
+
 /* ── Filter hospitals ── */
 function filterHospitals(hospitals) {
-  if (activeFilter === 'all') return hospitals;
-  return hospitals.filter(h => {
-    if (!h.wards) return false;
-    const wardKey = activeFilter;
-    const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
-    return entry && staffedAvail(entry) > 0;
+  let list = hospitals;
+  if (activeFilter !== 'all') {
+    list = list.filter(h => {
+      if (!h.wards) return false;
+      const wardKey = activeFilter;
+      const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
+      return entry && staffedAvail(entry) > 0;
+    });
+  }
+  if (activeBloodFilter) {
+    list = list.filter(h => {
+      const blood = h.blood_stock_summary || {};
+      return (blood[activeBloodFilter] || 0) > 0;
+    });
+  }
+  return list;
+}
+
+function setBloodFilter(bloodType) {
+  if (activeBloodFilter === bloodType) {
+    activeBloodFilter = null;
+  } else {
+    activeBloodFilter = bloodType;
+  }
+  document.querySelectorAll('.blood-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.blood === activeBloodFilter);
   });
+  const filtered = filterHospitals(allHospitals);
+  renderCards(filtered);
+  placeMarkers(filtered);
 }
 
 /* ── Auto-route to nearest recommended hospital ── */
@@ -869,8 +899,12 @@ document.getElementById('cockpit-lock-btn').addEventListener('click', () => {
 });
 
 /* ── Filter buttons ── */
-document.querySelectorAll('.filter-btn').forEach(btn => {
+document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(btn => {
   btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+});
+
+document.querySelectorAll('.blood-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => setBloodFilter(btn.dataset.blood));
 });
 
 /* ── Symptom input: Instant Keystroke Triage (300ms Debounce) ── */
