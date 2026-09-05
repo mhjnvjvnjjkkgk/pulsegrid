@@ -354,6 +354,27 @@
     </div>
   </div>
 
+  <!-- Live Operational Telemetry Bar -->
+  <div class="glass" style="padding:16px 24px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:center; gap:20px;">
+      <div>
+        <div style="font-size:0.7rem; color:var(--text-3); font-weight:700; text-transform:uppercase;">Admit Velocity</div>
+        <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; color:var(--green);" id="telemetry-velocity">4.2 / hr</div>
+      </div>
+      <div style="width:1px; height:28px; background:var(--border);"></div>
+      <div>
+        <div style="font-size:0.7rem; color:var(--text-3); font-weight:700; text-transform:uppercase;">Avg Check-in Time</div>
+        <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; color:#38bdf8;" id="telemetry-checkin">3.8 mins</div>
+      </div>
+      <div style="width:1px; height:28px; background:var(--border);"></div>
+      <div>
+        <div style="font-size:0.7rem; color:var(--text-3); font-weight:700; text-transform:uppercase;">Active Telemetry Holds</div>
+        <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; color:var(--amber);" id="telemetry-holds">1 Active</div>
+      </div>
+    </div>
+    <span class="header-tag" style="background:rgba(56,189,248,0.12); color:#38bdf8; border-color:rgba(56,189,248,0.3);">⚡ GPS SYNC ACTIVE</span>
+  </div>
+
   <!-- Wards Grid (4 Wards) -->
   <div class="wards-grid" id="wards-grid">
     <!-- Rendered via JS -->
@@ -650,6 +671,8 @@ function renderQueue(holds) {
     showToast(`🚨 New Inbound Emergency Hold Received!`);
   }
   lastHoldCount = count;
+  const telHolds = document.getElementById('telemetry-holds');
+  if (telHolds) telHolds.textContent = `${count} Active`;
 
   if (!holds || !holds.length) {
     container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-3); font-size:0.85rem;">No active holds in queue at this time 🎉</div>`;

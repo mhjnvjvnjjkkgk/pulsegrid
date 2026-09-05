@@ -71,6 +71,14 @@
     <h1 class="hero-title">Find Emergency Care.<br>Right Now.</h1>
     <p class="hero-sub">Real-time bed availability across 30 hospitals in Kolkata. Describe your condition and we'll find the right ward instantly.</p>
 
+    <!-- Hackathon Judge Quick Demo Bar -->
+    <div class="judge-demo-bar delay-1" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <span style="font-size:0.75rem; font-weight:700; color:var(--amber); letter-spacing:0.04em;">⚡ HACKATHON JUDGE DEMO:</span>
+      <button class="judge-demo-btn" onclick="runJudgeDemo(1)">🚨 1: Chest Pain (ESI-1)</button>
+      <button class="judge-demo-btn" onclick="runJudgeDemo(2)">👶 2: Child Seizure (ESI-2)</button>
+      <button class="judge-demo-btn" onclick="runJudgeDemo(3)">🩸 3: O- Negative Blood</button>
+    </div>
+
     <!-- Quick symptom chips -->
     <div class="quick-chips delay-1">
       <button class="chip" data-query="severe chest pain and shortness of breath">🫀 Chest/Heart</button>
@@ -935,6 +943,20 @@ document.querySelectorAll('.chip').forEach(btn => {
     runTriage(q);
   });
 });
+
+/* ── Hackathon Judge Quick Demo Handler ── */
+function runJudgeDemo(scenarioId) {
+  const input = document.getElementById('symptom-input');
+  if (scenarioId === 1) {
+    input.value = "severe chest pain radiating to left arm";
+    runTriage(input.value);
+  } else if (scenarioId === 2) {
+    input.value = "child seizure and high fever";
+    runTriage(input.value);
+  } else if (scenarioId === 3) {
+    setBloodFilter('O-');
+  }
+}
 
 /* ── Boot ── */
 loadHospitals();
