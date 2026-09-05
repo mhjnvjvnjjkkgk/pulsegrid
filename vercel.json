@@ -1,11 +1,15 @@
 {
   "version": 2,
-  "outputDirectory": "public",
+  "public": true,
   "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/:match*",
       "destination": "https://pulsegrid-g979.onrender.com/api/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
     }
   ]
 }
