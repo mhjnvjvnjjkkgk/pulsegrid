@@ -461,15 +461,15 @@ html, body {
 /* Hidden State (Phase 1): Off-screen at app boot */
 .bottom-sheet.hidden,
 .bottom-sheet.state-hidden {
-  transform: translateY(100%);
+  transform: translate3d(0, 100%, 0);
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
 }
 
-/* Peek State (Drawing 2): Covers ~40% bottom viewport */
+/* Peek State (Drawing 2): Covers ~300px bottom viewport (~35% height) */
 .bottom-sheet.state-peek {
-  transform: translateY(calc(100% - 380px));
+  transform: translate3d(0, calc(100% - 300px), 0);
   pointer-events: auto;
   opacity: 1;
   visibility: visible;
@@ -477,7 +477,7 @@ html, body {
 
 /* Expanded State (Drawing 3): Covers ~85% height */
 .bottom-sheet.state-expanded {
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
   pointer-events: auto;
   opacity: 1;
   visibility: visible;
@@ -956,9 +956,9 @@ html, body {
   }
 }
 
-/* ── Leaflet Tile Pane High-Contrast Dark Filter (ZERO API key required, crisp visible streets!) ── */
+/* ── Leaflet Tile Pane Clean Dark Theme (Sleek dark obsidian map with zero API key errors!) ── */
 .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(190deg) brightness(85%) contrast(140%) saturate(140%);
+  filter: brightness(95%) contrast(120%);
 }
 
 /* ── Photo Mockup Card Design System (Apple Liquid Glassmorphism) ── */
@@ -1244,13 +1244,35 @@ html, body {
   border-radius: 0 0 34px 34px;
 }
 
+/* ── Animated Neon Buttons & Micro-Interactions ── */
+@keyframes neon-shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-cyan-ring {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 1px 10px rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.75), inset 0 1px 15px rgba(255, 255, 255, 0.35); }
+}
+
+@keyframes pulse-crimson-ring {
+  0%, 100% { box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25); }
+  50% { box-shadow: 0 4px 22px rgba(244, 63, 94, 0.55); }
+}
+
+@keyframes pulse-blue-ring {
+  0%, 100% { box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25); }
+  50% { box-shadow: 0 4px 22px rgba(56, 189, 248, 0.55); }
+}
+
 .sticky-book-btn {
   width: 100%;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(90deg, rgba(0, 240, 255, 0.3) 0%, rgba(0, 255, 135, 0.25) 100%);
-  border: 1.5px solid rgba(0, 240, 255, 0.8);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), inset 0 1px 10px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.35) 0%, rgba(0, 255, 135, 0.3) 50%, rgba(0, 240, 255, 0.35) 100%);
+  background-size: 200% 100%;
+  animation: neon-shimmer-sweep 4s ease infinite, pulse-cyan-ring 3s infinite;
+  border: 1.5px solid rgba(0, 240, 255, 0.85);
   color: #ffffff;
   font-family: var(--font-headline);
   font-size: 1.05rem;
@@ -1261,11 +1283,12 @@ html, body {
   gap: 10px;
   cursor: pointer;
   letter-spacing: -0.2px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease;
 }
 
 .sticky-book-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
+  filter: brightness(1.2);
 }
 
 .sticky-call-row {
@@ -1286,25 +1309,25 @@ html, body {
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sticky-amb-btn {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.22) 0%, rgba(159, 18, 57, 0.35) 100%);
-  border: 1.2px solid rgba(244, 63, 94, 0.55);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.28) 0%, rgba(159, 18, 57, 0.4) 100%);
+  border: 1.2px solid rgba(244, 63, 94, 0.65);
   color: #f43f5e;
-  box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2);
+  animation: pulse-crimson-ring 3s infinite;
 }
 
 .sticky-hosp-btn {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.35) 100%);
-  border: 1.2px solid rgba(56, 189, 248, 0.55);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.4) 100%);
+  border: 1.2px solid rgba(56, 189, 248, 0.65);
   color: #38bdf8;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+  animation: pulse-blue-ring 3s infinite;
 }
 
 .sticky-amb-btn:active,
 .sticky-hosp-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 

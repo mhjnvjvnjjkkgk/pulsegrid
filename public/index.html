@@ -943,9 +943,11 @@
     if (!handle || !sheet) return;
 
     let startY = 0;
-    let initialHeight = 0;
+    let currentY = 0;
+    let isDragging = false;
 
-    handle.addEventListener('click', () => {
+    handle.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (currentSheetState === 'peek') {
         setSheetState('expanded');
       } else {
@@ -955,23 +957,48 @@
 
     handle.addEventListener('touchstart', (e) => {
       startY = e.touches[0].clientY;
-      initialHeight = sheet.offsetHeight;
+      currentY = startY;
+      isDragging = true;
+      sheet.style.transition = 'none';
     }, { passive: true });
 
     handle.addEventListener('touchmove', (e) => {
-      const deltaY = startY - e.touches[0].clientY;
-      const newHeight = initialHeight + deltaY;
-      if (newHeight > 180 && newHeight < window.innerHeight * 0.85) {
-        sheet.style.height = `${newHeight}px`;
+      if (!isDragging) return;
+      currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+
+      if (currentSheetState === 'peek') {
+        const peekOffset = window.innerHeight - 300;
+        const targetY = Math.max(0, peekOffset + deltaY);
+        sheet.style.transform = `translate3d(0, ${targetY}px, 0)`;
+      } else if (currentSheetState === 'expanded') {
+        if (deltaY > 0) {
+          const targetY = Math.min(window.innerHeight - 100, deltaY);
+          sheet.style.transform = `translate3d(0, ${targetY}px, 0)`;
+        }
       }
     }, { passive: true });
 
-    handle.addEventListener('touchend', (e) => {
-      sheet.style.height = ''; // clear inline height
-      if (sheet.offsetHeight > 380) {
-        setSheetState('expanded');
-      } else {
-        setSheetState('peek');
+    handle.addEventListener('touchend', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      sheet.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+      const deltaY = currentY - startY;
+
+      if (currentSheetState === 'peek') {
+        if (deltaY < -50) {
+          setSheetState('expanded');
+        } else if (deltaY > 80) {
+          setSheetState('hidden');
+        } else {
+          setSheetState('peek');
+        }
+      } else if (currentSheetState === 'expanded') {
+        if (deltaY > 80) {
+          setSheetState('peek');
+        } else {
+          setSheetState('expanded');
+        }
       }
     }, { passive: true });
   }
