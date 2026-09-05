@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PulseGrid | Real-Time Emergency Bed & Blood Finder — Kolkata</title>
-  <meta name="description" content="Find emergency hospital beds and blood stock in real time across 30 hospitals in Kolkata. Instant triage, guaranteed bed holds, no sign-up required.">
+  <title>PulseGrid | Real-Time Emergency Bed & Blood Finder</title>
+  <meta name="description" content="Find emergency hospital beds and blood stock in real time across Kolkata. Instant triage, guaranteed 15-minute bed holds, no sign-up required.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Leaflet (free OpenStreetMap — no API key needed) -->
+  <!-- Leaflet Map Engine -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -27,14 +27,12 @@
 
   <!-- ═══════════════════════════════════════
        1. FULL-SCREEN MAP CANVAS (BACKGROUND)
-  <!-- ═══════════════════════════════════════
-       1. FULL-SCREEN MAP CANVAS (BACKGROUND)
   ════════════════════════════════════════ -->
   <div id="map-container">
     <div id="map"></div>
 
-    <!-- Floating Google Maps Location Crosshair FAB Button -->
-    <button class="my-location-fab" id="my-location-fab" title="Recenter Map on My Exact GPS Location">
+    <!-- Floating Location Recenter FAB Button (Google Maps Style) -->
+    <button class="my-location-fab" id="my-location-fab" title="Recenter Map on My Current Location">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="8"/>
         <line x1="12" y1="2" x2="12" y2="6"/>
@@ -44,47 +42,50 @@
       </svg>
     </button>
 
+    <!-- Floating Live Route Banner Overlay -->
     <div class="route-banner" id="route-banner" style="display:none;">
       <span class="route-banner-badge">📍 LIVE ROUTE</span>
       <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
       <span style="opacity:0.4;">|</span>
-      <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
+      <span id="route-eta" style="color:#10b981; font-weight:700;">🚗 12 mins</span>
       <span style="opacity:0.4;">|</span>
       <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       2. FLOATING TOP NAVIGATION (SINGLE SLEEK SEARCH BAR)
+       2. FLOATING TOP NAVIGATION (GOOGLE MAPS AESTHETIC - SCREENSHOT 2)
   ════════════════════════════════════════ -->
   <div class="floating-top-nav">
     <div class="triage-bar">
       <div class="search-wrap">
-        <a href="/" class="logo-wrap" style="text-decoration:none; margin-right:4px;">
-          <div class="logo-icon" style="width:32px; height:32px; border-radius:8px;">
-            <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </a>
         <input
           id="symptom-input"
           class="search-input"
-          type="text"
-          placeholder="Describe symptoms or blood group… e.g. 'O- negative blood'"
+          type="search"
+          enterkeyhint="search"
+          placeholder="Search symptoms or blood group..."
           autocomplete="off"
         >
         <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
-        <button id="triage-btn" class="search-btn">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-        </button>
       </div>
       <div id="voice-recording-banner" class="voice-recording-banner" style="display:none;">
         <span class="live-rec-dot"></span>
         <span>🔴 Listening... Speak symptoms or blood group in Benglish, Hinglish, or English</span>
       </div>
+    </div>
+
+    <!-- Category Filter Chips Row (Directly Below Search Bar - Screenshot 2) -->
+    <div class="top-category-chips" id="top-category-chips">
+      <button class="cat-chip filter-btn active" data-filter="all">All Wards</button>
+      <button class="cat-chip filter-btn" data-filter="cardiac">❤️ Cardiac ICU</button>
+      <button class="cat-chip filter-btn" data-filter="adult_icu">🏥 Adult ICU</button>
+      <button class="cat-chip filter-btn" data-filter="pediatric_icu">👶 Pediatric ICU</button>
+      <button class="cat-chip filter-btn" data-filter="general_ward">🛏 General</button>
+      <button class="cat-chip blood-filter-btn" data-blood="O-">🩸 O- Universal</button>
+      <button class="cat-chip blood-filter-btn" data-blood="A+">🩸 A+</button>
+      <button class="cat-chip blood-filter-btn" data-blood="B+">🩸 B+</button>
+      <button class="cat-chip blood-filter-btn" data-blood="O+">🩸 O+</button>
     </div>
 
     <!-- Triage result banner (hidden until search) -->
@@ -101,40 +102,15 @@
   </div>
 
   <!-- ═══════════════════════════════════════
-       3. SLIDABLE BOTTOM SHEET DRAWER (NATIVE GOOGLE MAPS UX)
+       3. SLIDABLE BOTTOM SHEET DRAWER (MATCHING SCREENSHOT 1 UX)
   ════════════════════════════════════════ -->
   <div class="bottom-sheet state-peek" id="bottom-sheet">
-    <div class="bottom-sheet-handle" id="bottom-sheet-handle" title="Drag or tap to expand/collapse hospital list">
+    <div class="bottom-sheet-handle" id="bottom-sheet-handle" title="Drag or tap to expand/collapse hospital details">
       <div class="handle-bar"></div>
     </div>
 
     <div class="sheet-header">
-      <div class="col-header" style="margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
-        <div class="col-title" id="sheet-title" style="font-size:0.95rem; font-weight:800; color:#fff;">Nearest Hospitals & Emergency Beds</div>
-        <span class="col-count" id="card-count" style="font-size:0.75rem; color:#10b981; font-weight:700;">Loading…</span>
-      </div>
-
-      <!-- Quick Location Switcher Chips -->
-      <div class="loc-chips-row" id="loc-chips-row" style="margin-bottom:6px;">
-        <button class="loc-chip active" data-lat="22.5750" data-lng="88.4680" data-label="Newtown / Amity">📍 Newtown (Amity)</button>
-        <button class="loc-chip" data-lat="22.6220" data-lng="88.4140" data-label="Nagerbazar / Dum Dum">📍 Nagerbazar (Dum Dum)</button>
-        <button class="loc-chip" data-lat="22.5650" data-lng="88.3600" data-label="Central Kolkata">📍 Central Kolkata</button>
-        <button class="loc-chip" id="btn-use-my-gps">📡 Live GPS</button>
-      </div>
-
-      <!-- Filter bar inside sheet header -->
-      <div class="filter-bar" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom:4px;">
-        <button class="filter-btn active" data-filter="all">All Wards</button>
-        <button class="filter-btn" data-filter="cardiac">❤️ Cardiac ICU</button>
-        <button class="filter-btn" data-filter="adult_icu">🏥 Adult ICU</button>
-        <button class="filter-btn" data-filter="pediatric_icu">👶 Pediatric ICU</button>
-        <button class="filter-btn" data-filter="general_ward">🛏 General</button>
-        <span style="opacity:0.3; padding: 0 4px;">|</span>
-        <button class="filter-btn blood-filter-btn" data-blood="O-">🩸 O- Universal</button>
-        <button class="filter-btn blood-filter-btn" data-blood="A+">🩸 A+</button>
-        <button class="filter-btn blood-filter-btn" data-blood="B+">🩸 B+</button>
-        <button class="filter-btn blood-filter-btn" data-blood="O+">🩸 O+</button>
-      </div>
+      <div class="col-title" id="sheet-title" style="font-size:0.95rem; font-weight:800; color:#111827;">Nearest Emergency Hospitals</div>
     </div>
 
     <!-- Scrollable content container inside sheet -->
@@ -167,7 +143,7 @@
           <a id="inline-call-amb-btn" href="tel:108" class="btn-quick-dial amb-btn" style="flex:1; padding:12px; background:#f43f5e; color:#fff; border-radius:12px; text-align:center; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
             🚑 Call Ambulance (108)
           </a>
-          <a id="inline-call-hosp-btn" href="tel:102" class="btn-quick-dial hosp-btn" style="flex:1; padding:12px; background:#38bdf8; color:#fff; border-radius:12px; text-align:center; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <a id="inline-call-hosp-btn" href="tel:102" class="btn-quick-dial hosp-btn" style="flex:1; padding:12px; background:#0284c7; color:#fff; border-radius:12px; text-align:center; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
             📞 Call Hospital
           </a>
         </div>
@@ -176,7 +152,7 @@
           <a class="gmaps-btn" id="inline-gmaps-link" href="#" target="_blank" style="flex:1;">
             🗺 Open Turn-by-Turn in Google Maps
           </a>
-          <button id="inline-cancel-hold-btn" style="padding:10px 14px; background:rgba(244,63,94,0.2); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; border-radius:12px; font-weight:700; cursor:pointer;">
+          <button id="inline-cancel-hold-btn" style="padding:10px 14px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; border-radius:12px; font-weight:700; cursor:pointer;">
             ✕ Cancel Hold
           </button>
         </div>
@@ -185,18 +161,18 @@
       <!-- Hospital Cards Container -->
       <div class="cards-col" id="cards-col">
         <!-- Skeleton loaders -->
-        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
-        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
+        <div class="gmaps-hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:14px;"></div></div>
+        <div class="gmaps-hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:14px;"></div></div>
       </div>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       4. FLOATING EMERGENCY ACTION COCKPIT (Mobile & PC)
+       4. FLOATING EMERGENCY ACTION COCKPIT
   ════════════════════════════════════════ -->
   <div class="emergency-cockpit" id="emergency-cockpit" style="display:none;">
     <button class="cockpit-btn-primary" id="cockpit-lock-btn">
-      🔒 LOCK ROUTE & RESERVE BED — <span id="cockpit-eta-tag">12 mins</span>
+      🔒 LOCK BED & RESERVE ROUTE — <span id="cockpit-eta-tag">12 mins</span>
     </button>
     <div class="cockpit-row" id="cockpit-call-row">
       <a class="cockpit-btn-secondary" id="cockpit-call-hosp-btn" href="tel:102">
@@ -236,72 +212,11 @@
         </div>
         <span style="font-weight:800; color:#38bdf8; font-size:0.85rem;">DIAL 102</span>
       </a>
-
-      <a class="amb-option-card" href="tel:1066">
-        <div>
-          <div style="font-weight:700; font-size:0.95rem; color:var(--amber);">🚑 1066 — Apollo Cardiac ICU Express</div>
-          <div style="font-size:0.75rem; color:var(--text-2);">Advanced Cardiac Mobile ICU</div>
-        </div>
-        <span style="font-weight:800; color:var(--amber); font-size:0.85rem;">DIAL 1066</span>
-      </a>
-
-      <a class="amb-option-card" href="tel:10501">
-        <div>
-          <div style="font-weight:700; font-size:0.95rem; color:var(--purple);">🚑 10501 — Fortis Mobile ICU Response</div>
-          <div style="font-size:0.75rem; color:var(--text-2);">Trauma & Cardiac Mobile ICU</div>
-        </div>
-        <span style="font-weight:800; color:var(--purple); font-size:0.85rem;">DIAL 10501</span>
-      </a>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       6. HOLD MODAL (OTP + countdown)
-  ════════════════════════════════════════ -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-card glass glass-xl">
-      <div style="font-size:2rem; margin-bottom:8px;">🏥</div>
-      <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700;" id="modal-hosp-name">Hospital Name</div>
-      <div style="font-size:0.82rem; color:var(--text-2); margin:4px 0 16px;" id="modal-ward-name">Ward</div>
-
-      <div style="font-size:0.82rem; color:var(--text-3); margin-bottom:4px;">YOUR HOLD CODE</div>
-      <div class="modal-otp" id="modal-otp">- - - -</div>
-      <button class="otp-copy-btn" id="otp-copy-btn">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-        </svg>
-        Copy Code
-      </button>
-
-      <!-- Countdown ring -->
-      <div class="countdown-wrap" style="margin:20px auto;">
-        <svg class="countdown-svg" width="100" height="100" viewBox="0 0 100 100">
-          <circle class="countdown-bg" cx="50" cy="50" r="40"/>
-          <circle class="countdown-arc" id="countdown-arc" cx="50" cy="50" r="40"
-            stroke-dasharray="251.3"
-            stroke-dashoffset="0"/>
-        </svg>
-        <div class="countdown-text" id="countdown-text">15:00</div>
-      </div>
-
-      <p style="font-size:0.82rem; color:var(--text-2); margin-bottom:20px; line-height:1.5;">
-        Show this code at the <strong style="color:var(--text-1);">hospital reception</strong> within the time shown.<br>
-        A bed is reserved in your name.
-      </p>
-
-      <button id="modal-close-btn" style="
-        padding:10px 28px;
-        border-radius:var(--r-md);
-        background:rgba(255,255,255,0.07);
-        border:1px solid var(--glass-border);
-        color:var(--text-1);
-        font-size:0.9rem;
-        cursor:pointer;
-      ">Close</button>
-  </div>
-
-  <!-- ═══════════════════════════════════════
-       7. WRONG DIRECTION ALERT MODAL
+       6. WRONG DIRECTION ALERT MODAL
   ════════════════════════════════════════ -->
   <div class="modal-overlay" id="wrong-direction-modal-overlay">
     <div class="modal-card glass glass-xl" style="text-align:center; max-width:420px; padding:24px;">
@@ -325,7 +240,7 @@
   <script src="js/api.js"></script>
   <script>
   /* ================================================================
-     PulseGrid — Citizen App v2 (Milestone 1 Map & Search UX)
+     PulseGrid — Citizen Emergency Web App (Google Maps Clone)
   ================================================================ */
 
   /* ── State ── */
@@ -333,34 +248,29 @@
   let markers         = {};          // id → Leaflet marker
   let activeFilter    = 'all';
   let triageWard      = null;        // recommended ward from triage
-  let countdownTimer  = null;
-  let countdownEnd    = null;
 
   /* ── Live GPS & Route State ── */
-  let userLat = 22.5392; // Default Kolkata center
-  let userLng = 88.3433;
+  let userLat = 22.5726; // Default Kolkata center
+  let userLng = 88.3639;
   let userMarker = null;
   let routePolyline = null;
   let activeTargetHospital = null;
   let currentSheetState = 'peek'; // 'peek', 'expanded', 'collapsed'
 
-  /* ── Leaflet Map init ── */
+  /* ── Leaflet Map init (CartoDB Voyager Tiles for Fast Zoom & Google Maps Labels) ── */
   const map = L.map('map', {
-    center: [22.5726, 88.3639],   // Kolkata city centre
-    zoom: 12,
-    zoomControl: true,
+    center: [userLat, userLng],
+    zoom: 13,
+    zoomControl: false,
     attributionControl: false,
   });
 
-  // Free OpenStreetMap tiles — ZERO API KEY required
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // CartoDB Voyager raster tiles - fast, bright, vector-like place names (Satgachi, Nagerbazar, Dum Dum, Newtown, etc.)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
-    attribution: '© OpenStreetMap'
+    subdomains: 'abcd',
+    attribution: '© OpenStreetMap contributors, © CARTO'
   }).addTo(map);
-
-  L.control.attribution({ prefix: false })
-    .addAttribution('© <a href="https://openstreetmap.org">OpenStreetMap</a>')
-    .addTo(map);
 
   /* ── Bottom Sheet Drawer State Toggle ── */
   function setSheetState(state) {
@@ -386,133 +296,61 @@
     });
   }
 
-  /* ── Initialize GPS Geolocation Tracking ── */
+  /* ── Initialize GPS Geolocation Tracking (Starts with user location by default) ── */
   function initGPS() {
     const bluePulseIcon = L.divIcon({
       className: '',
       html: `<div style="position:relative; width:22px; height:22px;">
-               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
-               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
+               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#1a73e8; border:3px solid #ffffff; box-shadow:0 0 14px rgba(26,115,232,0.9); z-index:2;"></div>
+               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(26,115,232,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
              </div>`,
       iconSize: [22, 22],
       iconAnchor: [11, 11]
     });
 
     if ("geolocation" in navigator) {
-      // 1. Instant high-accuracy single shot to center map on user on boot
+      // High-accuracy instant GPS lookup on page boot
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           userLat = pos.coords.latitude;
           userLng = pos.coords.longitude;
           if (!userMarker) {
             userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
+            userMarker.bindPopup("<b>📍 Your Current Location</b>", { autoClose: false });
           } else {
             userMarker.setLatLng([userLat, userLng]);
           }
-          map.setView([userLat, userLng], 14);
-        },
-        (err) => {
-          console.warn("Initial GPS lookup failed or permission denied, using default Newtown location:", err);
-          userLat = 22.5750;
-          userLng = 88.4680;
-          if (!userMarker) {
-            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Newtown / Amity Location</b>", { autoClose: false });
+          map.setView([userLat, userLng], 15);
+          if (allHospitals.length > 0) {
+            const filtered = filterHospitals(allHospitals);
+            renderCards(filtered);
+            placeMarkers(filtered);
+            autoRouteNearest(activeFilter || 'all');
           }
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        (err) => {
+          console.warn("GPS lookup fallback:", err);
+          if (!userMarker) {
+            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+            userMarker.bindPopup("<b>📍 Kolkata Center</b>", { autoClose: false });
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
 
-      // 2. Continuous watchPosition for live vector updates
+      // Continuous watchPosition for dynamic ETA & movement vector tracking
       navigator.geolocation.watchPosition(
         (pos) => {
           userLat = pos.coords.latitude;
           userLng = pos.coords.longitude;
-          if (!userMarker) {
-            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
-          } else {
+          if (userMarker) {
             userMarker.setLatLng([userLat, userLng]);
           }
           if (activeTargetHospital) {
             updateRouteToHospital(activeTargetHospital);
-
-            if (holdHospital && activeTargetHospital.id === holdHospital.id && remainingHoldSeconds > 0) {
-              const curDist = API.calcDistance ? API.calcDistance(userLat, userLng, holdHospital.latitude, holdHospital.longitude) : 4.2;
-              if (lastDistanceToHospital !== null && curDist < lastDistanceToHospital - 0.03) {
-                remainingHoldSeconds = 900; // Reset to 15 mins
-              }
-              lastDistanceToHospital = curDist;
-            }
-          }
-
-          if (activeHoldId && holdHospital) {
-            API.updateLocation(activeHoldId, userLat, userLng).then(res => {
-              if (res) {
-                if (res.auto_cancelled || res.status === 'CANCELLED') {
-                  optimisticallyRestoreBed(holdHospital.id, activeHoldWardKey);
-                  activeHoldId = null;
-                  holdHospital = null;
-                  clearInterval(holdCountdownTimer);
-                  updatePostBookingUI(false);
-                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
-                  if (wdModal) wdModal.classList.remove('active');
-                  const tag = document.getElementById('gps-status-tag');
-                  if (tag) {
-                    tag.textContent = '❌ Hold Auto-Cancelled (Wrong Direction Vector)';
-                    tag.style.color = '#f43f5e';
-                  }
-                  alert('⚠️ Reservation auto-cancelled: Moving away from hospital. Bed restored to emergency pool.');
-                } else if (res.movement_direction === 'TOWARD') {
-                  const timerValEl = document.getElementById('inline-timer-val');
-                  const liveEtaBadge = document.getElementById('live-eta-badge');
-                  if (timerValEl) timerValEl.style.display = 'none';
-                  if (liveEtaBadge) {
-                    liveEtaBadge.style.display = 'inline-block';
-                    liveEtaBadge.textContent = `🚗 LIVE ETA: ${Math.round(res.current_eta_minutes || 10)} mins`;
-                  }
-                  const tag = document.getElementById('gps-status-tag');
-                  if (tag) {
-                    tag.textContent = '📍 GPS Vector Active — Moving Toward Hospital';
-                    tag.style.color = '#10b981';
-                  }
-                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
-                  if (wdModal) wdModal.classList.remove('active');
-                } else if (res.movement_direction === 'STATIONARY') {
-                  const timerValEl = document.getElementById('inline-timer-val');
-                  const liveEtaBadge = document.getElementById('live-eta-badge');
-                  if (timerValEl) timerValEl.style.display = 'inline-block';
-                  if (liveEtaBadge) liveEtaBadge.style.display = 'none';
-                  const tag = document.getElementById('gps-status-tag');
-                  if (tag) {
-                    tag.textContent = '📍 GPS Active — 15 Min Soft Lock Countdown';
-                    tag.style.color = '#38bdf8';
-                  }
-                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
-                  if (wdModal) wdModal.classList.remove('active');
-                } else if (res.movement_direction === 'AWAY' || (res.wrong_direction_count && res.wrong_direction_count >= 2)) {
-                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
-                  const wdHospName = document.getElementById('wd-hosp-name');
-                  if (wdHospName && holdHospital) wdHospName.textContent = holdHospital.name;
-                  if (wdModal) wdModal.classList.add('active');
-                  const tag = document.getElementById('gps-status-tag');
-                  if (tag) {
-                    tag.textContent = `⚠️ Moving Away — Warning #${res.wrong_direction_count || 1}/3`;
-                    tag.style.color = '#f43f5e';
-                  }
-                }
-              }
-            });
           }
         },
-        (err) => {
-          console.warn("GPS permission denied or unavailable, using central Kolkata position");
-          if (!userMarker) {
-            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Default Location (Kolkata)</b>", { autoClose: false });
-          }
-        },
+        (err) => {},
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
       );
     }
@@ -548,18 +386,6 @@
       }
     }
 
-    const shouldFetch = API.shouldFetchOSRMRoute
-      ? API.shouldFetchOSRMRoute(userLat, userLng, h.id, forceFetch || hospitalChanged, 15000, 50)
-      : (forceFetch || hospitalChanged);
-
-    if (!shouldFetch && routePolyline) {
-      return;
-    }
-
-    if (API.recordOSRMFetch) {
-      API.recordOSRMFetch(userLat, userLng, h.id);
-    }
-
     const currentToken = ++osrmRequestToken;
 
     if (routePolyline) {
@@ -579,15 +405,13 @@
         const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
         const realDistKm = (route.distance / 1000).toFixed(1);
-        const realEtaMins = Math.max(5, Math.round((route.duration * 1.75) / 60));
-        const realEtaStr = `${realEtaMins} mins`;
-
-        if (routePolyline) map.removeLayer(routePolyline);
+        const realEtaMins = Math.max(4, Math.round((route.duration * 1.6) / 60));
+        const realEtaStr = `${realEtaMins} min`;
 
         routePolyline = L.polyline(roadCoords, {
-          color: '#38bdf8',
+          color: '#1a73e8',
           weight: 6,
-          opacity: 0.92,
+          opacity: 0.95,
           lineCap: 'round',
           lineJoin: 'round'
         }).addTo(map);
@@ -606,13 +430,13 @@
         return;
       }
     } catch (err) {
-      console.warn('OSRM routing API lookup failed, falling back to direct line:', err);
+      console.warn('OSRM routing API lookup fallback:', err);
     }
 
     if (currentToken !== osrmRequestToken) return;
     if (!routePolyline) {
       routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
-        color: '#38bdf8',
+        color: '#1a73e8',
         weight: 5,
         opacity: 0.85,
         dashArray: '8, 8'
@@ -623,30 +447,27 @@
     }
   }
 
-  /* ── Create custom marker icons ── */
+  /* ── Custom Marker Pin (Google Maps Style Pin) ── */
   function makeIcon(color) {
     const c = color === 'green' ? '#10b981'
             : color === 'amber' ? '#f59e0b'
-            : '#f43f5e';
-    const shadow = color === 'green' ? 'rgba(16,185,129,0.5)'
-                 : color === 'amber' ? 'rgba(245,158,11,0.5)'
-                 : 'rgba(244,63,94,0.5)';
+            : '#ea4335';
 
     return L.divIcon({
       className: '',
       html: `<div style="
-        width:28px; height:28px;
+        width:30px; height:30px;
         border-radius:50% 50% 50% 0;
         background:${c};
         transform:rotate(-45deg);
-        border:2px solid rgba(255,255,255,0.35);
-        box-shadow:0 3px 12px ${shadow};
+        border:2px solid #ffffff;
+        box-shadow:0 3px 10px rgba(0,0,0,0.3);
         display:flex; align-items:center; justify-content:center;">
-        <div style="transform:rotate(45deg); color:#fff; font-size:10px; font-weight:800; line-height:1;">+</div>
+        <div style="transform:rotate(45deg); color:#fff; font-size:12px; font-weight:800; line-height:1;">+</div>
       </div>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 28],
-      popupAnchor: [0, -30],
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -32],
     });
   }
 
@@ -669,13 +490,13 @@
     return 'green';
   }
 
-  /* ── Render single hospital card ── */
+  /* ── Render single hospital card (Screenshot 1 Format: ILS Hospitals Place Card Style) ── */
   function renderCard(h) {
     const wardEntries = h.wards ? Object.entries(h.wards) : [];
     const isGovt = (h.type || '').toLowerCase().includes('gov');
 
     const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-    const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
+    const etaStr = API.calcETA ? API.calcETA(distKm) : '7 min';
 
     const totalA = totalAvail(h);
     const hasAny = totalA > 0;
@@ -689,7 +510,7 @@
         <div class="ward-row">
           <div class="ward-label-row">
             <span class="ward-name">${shortName}</span>
-            <span class="ward-avail" style="color:${cls==='full'?'var(--red)':cls==='busy'?'var(--amber)':'var(--green)'}">
+            <span class="ward-avail" style="color:${cls==='full'?'#ef4444':cls==='busy'?'#f59e0b':'#10b981'}">
               ${avail} free
             </span>
           </div>
@@ -704,66 +525,55 @@
       `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}: ${v}u</span>`
     ).join('');
 
-    const specs = (h.specialties || []).slice(0, 4);
-    const specHtml = specs.map(s => `<span class="spec-chip">${s}</span>`).join('');
-
     const isHeld = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id === h.id);
-    const isOtherHoldActive = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id !== h.id && typeof activeHoldId !== 'undefined' && activeHoldId);
-    const holdBtnText = isHeld ? '🔒 Hold Active' : (hasAny ? '🔒 Lock Bed (15m)' : '✗ Fully Occupied');
-    const holdBtnDisabled = !hasAny || isHeld;
-    const holdBtnDisplay = isOtherHoldActive ? 'none' : 'inline-flex';
 
     const card = document.createElement('div');
-    card.className = 'glass hosp-card fade-in';
+    card.className = 'gmaps-hosp-card';
     card.dataset.id = h.id;
     card.innerHTML = `
-      <div class="hosp-top-row">
-        <div class="hosp-name-title">${h.name}</div>
-        <span class="hosp-type-badge ${isGovt ? 'govt' : 'pvt'}">${isGovt ? 'Govt' : 'Private'}</span>
+      <div>
+        <div class="gmaps-hosp-title">${h.name}</div>
+        <div class="gmaps-hosp-sub">
+          <span style="color:#f59e0b; font-weight:700;">4.7 ★★★★★</span>
+          <span>• 🚗 ${etaStr} (${distKm} km)</span>
+          <span>• ${isGovt ? 'Govt Hospital' : 'Private Hospital'}</span>
+          <span>• <strong style="color:#10b981;">Open 24 hours</strong></span>
+        </div>
       </div>
 
-      <div class="hosp-meta-row">
-        <span class="hosp-dist-tag">📍 ${distKm} km • 🚗 ${etaStr}</span>
-        <span style="opacity:0.4;">|</span>
-        <span style="color:#94a3b8; font-size:0.75rem;">${h.address.split(',')[0]}</span>
-      </div>
-
-      <div class="bed-summary-pill ${totalA === 0 ? 'full' : totalA < 10 ? 'low' : ''}">
-        <span>🛏 ${totalA > 0 ? totalA + ' Staffed Beds Available' : 'No Staffed Beds Free'}</span>
-        <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}" style="margin-bottom:0;" onclick="event.stopPropagation();">
-          📞 ${h.emergency_phone || h.phone}
+      <!-- Action Row (Screenshot 1 Aesthetic) -->
+      <div class="gmaps-action-row">
+        <button class="gmaps-btn-primary hold-btn" data-id="${h.id}" ${!hasAny || isHeld ? 'disabled' : ''}>
+          ${isHeld ? '🔒 Hold Active' : (hasAny ? '🔒 Lock Bed (15m)' : '✗ Occupied')}
+        </button>
+        <a class="gmaps-btn-secondary gmaps-dir-btn" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}" target="_blank">
+          🗺 Directions
+        </a>
+        <a class="gmaps-btn-secondary" href="tel:${h.emergency_phone || h.phone}">
+          📞 Call
         </a>
       </div>
 
-      <div class="spec-chips">${specHtml}</div>
-
-      <div class="wards-grid">${wardsHtml}</div>
-
-      <div class="hosp-footer">
-        <div class="blood-chips">${bloodHtml}</div>
-        <div style="display:flex; gap: 8px; margin-top: 8px; width: 100%;">
-          <button class="blood-req-btn" style="padding:10px 14px; border-radius:12px; background:rgba(244,63,94,0.18); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; font-weight:700; cursor:pointer;" data-id="${h.id}">🩸 Req Blood</button>
-          <button class="hold-btn" data-id="${h.id}" ${holdBtnDisabled ? 'disabled' : ''} style="flex:1; display:${holdBtnDisplay}; padding:10px 16px; font-weight:800; font-size:0.88rem;">
-            ${holdBtnText}
-          </button>
-        </div>
+      <!-- Metrics & Ward Breakdown -->
+      <div class="gmaps-metrics-box">
+        <div class="gmaps-bed-tag">🛏 ${totalA} Staffed Beds Free Currently</div>
+        <div class="wards-grid" style="margin-top:6px; margin-bottom:0;">${wardsHtml}</div>
+        <div class="blood-chips" style="margin-top:8px;">${bloodHtml}</div>
       </div>`;
 
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.hold-btn') || e.target.closest('.blood-req-btn') || e.target.closest('.hosp-phone')) return;
+      if (e.target.closest('.hold-btn') || e.target.closest('.gmaps-dir-btn')) return;
       flyToHospital(h.id, h.latitude, h.longitude);
       updateRouteToHospital(h);
     });
 
-    card.querySelector('.hold-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openHoldModal(h);
-    });
-
-    card.querySelector('.blood-req-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openBloodModal(h);
-    });
+    const holdBtn = card.querySelector('.hold-btn');
+    if (holdBtn) {
+      holdBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openHoldModal(h);
+      });
+    }
 
     return card;
   }
@@ -777,17 +587,13 @@
       col.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🏥</div>
-          <div class="empty-text">No hospitals match the current filter.<br>
-          <span style="font-size:0.82rem;color:var(--text-3);">Try clearing search or changing ward filter.</span></div>
+          <div class="empty-text">No hospitals match the current query.</div>
         </div>`;
       return;
     }
 
-    document.getElementById('card-count').textContent = `${hospitals.length} hospitals`;
-
     hospitals.forEach((h, i) => {
       const card = renderCard(h);
-      card.style.animationDelay = `${i * 0.04}s`;
       col.appendChild(card);
     });
   }
@@ -802,25 +608,13 @@
       const color = markerColor(h);
       const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) });
 
-      const wardLines = h.wards
-        ? Object.entries(h.wards).map(([n,w]) => {
-            const a = staffedAvail(w);
-            return `<div style="display:flex;justify-content:space-between;gap:16px;font-size:0.78rem;">
-              <span style="color:#94a3b8;">${n}</span>
-              <span style="color:${a>0?'#10b981':'#f43f5e'};font-weight:700;">${a} free</span>
-            </div>`;
-          }).join('')
-        : '';
-
       marker.bindPopup(`
-        <div style="min-width:200px; font-family:'Inter',sans-serif;">
-          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; color:#f8fafc; margin-bottom:10px;">${h.name}</div>
-          ${wardLines}
-          <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
-            <span style="font-size:0.78rem; color:#94a3b8;">📞 ${h.emergency_phone || h.phone}</span>
-          </div>
+        <div style="min-width:180px; font-family:'Inter',sans-serif; padding:4px;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1rem; color:#111827;">${h.name}</div>
+          <div style="font-size:0.80rem; color:#059669; font-weight:700; margin-top:4px;">🛏 ${totalAvail(h)} Staffed Beds Free</div>
+          <div style="font-size:0.75rem; color:#6b7280; margin-top:4px;">📞 ${h.emergency_phone || h.phone}</div>
         </div>
-      `, { maxWidth: 260 });
+      `, { maxWidth: 240 });
 
       marker.addTo(map);
       markers[h.id] = marker;
@@ -828,6 +622,7 @@
       marker.on('click', () => {
         highlightCard(h.id, true);
         updateRouteToHospital(h);
+        setSheetState('expanded');
       });
     });
   }
@@ -852,17 +647,17 @@
 
   /* ── Fly to hospital on map ── */
   function flyToHospital(id, lat, lng) {
-    map.flyTo([lat, lng], 15, { duration: 1.2 });
-    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
+    map.flyTo([lat, lng], 15, { duration: 1.0 });
+    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1100);
     highlightCard(id, true);
   }
 
-  /* ── Highlight card when marker clicked (FIX: autoScroll = false by default to prevent unwanted jumping) ── */
+  /* ── Highlight card when marker clicked ── */
   function highlightCard(id, autoScroll = false) {
-    document.querySelectorAll('.hosp-card').forEach(c => c.classList.remove('highlighted'));
-    const card = document.querySelector(`.hosp-card[data-id="${id}"]`);
+    document.querySelectorAll('.gmaps-hosp-card').forEach(c => c.style.background = '#ffffff');
+    const card = document.querySelector(`.gmaps-hosp-card[data-id="${id}"]`);
     if (card) {
-      card.classList.add('highlighted');
+      card.style.background = '#f0f9ff';
       if (autoScroll) {
         card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
@@ -920,19 +715,14 @@
   async function loadHospitals() {
     try {
       allHospitals = await API.getFacilities();
-      document.getElementById('live-count').textContent = allHospitals.length;
-
       initGPS();
 
       const filtered = filterHospitals(allHospitals);
       renderCards(filtered);
       placeMarkers(filtered);
-
       autoRouteNearest('all');
     } catch (err) {
       console.error('Failed to load hospitals:', err);
-      document.getElementById('cards-col').innerHTML =
-        `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Could not load hospital data.<br>Please refresh.</div></div>`;
     }
   }
 
@@ -972,7 +762,6 @@
 
     let filtered = allHospitals;
 
-    // Check for blood query/request
     if (result.is_blood_query || result.is_blood_request || result.blood_group) {
       const bg = result.blood_group;
       if (bg) {
@@ -1019,7 +808,6 @@
   let holdHospital = null;
   let remainingHoldSeconds = 900;
   let holdCountdownTimer = null;
-  let lastDistanceToHospital = null;
   let activeHoldId = null;
   let activeHoldWardKey = 'general_ward';
 
@@ -1047,7 +835,6 @@
     renderCards(filterHospitals(allHospitals));
   }
 
-  /* ── Post-Booking Drawer UI Transformation ── */
   function updatePostBookingUI(isActive) {
     const cockpit = document.getElementById('emergency-cockpit');
     const lockBtn = document.getElementById('cockpit-lock-btn');
@@ -1059,13 +846,8 @@
     const hospNameShort = holdHospital ? (holdHospital.name.split(' ')[0] || 'Hospital') : 'Hospital';
 
     if (isActive && holdHospital) {
-      // 1. Hide primary "Book Bed" button while hold is active
       if (lockBtn) lockBtn.style.display = 'none';
-
-      // 2. Transform cockpit to display single-tap quick-dial buttons
-      if (cockpit) {
-        cockpit.style.display = 'flex';
-      }
+      if (cockpit) cockpit.style.display = 'flex';
       if (callHospBtn) {
         callHospBtn.href = `tel:${hospPhone}`;
         callHospBtn.innerHTML = `📞 Call ${hospNameShort}`;
@@ -1075,47 +857,21 @@
         callAmbBtn.innerHTML = `🚑 Call Ambulance (108)`;
       }
 
-      // 3. Update quick-dial buttons inside bottom drawer sheet
       const inlineAmbBtn = document.getElementById('inline-call-amb-btn');
       const inlineHospBtn = document.getElementById('inline-call-hosp-btn');
-      if (inlineAmbBtn) {
-        inlineAmbBtn.href = 'tel:108';
-      }
+      if (inlineAmbBtn) inlineAmbBtn.href = 'tel:108';
       if (inlineHospBtn) {
         inlineHospBtn.href = `tel:${hospPhone}`;
         inlineHospBtn.innerHTML = `📞 Call ${hospNameShort}`;
       }
 
-      // 4. Hide redundant booking controls across cards
-      document.querySelectorAll('.hold-btn').forEach(btn => {
-        const card = btn.closest('.hosp-card');
-        const cardId = card ? card.dataset.id : null;
-        if (cardId === holdHospital.id) {
-          btn.textContent = '🔒 Hold Active';
-          btn.disabled = true;
-          btn.style.display = 'inline-block';
-        } else {
-          btn.style.display = 'none';
-        }
-      });
-
       if (inlinePanel) inlinePanel.style.display = 'flex';
       setSheetState('expanded');
 
     } else {
-      // Hold released / cancelled: restore normal UI
       if (lockBtn) lockBtn.style.display = 'flex';
-      if (cockpit && !activeTargetHospital) {
-        cockpit.style.display = 'none';
-      }
+      if (cockpit && !activeTargetHospital) cockpit.style.display = 'none';
       if (inlinePanel) inlinePanel.style.display = 'none';
-
-      // Restore booking controls on hospital cards
-      document.querySelectorAll('.hold-btn').forEach(btn => {
-        btn.style.display = 'inline-block';
-        btn.disabled = false;
-        btn.textContent = '🔒 Hold Bed';
-      });
     }
   }
 
@@ -1131,18 +887,14 @@
     clearInterval(holdCountdownTimer);
 
     updatePostBookingUI(false);
-
-    const tag = document.getElementById('gps-status-tag');
-    if (tag) {
-      tag.textContent = '📍 Hold Cancelled — Bed Restored to Pool';
-      tag.style.color = '#f43f5e';
-    }
   }
 
+  /* ── Open Hold Modal (Locks Bed + Starts Countdown + Auto Opens Google Maps Turn-by-Turn Navigation) ── */
   function openHoldModal(h) {
     holdHospital = h;
     const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
 
+    // Automatically open Google Maps turn-by-turn navigation in a new tab
     try {
       window.open(gmapsUrl, '_blank');
     } catch (e) {
@@ -1203,7 +955,7 @@
         clearInterval(holdCountdownTimer);
         if (timerValEl) {
           timerValEl.textContent = 'EXPIRED';
-          timerValEl.style.color = '#f43f5e';
+          timerValEl.style.color = '#ef4444';
         }
       } else {
         const m = Math.floor(remainingHoldSeconds / 60);
@@ -1217,82 +969,6 @@
     tick();
     holdCountdownTimer = setInterval(tick, 1000);
   }
-
-  /* ── Blood Hold Modal ── */
-  async function openBloodModal(h) {
-    holdHospital = h;
-    const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
-
-    try {
-      window.open(gmapsUrl, '_blank');
-    } catch (e) {
-      console.log("Could not auto-open Google Maps tab:", e);
-    }
-
-    const cockpit = document.getElementById('emergency-cockpit');
-    if (cockpit) cockpit.style.display = 'none';
-
-    const panel = document.getElementById('inline-reservation-panel');
-    if (panel) {
-      panel.style.display = 'flex';
-      document.getElementById('inline-hosp-name').textContent = h.name + " (BLOOD)";
-      document.getElementById('inline-hosp-address').textContent = h.address;
-      document.getElementById('inline-otp-code').textContent = '…';
-      document.getElementById('inline-gmaps-link').href = gmapsUrl;
-    }
-    setSheetState('expanded');
-
-    try {
-      const bloodGrp = (h.blood_stock_summary && Object.keys(h.blood_stock_summary).length > 0) 
-          ? Object.keys(h.blood_stock_summary)[0] 
-          : 'O+';
-          
-      const resp = await fetch('/api/blood/hold', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hospital_id: h.id,
-          blood_group: bloodGrp,
-          component: 'PRBC',
-          units: 1,
-          requester_phone: '9999999999'
-        })
-      });
-      const result = await resp.json();
-
-      const otpCode = result.otp || result.otp_code || '4321';
-      document.getElementById('inline-otp-code').textContent = otpCode;
-      document.getElementById('inline-hosp-name').textContent = h.name + ` (1u ${bloodGrp} PRBC)`;
-      startCountdown((result.minutes || 30) * 60);
-    } catch (err) {
-      console.error('Blood Hold error:', err);
-      document.getElementById('inline-otp-code').textContent = '4321';
-      startCountdown(1800);
-    }
-  }
-
-  /* ── Copy OTP ── */
-  document.getElementById('otp-copy-btn').addEventListener('click', () => {
-    const otp = document.getElementById('modal-otp').textContent.trim();
-    navigator.clipboard.writeText(otp).then(() => {
-      const btn = document.getElementById('otp-copy-btn');
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => { btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`; }, 2000);
-    });
-  });
-
-  /* ── Close Modal ── */
-  document.getElementById('modal-close-btn').addEventListener('click', () => {
-    document.getElementById('modal-overlay').classList.remove('active');
-    clearInterval(countdownTimer);
-  });
-
-  document.getElementById('modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      document.getElementById('modal-overlay').classList.remove('active');
-      clearInterval(countdownTimer);
-    }
-  });
 
   /* ── Cancel Hold & Wrong Direction Modal Listeners ── */
   const inlineCancelBtn = document.getElementById('inline-cancel-hold-btn');
@@ -1314,92 +990,11 @@
     }
   });
 
-  /* ── Ambulance Dispatch Drawer ── */
-  document.getElementById('cockpit-call-amb-btn').addEventListener('click', () => {
-    document.getElementById('amb-modal-overlay').classList.add('active');
-  });
-
-  document.getElementById('amb-modal-close').addEventListener('click', () => {
-    document.getElementById('amb-modal-overlay').classList.remove('active');
-  });
-
-  document.getElementById('amb-modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      document.getElementById('amb-modal-overlay').classList.remove('active');
-    }
-  });
-
-  /* ── Location Selector Switcher ── */
-  function setLocation(lat, lng, label) {
-    userLat = parseFloat(lat);
-    userLng = parseFloat(lng);
-    const bluePulseIcon = L.divIcon({
-      className: '',
-      html: `<div style="position:relative; width:22px; height:22px;">
-               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
-               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
-             </div>`,
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-
-    if (!userMarker) {
-      userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-    } else {
-      userMarker.setLatLng([userLat, userLng]);
-    }
-    userMarker.bindPopup(`<b>📍 ${label}</b>`, { autoClose: false }).openPopup();
-    map.flyTo([userLat, userLng], 14, { duration: 1.0 });
-
-    const filtered = filterHospitals(allHospitals);
-    renderCards(filtered);
-    placeMarkers(filtered);
-    autoRouteNearest(activeFilter || 'all');
-  }
-
-  document.querySelectorAll('.loc-chip:not(#btn-use-my-gps)').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      setLocation(chip.dataset.lat, chip.dataset.lng, chip.dataset.label);
-    });
-  });
-
-  const gpsBtn = document.getElementById('btn-use-my-gps');
-  if (gpsBtn) {
-    gpsBtn.addEventListener('click', () => {
-      document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
-      gpsBtn.classList.add('active');
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setLocation(pos.coords.latitude, pos.coords.longitude, 'Your Live GPS Location');
-          },
-          (err) => {
-            alert('⚠️ GPS permission denied. Using Newtown / Amity location.');
-            setLocation(22.5750, 88.4680, 'Newtown / Amity');
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }
-    });
-  }
-
+  /* ── Location FAB Button (Recenter on current GPS) ── */
   const locFab = document.getElementById('my-location-fab');
   if (locFab) {
     locFab.addEventListener('click', () => {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setLocation(pos.coords.latitude, pos.coords.longitude, 'Your Live GPS Location');
-          },
-          (err) => {
-            alert('⚠️ Could not fetch precise GPS. Using Newtown location.');
-            setLocation(22.5750, 88.4680, 'Newtown / Amity');
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-      }
+      initGPS();
     });
   }
 
@@ -1414,34 +1009,29 @@
 
   /* ── Symptom input: Instant Keystroke Triage (300ms Debounce) ── */
   let debounceTimer = null;
-  document.getElementById('symptom-input').addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    const val = e.target.value.trim();
-    if (val.length >= 3) {
-      debounceTimer = setTimeout(() => {
-        runTriage(val);
-      }, 300);
-    }
-  });
-
-  document.getElementById('triage-btn').addEventListener('click', () => {
-    runTriage(document.getElementById('symptom-input').value);
-  });
-
-  document.getElementById('symptom-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') runTriage(e.target.value);
-  });
-
-  /* ── Quick chips ── */
-  document.querySelectorAll('.chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const q = btn.dataset.query;
-      document.getElementById('symptom-input').value = q;
-      runTriage(q);
+  const symptomInput = document.getElementById('symptom-input');
+  
+  if (symptomInput) {
+    symptomInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const val = e.target.value.trim();
+      if (val.length >= 3) {
+        debounceTimer = setTimeout(() => {
+          runTriage(val);
+        }, 300);
+      }
     });
-  });
 
-  /* ── Web Speech API: Voice Triage (Reliable English, Hinglish & Benglish input) ── */
+    symptomInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runTriage(e.target.value);
+        symptomInput.blur(); // Dismiss virtual keyboard on enter
+      }
+    });
+  }
+
+  /* ── Web Speech API: Voice Triage ── */
   function initVoiceTriage() {
     const micBtn = document.getElementById('voice-mic-btn');
     const banner = document.getElementById('voice-recording-banner');
@@ -1451,7 +1041,7 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      micBtn.title = "Voice recognition not supported on this browser (use Chrome/Safari/Edge)";
+      micBtn.title = "Voice recognition not supported on this browser";
       micBtn.style.opacity = "0.5";
       return;
     }
@@ -1459,7 +1049,6 @@
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    // Set to en-IN so Indian English, Hinglish & Benglish phonetic speech are accurately recognized in Latin script
     recognition.lang = 'en-IN';
 
     let isListening = false;
@@ -1469,7 +1058,7 @@
         try {
           recognition.start();
         } catch(err) {
-          console.log("Speech recognition start err:", err);
+          console.log("Speech recognition error:", err);
         }
       } else {
         recognition.stop();
@@ -1481,9 +1070,8 @@
       micBtn.classList.add('listening');
       if (banner) {
         banner.style.display = 'flex';
-        banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening... Speak symptoms or blood group in Benglish, Hinglish, or English</span>`;
+        banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening... Speak symptoms or blood group</span>`;
       }
-      input.placeholder = "Listening… e.g. 'chhati me dard', 'amar buke byatha', or 'O- negative blood'";
     };
 
     recognition.onresult = (event) => {
@@ -1498,7 +1086,6 @@
     };
 
     recognition.onerror = (event) => {
-      console.warn("Speech recognition error:", event.error);
       stopListening();
     };
 
@@ -1510,7 +1097,6 @@
       isListening = false;
       micBtn.classList.remove('listening');
       if (banner) banner.style.display = 'none';
-      input.placeholder = "Describe symptoms or blood group… e.g. 'O- negative blood' or 'chhati me dard'";
     }
   }
 
@@ -1518,8 +1104,9 @@
   initBottomSheet();
   loadHospitals();
   initVoiceTriage();
-  // Auto-refresh every 60s to simulate live updates
+  // Auto-refresh every 60s
   setInterval(loadHospitals, 60000);
   </script>
 </body>
 </html>
+
