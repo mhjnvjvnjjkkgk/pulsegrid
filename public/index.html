@@ -12,8 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Leaflet Map Engine -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Our Design System -->
   <link rel="stylesheet" href="css/custom.css">
@@ -53,26 +53,19 @@
       <div class="hamburger-line"></div>
     </button>
 
-    <div class="header-logo-badge">
+    <div class="header-logo-badge" title="PulseGrid">
       <div class="logo-circle">P</div>
-      <span class="logo-title">PulseGrid</span>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       3. SEARCH CONTAINER (Drawing 1: Initial Bottom Bar & Blood Chips)
+       3. SEARCH CONTAINER (Drawing 1: Initial Bottom Bar & 7:3 Top Bar)
   ════════════════════════════════════════ -->
   <div class="search-container mode-bottom" id="search-container">
-    <!-- Quick Blood Group Chips (Drawing 1: Symmetrical 8 Blood Group Matrix) -->
-    <div class="blood-quick-chips" id="blood-quick-chips">
-      <button class="blood-chip-btn" data-blood="O-">🩸 O-</button>
-      <button class="blood-chip-btn" data-blood="O+">🩸 O+</button>
-      <button class="blood-chip-btn" data-blood="A-">🩸 A-</button>
-      <button class="blood-chip-btn" data-blood="A+">🩸 A+</button>
-      <button class="blood-chip-btn" data-blood="B-">🩸 B-</button>
-      <button class="blood-chip-btn" data-blood="B+">🩸 B+</button>
-      <button class="blood-chip-btn" data-blood="AB-">🩸 AB-</button>
-      <button class="blood-chip-btn" data-blood="AB+">🩸 AB+</button>
+    <!-- 7:3 Top Bar above Search Input (Drawing 1 Alignment) -->
+    <div class="search-top-bar" id="search-top-bar">
+      <div class="blood-info-text">Type blood group if required</div>
+      <button class="nearest-hosp-btn" id="nearest-hosp-btn">Nearest Hospital</button>
     </div>
 
     <!-- Search Input Wrap -->
@@ -572,7 +565,7 @@
   let activeHoldId         = null;
   let holdHospital         = null;
 
-  /* ── Leaflet Map init (Clean OSM HOT tiles — ZERO API Key Watermark!) ── */
+  /* ── Leaflet Map init (Clean OpenStreetMap CDN Tiles — ZERO API Key Watermark!) ── */
   const map = L.map('map', {
     center: [userLat, userLng],
     zoom: 13,
@@ -580,11 +573,16 @@
     attributionControl: false,
   });
 
-  // OpenStreetMap HOT tiles — 100% free, zero "API KEY REQUIRED" text overlay!
-  L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+  // OpenStreetMap Standard CDN tiles — 100% free, zero "API KEY REQUIRED" text overlay!
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     subdomains: 'abc'
   }).addTo(map);
+
+  // Force map layout recalculation to ensure tiles load seamlessly
+  setTimeout(() => { map.invalidateSize(); }, 100);
+  setTimeout(() => { map.invalidateSize(); }, 500);
+  window.addEventListener('resize', () => { map.invalidateSize(); });
 
   /* ── Initialize GPS Geolocation ── */
   function initGPS() {
@@ -945,15 +943,30 @@
   }
 
   /* ── Listeners ── */
-  document.querySelectorAll('.blood-chip-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const b = btn.dataset.blood;
-      activeBloodFilter = b;
-      document.querySelectorAll('.blood-chip-btn').forEach(x => x.classList.remove('active'));
-      btn.classList.add('active');
-      runTriage(`${b} blood requirement`);
+  function findAndShowNearestHospital() {
+    if (!allHospitals || allHospitals.length === 0) return;
+    let nearest = allHospitals[0];
+    let minDistance = Infinity;
+
+    allHospitals.forEach(h => {
+      const d = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 999;
+      if (d < minDistance) {
+        minDistance = d;
+        nearest = h;
+      }
     });
-  });
+
+    if (nearest) {
+      updateRouteToHospital(nearest);
+      showBottomSheet();
+      map.setView([nearest.latitude, nearest.longitude], 15);
+    }
+  }
+
+  const nearestBtn = document.getElementById('nearest-hosp-btn');
+  if (nearestBtn) {
+    nearestBtn.addEventListener('click', findAndShowNearestHospital);
+  }
 
   const symptomInput = document.getElementById('symptom-input');
   if (symptomInput) {
