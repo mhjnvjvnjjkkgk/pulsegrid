@@ -164,6 +164,23 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════
+       FLOATING EMERGENCY ACTION COCKPIT (Mobile & PC)
+  ════════════════════════════════════════ -->
+  <div class="emergency-cockpit" id="emergency-cockpit" style="display:none;">
+    <button class="cockpit-btn-primary" id="cockpit-lock-btn">
+      🔒 LOCK ROUTE & RESERVE BED — <span id="cockpit-eta-tag">12 mins</span>
+    </button>
+    <div class="cockpit-row">
+      <a class="cockpit-btn-secondary" id="cockpit-call-hosp-btn" href="tel:102">
+        📞 Call Hospital
+      </a>
+      <a class="cockpit-btn-secondary" id="cockpit-call-amb-btn" href="tel:108">
+        🚑 Call Ambulance (108)
+      </a>
+    </div>
+  </div>
+
 </main>
 
 <!-- ═══════════════════════════════════════
@@ -320,6 +337,18 @@ function updateRouteToHospital(h) {
     document.getElementById('route-hosp-name').textContent = h.name;
     document.getElementById('route-eta').textContent = `🚗 ${etaStr}`;
     document.getElementById('route-dist').textContent = `${distKm} km`;
+  }
+
+  // Update Emergency Action Cockpit (Mobile & PC)
+  const cockpit = document.getElementById('emergency-cockpit');
+  if (cockpit) {
+    cockpit.style.display = 'flex';
+    document.getElementById('cockpit-eta-tag').textContent = `${etaStr} • ${h.name.split(' ')[0]}`;
+    const callHospBtn = document.getElementById('cockpit-call-hosp-btn');
+    if (callHospBtn) {
+      callHospBtn.href = `tel:${h.emergency_phone || h.phone}`;
+      callHospBtn.innerHTML = `📞 Call ${h.name.split(' ')[0]}`;
+    }
   }
 }
 
@@ -609,8 +638,12 @@ function displayTriageResult(result) {
 
   resultEl.classList.add('active');
   cardEl.className   = `triage-card glass ${result.severity}`;
+  
+  const esiLabel = result.severity === 'RED' ? 'ESI-1 Critical' : result.severity === 'YELLOW' ? 'ESI-2 Urgent' : 'ESI-4 Non-Urgent';
+  const esiClass = result.severity === 'RED' ? 'esi-1' : result.severity === 'YELLOW' ? 'esi-2' : 'esi-3';
+  
   pillEl.className   = `severity-pill ${result.severity}`;
-  pillEl.textContent = result.severity;
+  pillEl.innerHTML   = `${result.severity} &nbsp;<span class="esi-badge ${esiClass}">${esiLabel}</span>`;
   wardEl.textContent = result.ward || result.recommended_ward || '';
   expEl.textContent  = result.explanation || result.reason || '';
 
@@ -734,12 +767,30 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
   }
 });
 
+/* ── Cockpit Lock Button ── */
+document.getElementById('cockpit-lock-btn').addEventListener('click', () => {
+  if (activeTargetHospital) {
+    openHoldModal(activeTargetHospital);
+  }
+});
+
 /* ── Filter buttons ── */
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => setFilter(btn.dataset.filter));
 });
 
-/* ── Symptom input ── */
+/* ── Symptom input: Instant Keystroke Triage (300ms Debounce) ── */
+let debounceTimer = null;
+document.getElementById('symptom-input').addEventListener('input', (e) => {
+  clearTimeout(debounceTimer);
+  const val = e.target.value.trim();
+  if (val.length >= 3) {
+    debounceTimer = setTimeout(() => {
+      runTriage(val);
+    }, 300);
+  }
+});
+
 document.getElementById('triage-btn').addEventListener('click', () => {
   runTriage(document.getElementById('symptom-input').value);
 });
