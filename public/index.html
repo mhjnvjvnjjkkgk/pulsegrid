@@ -102,12 +102,12 @@
   <!-- ═══════════════════════════════════════
        4. SLIDABLE BOTTOM SHEET DRAWER (Drawings 2 & 3)
   ════════════════════════════════════════ -->
-  <div class="bottom-sheet hidden" id="bottom-sheet">
+  <div class="bottom-sheet hidden state-hidden" id="bottom-sheet">
     <div class="sheet-handle-zone" id="bottom-sheet-handle" title="Drag to expand / collapse details">
       <div class="sheet-handle-bar"></div>
     </div>
 
-    <div class="sheet-content" id="sheet-content">
+    <div class="sheet-content-scroll tactical-scroll" id="sheet-content">
       <!-- Hospital Cards Container -->
       <div class="cards-col" id="cards-col"></div>
     </div>
@@ -577,7 +577,7 @@
   let userMarker           = null;
   let routePolyline        = null;
   let activeTargetHospital = null;
-  let currentSheetState    = 'peek'; // 'peek', 'expanded'
+  let currentSheetState    = 'hidden'; // 'hidden', 'peek', 'expanded'
   let activeHoldId         = null;
   let holdHospital         = null;
 
