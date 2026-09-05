@@ -1255,18 +1255,18 @@ main { position: relative; z-index: 1; }
   border: none;
 }
 
-/* ── Floating Top Navigation Bar ── */
+/* ── Floating Top Navigation Bar (Google Maps Search Aesthetic) ── */
 .floating-top-nav {
   position: fixed;
-  top: 16px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 768px;
+  width: calc(100% - 20px);
+  max-width: 680px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: auto;
 }
 
@@ -1274,13 +1274,176 @@ main { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  border-radius: var(--r-lg);
-  background: rgba(13, 21, 38, 0.88);
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(13, 21, 38, 0.92);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  width: 100%;
+}
+
+.triage-bar {
+  width: 100%;
+  margin: 0;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 999px;
+  padding: 6px 10px 6px 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.15);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.search-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--blue-glow);
+}
+
+/* Location Selector Chips */
+.loc-chips-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.loc-chips-row::-webkit-scrollbar { display: none; }
+
+.loc-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.loc-chip:hover, .loc-chip.active {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+}
+
+/* ── Hospital Card Overhaul (Zero Clipping, High Contrast) ── */
+.hosp-card {
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(8, 12, 24, 0.97) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hosp-card.highlighted {
+  border-color: #38bdf8;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+}
+
+.hosp-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.hosp-name-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  flex: 1;
+  word-break: break-word;
+}
+
+.hosp-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.hosp-dist-tag {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.bed-summary-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.bed-summary-pill.low {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+
+.bed-summary-pill.full {
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.35);
+  color: #f43f5e;
 }
 
 /* ── Slidable Bottom Sheet Drawer (Google Maps Native Style) ── */
@@ -1292,13 +1455,13 @@ main { position: relative; z-index: 1; }
   width: 100%;
   max-width: 840px;
   z-index: 1500;
-  background: linear-gradient(180deg, rgba(13, 21, 38, 0.96) 0%, rgba(6, 10, 20, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(13, 21, 38, 0.97) 0%, rgba(6, 10, 20, 0.99) 100%);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   border: 1.5px solid rgba(255, 255, 255, 0.16);
   border-bottom: none;
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.15);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
@@ -1316,23 +1479,23 @@ main { position: relative; z-index: 1; }
 }
 
 .bottom-sheet-handle .handle-bar {
-  width: 48px;
+  width: 52px;
   height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
   transition: background 0.2s;
 }
 
 .bottom-sheet-handle:hover .handle-bar {
-  background: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.9);
 }
 
 .bottom-sheet.state-peek {
-  height: 250px;
+  height: 330px;
 }
 
 .bottom-sheet.state-expanded {
-  height: 75vh;
+  height: 80vh;
 }
 
 .bottom-sheet.state-collapsed {

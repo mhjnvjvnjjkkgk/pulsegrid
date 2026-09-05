@@ -87,6 +87,12 @@
         <span class="live-rec-dot"></span>
         <span>🔴 Listening... Speak emergency symptoms or blood group in Benglish, Hinglish, or English</span>
       </div>
+    <!-- Quick Location Switcher Chips -->
+    <div class="loc-chips-row" id="loc-chips-row">
+      <button class="loc-chip active" data-lat="22.5750" data-lng="88.4680" data-label="Newtown / Amity">📍 Newtown (Amity)</button>
+      <button class="loc-chip" data-lat="22.6220" data-lng="88.4140" data-label="Nagerbazar / Dum Dum">📍 Nagerbazar (Dum Dum)</button>
+      <button class="loc-chip" data-lat="22.5650" data-lng="88.3600" data-label="Central Kolkata">📍 Central Kolkata</button>
+      <button class="loc-chip" id="btn-use-my-gps">📡 Live GPS</button>
     </div>
 
     <!-- Quick symptom & blood chips -->
@@ -657,6 +663,9 @@
     const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
     const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
 
+    const totalA = totalAvail(h);
+    const hasAny = totalA > 0;
+
     const wardsHtml = wardEntries.map(([name, w]) => {
       const avail = staffedAvail(w);
       const pct   = w.total > 0 ? Math.round((w.occupied + w.held) / w.total * 100) : 0;
@@ -678,44 +687,39 @@
 
     const blood = h.blood_stock_summary || {};
     const bloodHtml = Object.entries(blood).map(([t, v]) =>
-      `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}<br><span style="opacity:0.7;font-size:0.6rem;">${v}u</span></span>`
+      `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}: ${v}u</span>`
     ).join('');
 
-    const specs = (h.specialties || []).slice(0,4);
+    const specs = (h.specialties || []).slice(0, 4);
     const specHtml = specs.map(s => `<span class="spec-chip">${s}</span>`).join('');
-
-    const totalA = totalAvail(h);
-    const hasAny = totalA > 0;
 
     const isHeld = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id === h.id);
     const isOtherHoldActive = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id !== h.id && typeof activeHoldId !== 'undefined' && activeHoldId);
-    const holdBtnText = isHeld ? '🔒 Hold Active' : (hasAny ? '🔒 Hold Bed' : '✗ Full');
+    const holdBtnText = isHeld ? '🔒 Hold Active' : (hasAny ? '🔒 Lock Bed (15m)' : '✗ Fully Occupied');
     const holdBtnDisabled = !hasAny || isHeld;
-    const holdBtnDisplay = isOtherHoldActive ? 'none' : 'inline-block';
+    const holdBtnDisplay = isOtherHoldActive ? 'none' : 'inline-flex';
 
     const card = document.createElement('div');
     card.className = 'glass hosp-card fade-in';
     card.dataset.id = h.id;
     card.innerHTML = `
-      <div class="hosp-top">
-        <div>
-          <div class="hosp-name">${h.name}</div>
-          <div class="hosp-address">${h.address}</div>
-          <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:6px;">
-            <span>📍 ${distKm} km</span>
-            <span style="opacity:0.4;">•</span>
-            <span>🚗 ${etaStr}</span>
-          </div>
-        </div>
-        <span class="hosp-type-badge ${isGovt?'govt':'pvt'}">${isGovt?'Govt':'Private'}</span>
+      <div class="hosp-top-row">
+        <div class="hosp-name-title">${h.name}</div>
+        <span class="hosp-type-badge ${isGovt ? 'govt' : 'pvt'}">${isGovt ? 'Govt' : 'Private'}</span>
       </div>
 
-      <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.21 1.21a2 2 0 012-2.18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 6l1.27 1.27a16 16 0 006.29 6.29l1.27-1.27-.37.37a2 2 0 002.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-        </svg>
-        ${h.emergency_phone || h.phone}
-      </a>
+      <div class="hosp-meta-row">
+        <span class="hosp-dist-tag">📍 ${distKm} km • 🚗 ${etaStr}</span>
+        <span style="opacity:0.4;">|</span>
+        <span style="color:#94a3b8; font-size:0.75rem;">${h.address.split(',')[0]}</span>
+      </div>
+
+      <div class="bed-summary-pill ${totalA === 0 ? 'full' : totalA < 10 ? 'low' : ''}">
+        <span>🛏 ${totalA > 0 ? totalA + ' Staffed Beds Available' : 'No Staffed Beds Free'}</span>
+        <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}" style="margin-bottom:0;" onclick="event.stopPropagation();">
+          📞 ${h.emergency_phone || h.phone}
+        </a>
+      </div>
 
       <div class="spec-chips">${specHtml}</div>
 
@@ -723,16 +727,16 @@
 
       <div class="hosp-footer">
         <div class="blood-chips">${bloodHtml}</div>
-        <div style="display:flex; gap: 8px; margin-top: 8px;">
-          <button class="blood-req-btn" style="padding:8px; border-radius:12px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#f43f5e; cursor:pointer;" data-id="${h.id}">🩸 Req Blood</button>
-          <button class="hold-btn" data-id="${h.id}" ${holdBtnDisabled?'disabled':''} style="flex:1; display:${holdBtnDisplay};">
+        <div style="display:flex; gap: 8px; margin-top: 8px; width: 100%;">
+          <button class="blood-req-btn" style="padding:10px 14px; border-radius:12px; background:rgba(244,63,94,0.18); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; font-weight:700; cursor:pointer;" data-id="${h.id}">🩸 Req Blood</button>
+          <button class="hold-btn" data-id="${h.id}" ${holdBtnDisabled ? 'disabled' : ''} style="flex:1; display:${holdBtnDisplay}; padding:10px 16px; font-weight:800; font-size:0.88rem;">
             ${holdBtnText}
           </button>
         </div>
       </div>`;
 
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.hold-btn') || e.target.closest('.blood-req-btn')) return;
+      if (e.target.closest('.hold-btn') || e.target.closest('.blood-req-btn') || e.target.closest('.hosp-phone')) return;
       flyToHospital(h.id, h.latitude, h.longitude);
       updateRouteToHospital(h);
     });
@@ -1310,6 +1314,62 @@
       document.getElementById('amb-modal-overlay').classList.remove('active');
     }
   });
+
+  /* ── Location Selector Switcher ── */
+  function setLocation(lat, lng, label) {
+    userLat = parseFloat(lat);
+    userLng = parseFloat(lng);
+    const bluePulseIcon = L.divIcon({
+      className: '',
+      html: `<div style="position:relative; width:22px; height:22px;">
+               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
+               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
+             </div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    if (!userMarker) {
+      userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+    } else {
+      userMarker.setLatLng([userLat, userLng]);
+    }
+    userMarker.bindPopup(`<b>📍 ${label}</b>`, { autoClose: false }).openPopup();
+    map.flyTo([userLat, userLng], 14, { duration: 1.0 });
+
+    const filtered = filterHospitals(allHospitals);
+    renderCards(filtered);
+    placeMarkers(filtered);
+    autoRouteNearest(activeFilter || 'all');
+  }
+
+  document.querySelectorAll('.loc-chip:not(#btn-use-my-gps)').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      setLocation(chip.dataset.lat, chip.dataset.lng, chip.dataset.label);
+    });
+  });
+
+  const gpsBtn = document.getElementById('btn-use-my-gps');
+  if (gpsBtn) {
+    gpsBtn.addEventListener('click', () => {
+      document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
+      gpsBtn.classList.add('active');
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setLocation(pos.coords.latitude, pos.coords.longitude, 'Your Live GPS Location');
+          },
+          (err) => {
+            alert('⚠️ GPS permission denied. Using Newtown / Amity location.');
+            setLocation(22.5750, 88.4680, 'Newtown / Amity');
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      }
+    });
+  }
 
   /* ── Filter buttons ── */
   document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(btn => {
