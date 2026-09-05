@@ -1,170 +1,655 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulseGrid | Emergency Bed Finder</title>
-    <meta name="description" content="Real-time emergency hospital bed reservation system">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { blue: '#3b82f6', purple: '#8b5cf6', dark: '#0a0e1a' }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/custom.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseGrid | Real-Time Emergency Bed Finder — Kolkata</title>
+  <meta name="description" content="Find emergency hospital beds in real time across 30 hospitals in Kolkata. Instant triage, guaranteed bed holds, no sign-up required.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Leaflet (free OpenStreetMap — no API key needed) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Our Design System -->
+  <link rel="stylesheet" href="css/custom.css">
 </head>
-<body class="bg-[#0a0e1a] text-slate-100 min-h-screen font-sans relative">
+<body>
 
-    <!-- Ambient Glow Orbs -->
-    <div class="glow-orb" style="top: -10%; left: -10%; background: var(--accent-blue);"></div>
-    <div class="glow-orb" style="top: 40%; right: -5%; background: var(--accent-purple);"></div>
+<!-- Ambient background orbs -->
+<div class="orb orb-blue"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-cyan"></div>
 
-    <!-- Header -->
-    <header class="sticky top-0 z-40 px-6 py-4 glass-panel rounded-none border-t-0 border-l-0 border-r-0 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <h1 class="text-2xl font-bold tracking-tight">PulseGrid</h1>
-        </div>
-        
-        <div class="flex items-center gap-4">
-            <div class="pulse-badge hidden sm:flex">
-                Live | 12 Hospitals Connected
-            </div>
-            <div id="mode-switcher" class="glass-panel px-4 py-2 flex items-center gap-2 cursor-pointer border-blue-500/30 text-blue-300 transition-colors">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Citizen
-            </div>
-        </div>
-    </header>
+<!-- ═══════════════════════════════════════
+     HEADER
+════════════════════════════════════════ -->
+<header class="site-header">
+  <a href="/" class="logo-wrap">
+    <div class="logo-icon">
+      <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
+    <span class="logo-text">PulseGrid</span>
+  </a>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        
-        <!-- Hero -->
-        <section class="text-center mb-10 fade-in-up">
-            <h2 class="text-4xl sm:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                Find Emergency Care. Now.
-            </h2>
-            <p class="text-lg text-slate-400 max-w-2xl mx-auto">
-                Real-time bed availability and guaranteed hold times for critical care.
-            </p>
-        </section>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      <span id="live-count">30</span> Hospitals Live
+    </div>
+    <a href="admin/" id="desk-btn" style="
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    ">Hospital Desk →</a>
+  </div>
+</header>
 
-        <!-- Triage Bar -->
-        <section class="max-w-3xl mx-auto mb-10 fade-in-up delay-100">
-            <div class="glass-panel p-4 mb-4 flex gap-2 overflow-x-auto no-scrollbar">
-                <button class="quick-btn glass-panel px-4 py-2 flex-shrink-0 flex items-center gap-2 hover:bg-white/5" data-query="Severe chest pain and shortness of breath">
-                    🫀 Chest/Heart
-                </button>
-                <button class="quick-btn glass-panel px-4 py-2 flex-shrink-0 flex items-center gap-2 hover:bg-white/5" data-query="Severe bleeding from trauma injury">
-                    🩸 Trauma
-                </button>
-                <button class="quick-btn glass-panel px-4 py-2 flex-shrink-0 flex items-center gap-2 hover:bg-white/5" data-query="Active labor and water broke">
-                    🤰 Maternity
-                </button>
-                <button class="quick-btn glass-panel px-4 py-2 flex-shrink-0 flex items-center gap-2 hover:bg-white/5" data-query="General emergency">
-                    🤕 Other
-                </button>
-            </div>
+<main>
 
-            <div class="glass-panel p-2 flex items-center gap-2">
-                <button id="mic-btn" class="p-3 rounded-xl hover:bg-white/10 text-slate-400 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-                </button>
-                <input type="text" id="search-input" class="w-full bg-transparent border-none focus:outline-none text-lg px-2" placeholder="Describe symptom or injury...">
-                <button id="search-btn" class="btn-primary rounded-xl px-6">Find Beds</button>
-            </div>
-        </section>
-
-        <!-- Triage Result Panel -->
-        <section id="triage-result-panel" class="max-w-3xl mx-auto mb-10 hidden">
-            <div class="glass-panel p-6 border-l-4 border-l-amber-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <span id="triage-badge" class="status-pill-amber uppercase">Processing</span>
-                        <span id="triage-ward" class="font-bold text-white text-lg">Recommended: Analyzing...</span>
-                    </div>
-                    <p id="triage-reason" class="text-sm text-slate-400">Evaluating symptoms...</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Hospitals List -->
-            <div class="lg:col-span-2">
-                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                    Available Facilities
-                </h3>
-                <div id="hospital-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Cards injected by JS -->
-                </div>
-            </div>
-
-            <!-- Map Section -->
-            <div class="lg:col-span-1">
-                <h3 class="text-xl font-semibold mb-4">Live Map</h3>
-                <div id="map" class="w-full h-[400px] rounded-2xl border border-white/10 z-0 glass-panel p-1"></div>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Transit Modal (Hidden) -->
-    <div id="transit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="glass-panel w-full max-w-md p-8 relative flex flex-col items-center text-center">
-            <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-4 text-blue-400 animate-[heartbeat_2s_infinite]">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-            </div>
-            
-            <h2 class="text-2xl font-bold mb-1">Bed Hold Confirmed</h2>
-            <p id="modal-hospital-name" class="text-slate-400 mb-6">City General Hospital</p>
-
-            <!-- Circular Timer -->
-            <div class="relative w-32 h-32 mb-6">
-                <svg class="w-full h-full countdown-ring" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8" />
-                    <circle cx="60" cy="60" r="54" fill="none" stroke="var(--accent-blue)" stroke-width="8" stroke-dasharray="339.292" stroke-dashoffset="0" stroke-linecap="round" />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center flex-col">
-                    <span id="countdown-text" class="text-2xl font-bold font-mono">15:00</span>
-                </div>
-            </div>
-
-            <p class="text-sm text-slate-400 mb-2">Show this OTP upon arrival:</p>
-            <div id="modal-otp" class="otp-display text-5xl font-bold text-white mb-8 tracking-widest bg-black/30 py-3 px-6 rounded-xl border border-white/10">
-                1234
-            </div>
-
-            <button id="cancel-hold-btn" class="text-slate-400 hover:text-white transition-colors underline text-sm">
-                Cancel / Reroute
-            </button>
-        </div>
+  <!-- ═══════════════════════════════════════
+       HERO + TRIAGE SEARCH
+  ════════════════════════════════════════ -->
+  <section class="hero fade-in">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+      Smart India Hackathon 2026 — SIH Team PulseGrid
     </div>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/triage.js"></script>
+    <h1 class="hero-title">Find Emergency Care.<br>Right Now.</h1>
+    <p class="hero-sub">Real-time bed availability across 30 hospitals in Kolkata. Describe your condition and we'll find the right ward instantly.</p>
+
+    <!-- Quick symptom chips -->
+    <div class="quick-chips delay-1">
+      <button class="chip" data-query="severe chest pain and shortness of breath">🫀 Chest/Heart</button>
+      <button class="chip" data-query="severe bleeding from trauma injury">🩸 Trauma</button>
+      <button class="chip" data-query="active labor and water broke">🤰 Maternity</button>
+      <button class="chip" data-query="child convulsion and high fever">👶 Pediatric</button>
+      <button class="chip" data-query="stroke face drooping arm weakness">🧠 Stroke</button>
+      <button class="chip" data-query="stomach pain and vomiting">🤢 Stomach</button>
+      <button class="chip" data-query="snake bite">🐍 Snake Bite</button>
+      <button class="chip" data-query="breathlessness asthma attack">💨 Breathing</button>
+    </div>
+
+    <!-- Main triage search bar -->
+    <div class="triage-bar delay-2">
+      <div class="search-wrap">
+        <svg width="18" height="18" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          id="symptom-input"
+          class="search-input"
+          type="text"
+          placeholder="Describe symptoms… e.g. 'I have stomach pain and I'm feeling dizzy'"
+          autocomplete="off"
+        >
+        <button id="triage-btn" class="search-btn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Analyse</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Triage result (hidden until search) -->
+    <div class="triage-result" id="triage-result">
+      <div class="triage-card glass" id="triage-card">
+        <div class="triage-header">
+          <span class="severity-pill" id="sev-pill">—</span>
+          <span class="triage-ward" id="triage-ward">—</span>
+        </div>
+        <p class="triage-explanation" id="triage-exp">—</p>
+        <div class="triage-keywords" id="triage-keywords"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SPLIT VIEW: MAP + HOSPITAL CARDS
+  ════════════════════════════════════════ -->
+  <div class="split-view">
+
+    <!-- LEFT: Map -->
+    <div class="map-panel glass">
+      <div id="map"></div>
+    </div>
+
+    <!-- RIGHT: Scrollable hospital cards -->
+    <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
+
+      <!-- Column header + filters -->
+      <div class="col-header" style="flex-shrink:0;">
+        <div>
+          <div class="col-title">Nearest Hospitals</div>
+        </div>
+        <span class="col-count" id="card-count">Loading…</span>
+      </div>
+
+      <div class="filter-bar" style="flex-shrink:0;">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="cardiac">❤️ Cardiac ICU</button>
+        <button class="filter-btn" data-filter="adult_icu">🏥 Adult ICU</button>
+        <button class="filter-btn" data-filter="pediatric_icu">👶 Pediatric ICU</button>
+        <button class="filter-btn" data-filter="general_ward">🛏 General</button>
+      </div>
+
+      <div class="cards-col" id="cards-col">
+        <!-- Skeleton loaders -->
+        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
+        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
+        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════
+     HOLD MODAL (OTP + countdown)
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card glass glass-xl">
+    <div style="font-size:2rem; margin-bottom:8px;">🏥</div>
+    <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700;" id="modal-hosp-name">Hospital Name</div>
+    <div style="font-size:0.82rem; color:var(--text-2); margin:4px 0 16px;" id="modal-ward-name">Ward</div>
+
+    <div style="font-size:0.82rem; color:var(--text-3); margin-bottom:4px;">YOUR HOLD CODE</div>
+    <div class="modal-otp" id="modal-otp">- - - -</div>
+    <button class="otp-copy-btn" id="otp-copy-btn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+      </svg>
+      Copy Code
+    </button>
+
+    <!-- Countdown ring -->
+    <div class="countdown-wrap" style="margin:20px auto;">
+      <svg class="countdown-svg" width="100" height="100" viewBox="0 0 100 100">
+        <circle class="countdown-bg" cx="50" cy="50" r="40"/>
+        <circle class="countdown-arc" id="countdown-arc" cx="50" cy="50" r="40"
+          stroke-dasharray="251.3"
+          stroke-dashoffset="0"/>
+      </svg>
+      <div class="countdown-text" id="countdown-text">15:00</div>
+    </div>
+
+    <p style="font-size:0.82rem; color:var(--text-2); margin-bottom:20px; line-height:1.5;">
+      Show this code at the <strong style="color:var(--text-1);">hospital reception</strong> within the time shown.<br>
+      A bed is reserved in your name.
+    </p>
+
+    <button id="modal-close-btn" style="
+      padding:10px 28px;
+      border-radius:var(--r-md);
+      background:rgba(255,255,255,0.07);
+      border:1px solid var(--glass-border);
+      color:var(--text-1);
+      font-size:0.9rem;
+      cursor:pointer;
+    ">Close</button>
+  </div>
+</div>
+
+
+<script src="js/api.js"></script>
+<script>
+/* ================================================================
+   PulseGrid — Citizen App v2
+   Written by Team PulseGrid (SIH 2026)
+================================================================ */
+
+/* ── State ── */
+let allHospitals    = [];
+let markers         = {};          // id → Leaflet marker
+let activeFilter    = 'all';
+let triageWard      = null;        // recommended ward from triage
+let countdownTimer  = null;
+let countdownEnd    = null;
+
+/* ── Leaflet Map init ── */
+const map = L.map('map', {
+  center: [22.5726, 88.3639],   // Kolkata city centre
+  zoom: 12,
+  zoomControl: true,
+  attributionControl: false,
+});
+
+// Free OpenStreetMap tiles — ZERO API KEY required
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+L.control.attribution({ prefix: false })
+  .addAttribution('© <a href="https://openstreetmap.org">OpenStreetMap</a>')
+  .addTo(map);
+
+/* ── Create custom marker icons ── */
+function makeIcon(color) {
+  const c = color === 'green' ? '#10b981'
+          : color === 'amber' ? '#f59e0b'
+          : '#f43f5e';
+  const shadow = color === 'green' ? 'rgba(16,185,129,0.5)'
+               : color === 'amber' ? 'rgba(245,158,11,0.5)'
+               : 'rgba(244,63,94,0.5)';
+
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:28px; height:28px;
+      border-radius:50% 50% 50% 0;
+      background:${c};
+      transform:rotate(-45deg);
+      border:2px solid rgba(255,255,255,0.35);
+      box-shadow:0 3px 12px ${shadow};
+      display:flex; align-items:center; justify-content:center;">
+      <div style="transform:rotate(45deg); color:#fff; font-size:10px; font-weight:800; line-height:1;">+</div>
+    </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30],
+  });
+}
+
+/* ── Compute staffed available beds for a ward ── */
+function staffedAvail(ward) {
+  // Uses: total - occupied - held = real staffed available beds
+  // Ignores "ghost beds" that exist on paper but aren't staffed
+  return Math.max(0, (ward.total || 0) - (ward.occupied || 0) - (ward.held || 0));
+}
+
+/* ── Compute total available across all wards ── */
+function totalAvail(h) {
+  let total = 0;
+  if (h.wards) {
+    Object.values(h.wards).forEach(w => { total += staffedAvail(w); });
+  }
+  return total;
+}
+
+/* ── Get marker colour based on availability ── */
+function markerColor(h) {
+  const avail = totalAvail(h);
+  if (avail === 0) return 'red';
+  if (avail < 10)  return 'amber';
+  return 'green';
+}
+
+/* ── Render a single hospital card ── */
+function renderCard(h) {
+  const wardEntries = h.wards ? Object.entries(h.wards) : [];
+  const isGovt = (h.type || '').toLowerCase().includes('gov');
+
+  // Staffed beds for all 4 wards
+  const wardsHtml = wardEntries.map(([name, w]) => {
+    const avail = staffedAvail(w);
+    const pct   = w.total > 0 ? Math.round((w.occupied + w.held) / w.total * 100) : 0;
+    const cls   = pct >= 95 ? 'full' : pct >= 75 ? 'busy' : 'ok';
+    const shortName = name.replace(' ICU','').replace('General','Gen. Ward');
+    return `
+      <div class="ward-row">
+        <div class="ward-label-row">
+          <span class="ward-name">${shortName}</span>
+          <span class="ward-avail" style="color:${cls==='full'?'var(--red)':cls==='busy'?'var(--amber)':'var(--green)'}">
+            ${avail} free
+          </span>
+        </div>
+        <div class="ward-bar">
+          <div class="ward-bar-fill ${cls}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Blood stock
+  const blood = h.blood_stock_summary || {};
+  const bloodHtml = Object.entries(blood).map(([t, v]) =>
+    `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}<br><span style="opacity:0.7;font-size:0.6rem;">${v}u</span></span>`
+  ).join('');
+
+  // Specialties (show up to 4)
+  const specs = (h.specialties || []).slice(0,4);
+  const specHtml = specs.map(s => `<span class="spec-chip">${s}</span>`).join('');
+
+  const totalA = totalAvail(h);
+  const hasAny = totalA > 0;
+
+  const card = document.createElement('div');
+  card.className = 'glass hosp-card fade-in';
+  card.dataset.id = h.id;
+  card.innerHTML = `
+    <div class="hosp-top">
+      <div>
+        <div class="hosp-name">${h.name}</div>
+        <div class="hosp-address">${h.address}</div>
+      </div>
+      <span class="hosp-type-badge ${isGovt?'govt':'pvt'}">${isGovt?'Govt':'Private'}</span>
+    </div>
+
+    <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.21 1.21a2 2 0 012-2.18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 6l1.27 1.27a16 16 0 006.29 6.29l1.27-1.27-.37.37a2 2 0 002.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+      </svg>
+      ${h.emergency_phone || h.phone}
+    </a>
+
+    <div class="spec-chips">${specHtml}</div>
+
+    <div class="wards-grid">${wardsHtml}</div>
+
+    <div class="hosp-footer">
+      <div class="blood-chips">${bloodHtml}</div>
+      <button class="hold-btn" data-id="${h.id}" ${hasAny?'':'disabled'}>
+        ${hasAny ? '🔒 Hold Bed' : '✗ Full'}
+      </button>
+    </div>`;
+
+  // Click card → fly map to hospital
+  card.addEventListener('click', (e) => {
+    if (e.target.classList.contains('hold-btn')) return;
+    flyToHospital(h.id, h.latitude, h.longitude);
+  });
+
+  // Hold button
+  card.querySelector('.hold-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openHoldModal(h);
+  });
+
+  return card;
+}
+
+/* ── Render all hospital cards ── */
+function renderCards(hospitals) {
+  const col = document.getElementById('cards-col');
+  col.innerHTML = '';
+
+  if (!hospitals.length) {
+    col.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏥</div>
+        <div class="empty-text">No hospitals match the current filter.<br>
+        <span style="font-size:0.82rem;color:var(--text-3);">Try removing the specialty filter.</span></div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('card-count').textContent = `${hospitals.length} hospitals`;
+
+  hospitals.forEach((h, i) => {
+    const card = renderCard(h);
+    card.style.animationDelay = `${i * 0.04}s`;
+    col.appendChild(card);
+  });
+}
+
+/* ── Place map markers ── */
+function placeMarkers(hospitals) {
+  // Clear old markers
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  markers = {};
+
+  hospitals.forEach(h => {
+    if (!h.latitude || !h.longitude) return;
+    const color = markerColor(h);
+    const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) });
+
+    const avail = totalAvail(h);
+    const wardLines = h.wards
+      ? Object.entries(h.wards).map(([n,w]) => {
+          const a = staffedAvail(w);
+          return `<div style="display:flex;justify-content:space-between;gap:16px;font-size:0.78rem;">
+            <span style="color:#94a3b8;">${n}</span>
+            <span style="color:${a>0?'#10b981':'#f43f5e'};font-weight:700;">${a} free</span>
+          </div>`;
+        }).join('')
+      : '';
+
+    marker.bindPopup(`
+      <div style="min-width:200px; font-family:'Inter',sans-serif;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; color:#f8fafc; margin-bottom:10px;">${h.name}</div>
+        ${wardLines}
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
+          <span style="font-size:0.78rem; color:#94a3b8;">📞 ${h.emergency_phone || h.phone}</span>
+        </div>
+      </div>
+    `, { maxWidth: 260 });
+
+    marker.addTo(map);
+    markers[h.id] = marker;
+
+    marker.on('click', () => highlightCard(h.id));
+  });
+}
+
+/* ── Fly to hospital on map ── */
+function flyToHospital(id, lat, lng) {
+  map.flyTo([lat, lng], 15, { duration: 1.2 });
+  setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
+  highlightCard(id);
+}
+
+/* ── Highlight card when marker clicked ── */
+function highlightCard(id) {
+  document.querySelectorAll('.hosp-card').forEach(c => c.classList.remove('highlighted'));
+  const card = document.querySelector(`.hosp-card[data-id="${id}"]`);
+  if (card) {
+    card.classList.add('highlighted');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+/* ── Filter hospitals ── */
+function filterHospitals(hospitals) {
+  if (activeFilter === 'all') return hospitals;
+  return hospitals.filter(h => {
+    if (!h.wards) return false;
+    const wardKey = activeFilter;
+    // Find ward by db_key
+    const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
+    return entry && staffedAvail(entry) > 0;
+  });
+}
+
+/* ── Load hospitals from API ── */
+async function loadHospitals() {
+  try {
+    allHospitals = await API.getFacilities();
+    document.getElementById('live-count').textContent = allHospitals.length;
+
+    const filtered = filterHospitals(allHospitals);
+    renderCards(filtered);
+    placeMarkers(filtered);
+  } catch (err) {
+    console.error('Failed to load hospitals:', err);
+    document.getElementById('cards-col').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Could not load hospital data.<br>Please refresh.</div></div>`;
+  }
+}
+
+/* ── Triage ── */
+async function runTriage(text) {
+  if (!text.trim()) return;
+  try {
+    const result = await API.triage(text);
+    displayTriageResult(result);
+  } catch (err) {
+    console.error('Triage error:', err);
+  }
+}
+
+function displayTriageResult(result) {
+  const resultEl = document.getElementById('triage-result');
+  const cardEl   = document.getElementById('triage-card');
+  const pillEl   = document.getElementById('sev-pill');
+  const wardEl   = document.getElementById('triage-ward');
+  const expEl    = document.getElementById('triage-exp');
+  const kwEl     = document.getElementById('triage-keywords');
+
+  resultEl.classList.add('active');
+  cardEl.className   = `triage-card glass ${result.severity}`;
+  pillEl.className   = `severity-pill ${result.severity}`;
+  pillEl.textContent = result.severity;
+  wardEl.textContent = result.ward || result.recommended_ward || '';
+  expEl.textContent  = result.explanation || result.reason || '';
+
+  kwEl.innerHTML = (result.matched_keywords || [])
+    .map(k => `<span class="keyword-tag">${k}</span>`)
+    .join('');
+
+  // Auto-filter cards to matching ward
+  triageWard = result.recommended_ward;
+  if (triageWard && triageWard !== 'general_ward') {
+    setFilter(triageWard);
+  }
+
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── Set active filter ── */
+function setFilter(filterKey) {
+  activeFilter = filterKey;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filterKey);
+  });
+  const filtered = filterHospitals(allHospitals);
+  renderCards(filtered);
+  placeMarkers(filtered);
+}
+
+/* ── Hold / OTP Modal ── */
+let holdHospital = null;
+
+function openHoldModal(h) {
+  holdHospital = h;
+  document.getElementById('modal-hosp-name').textContent = h.name;
+  document.getElementById('modal-ward-name').textContent = 'General Ward (Default)';
+  document.getElementById('modal-otp').textContent = '…';
+
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('active');
+
+  createHold(h);
+}
+
+async function createHold(h) {
+  try {
+    const result = await API.createHold(
+      h.id,
+      'general_ward',
+      'citizen',
+      '9999999999',   // Guest phone — no signup required
+      'YELLOW'
+    );
+
+    if (result.error) {
+      document.getElementById('modal-otp').textContent = 'Full';
+      return;
+    }
+
+    document.getElementById('modal-otp').textContent = result.otp_code;
+    document.getElementById('modal-hosp-name').textContent = h.name;
+    if (result.ward) {
+      document.getElementById('modal-ward-name').textContent = result.ward;
+    }
+
+    startCountdown(15 * 60); // 15 minutes
+  } catch (err) {
+    console.error('Hold error:', err);
+    document.getElementById('modal-otp').textContent = 'ERR';
+  }
+}
+
+function startCountdown(seconds) {
+  clearInterval(countdownTimer);
+  const arc      = document.getElementById('countdown-arc');
+  const textEl   = document.getElementById('countdown-text');
+  const total    = seconds;
+  const circum   = 251.3;
+
+  let remaining = seconds;
+
+  function tick() {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(countdownTimer);
+      textEl.textContent = '0:00';
+      arc.style.strokeDashoffset = circum;
+      return;
+    }
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    textEl.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    arc.style.strokeDashoffset = circum * (1 - remaining / total);
+  }
+
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+/* ── Copy OTP ── */
+document.getElementById('otp-copy-btn').addEventListener('click', () => {
+  const otp = document.getElementById('modal-otp').textContent.trim();
+  navigator.clipboard.writeText(otp).then(() => {
+    const btn = document.getElementById('otp-copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`; }, 2000);
+  });
+});
+
+/* ── Close Modal ── */
+document.getElementById('modal-close-btn').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('active');
+  clearInterval(countdownTimer);
+});
+
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('modal-overlay').classList.remove('active');
+    clearInterval(countdownTimer);
+  }
+});
+
+/* ── Filter buttons ── */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+});
+
+/* ── Symptom input ── */
+document.getElementById('triage-btn').addEventListener('click', () => {
+  runTriage(document.getElementById('symptom-input').value);
+});
+
+document.getElementById('symptom-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') runTriage(e.target.value);
+});
+
+/* ── Quick chips ── */
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const q = btn.dataset.query;
+    document.getElementById('symptom-input').value = q;
+    runTriage(q);
+  });
+});
+
+/* ── Boot ── */
+loadHospitals();
+// Auto-refresh every 60s to simulate live updates
+setInterval(loadHospitals, 60000);
+</script>
 </body>
 </html>
