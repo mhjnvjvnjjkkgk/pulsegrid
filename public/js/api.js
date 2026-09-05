@@ -204,7 +204,7 @@ async function fetchBloodInventory(hospitalId) {
     }
 }
 
-// Distance calculation helper (Haversine formula + Kolkata road tortuosity factor)
+// Distance calculation helper (Haversine formula + realistic arterial road tortuosity factor)
 function calcDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
     const R = 6371; // Earth radius in km
@@ -215,15 +215,15 @@ function calcDistance(lat1, lon1, lat2, lon2) {
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const straightKm = R * c;
-    // Urban road tortuosity multiplier (~1.42x for Kolkata street layout)
-    const roadKm = straightKm * 1.42;
+    // Realistic road tortuosity multiplier (~1.18x)
+    const roadKm = straightKm * 1.18;
     return Math.round(roadKm * 10) / 10;
 }
 
-// Estimate car driving duration in minutes based on real Kolkata city traffic pace (~18 km/h + signals)
+// Estimate car driving duration in minutes based on real emergency driving pace (~28 km/h)
 function calcETA(distKm) {
-    if (!distKm || distKm > 900) return '15 mins';
-    const mins = Math.max(5, Math.round((distKm / 18) * 60 + 3));
+    if (!distKm || distKm > 900) return '12 mins';
+    const mins = Math.max(3, Math.round((distKm / 28) * 60 + 2));
     return `${mins} mins`;
 }
 

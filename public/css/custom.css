@@ -501,7 +501,7 @@ html, body {
 }
 
 .sheet-content-scroll {
-  padding: 0 20px 30px 20px;
+  padding: 0 20px 160px 20px;
   max-height: calc(85vh - 40px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

@@ -748,11 +748,21 @@
   }
 
   function triggerStickyHold() {
+    const sorted = getSortedHospitals(allHospitals);
     if (activeTargetHospital) {
       openHoldModal(activeTargetHospital);
-    } else if (allHospitals && allHospitals.length > 0) {
-      openHoldModal(allHospitals[0]);
+    } else if (sorted && sorted.length > 0) {
+      openHoldModal(sorted[0]);
     }
+  }
+
+  function getSortedHospitals(list) {
+    if (!list || !list.length) return [];
+    return [...list].sort((a, b) => {
+      const dA = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, a.latitude, a.longitude) : 999;
+      const dB = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, b.latitude, b.longitude) : 999;
+      return dA - dB;
+    });
   }
 
   /* ── Render Hospital Card (Matching User Photo Mockup) ── */
@@ -776,12 +786,6 @@
     card.className = 'gmaps-hosp-card';
     card.dataset.id = h.id;
     card.innerHTML = `
-      <!-- 0. IMAGE 1 TOP SUMMARY CARD (Peek View Focus) -->
-      <div class="hosp-peek-tag-row">
-        <span class="hosp-peek-tag-red">⚠️ Level-1 Trauma & Cardiac Bay Ready</span>
-        <span class="hosp-peek-tag-verified">TRAUMA VERIFIED</span>
-      </div>
-
       <div class="hosp-peek-title-row">
         <div>
           <div class="hosp-peek-name">${h.name} <span class="hosp-verified-check">✔</span></div>
@@ -983,11 +987,29 @@
   function initTouchDrawer() {
     const handle = document.getElementById('bottom-sheet-handle');
     const sheet = document.getElementById('bottom-sheet');
+    const sheetContent = document.getElementById('sheet-content');
     if (!handle || !sheet) return;
 
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
+
+    // Auto-expand sheet on swipe up inside sheet content scroll view
+    if (sheetContent) {
+      let contentStartY = 0;
+      sheetContent.addEventListener('touchstart', (e) => {
+        contentStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      sheetContent.addEventListener('touchmove', (e) => {
+        if (currentSheetState === 'peek') {
+          const currentTouchY = e.touches[0].clientY;
+          if (contentStartY - currentTouchY > 15) { // Swiping up inside drawer content
+            setSheetState('expanded');
+          }
+        }
+      }, { passive: true });
+    }
 
     handle.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1068,7 +1090,7 @@
     currentSearchQuery = text;
     try {
       const result = await API.triage(text);
-      let filtered = allHospitals;
+      let filtered = getSortedHospitals(allHospitals);
 
       if (result.recommended_ward) {
         activeFilter = result.recommended_ward;
@@ -1091,7 +1113,8 @@
   /* ── Load Facilities ── */
   async function loadHospitals() {
     try {
-      allHospitals = await API.getFacilities();
+      const raw = await API.getFacilities();
+      allHospitals = getSortedHospitals(raw);
       initGPS();
       placeMarkers(allHospitals);
       renderCards(allHospitals);
