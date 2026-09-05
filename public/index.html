@@ -148,50 +148,415 @@
      PulseGrid — Apple Liquid Glass Emergency Web App
   ================================================================ */
 
-  /* ── Pre-Defined Clinical Emergency First-Aid Dictionary ("Things to Check & DO") ── */
-  const FIRST_AID_GUIDANCE = {
-    cardiac: {
-      title: "❤️ Cardiac ICU Condition — Immediate Emergency Guidance",
+  /* ── 18-Category Doctor-Grade Clinical Emergency Database ("Things to Check & DO") ── */
+  const CLINICAL_DATABASE = {
+    cardiac_arrest: {
+      category: "Cardiac Arrest / CPR",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🫀 Cardiac Arrest / CPR — Resuscitation Protocol",
+      struggling: "Check carotid pulse & chest movement (max 10s). Agonal gasping is NOT breathing.",
+      doNow: "Lay patient flat on hard floor immediately. Begin high-quality chest compressions.",
       steps: [
-        { num: "1", text: "Check if Patient is Struggling for breath or unresponsive. Stay calm." },
-        { num: "2", text: "Something You Can DO: Sit patient upright at 45° angle. Unbutton tight collar/clothing." },
-        { num: "3", text: "Possible Reasons: Acute Angina / Cardiac Ischemia (ESI-1 Critical Acuity)." },
-        { num: "4", text: "How to do: Administer 300mg Aspirin if conscious and not allergic. Do NOT lie patient flat." },
-        { num: "5", text: "Reassurance: Hospital ER Resuscitation Bay is auto-notified. ETA 12 mins." },
-        { num: "6", text: "Visual Protocol: Continuous pulse check. Prepare for automated CPR if pulse stops." }
-      ]
+        "Call 108 emergency line & request AED (Automated External Defibrillator).",
+        "Compress chest hard & fast in center (100-120 bpm, depth 2 inches / 5 cm).",
+        "Allow chest to recoil completely after each compression.",
+        "Perform 30 compressions followed by 2 rescue breaths if trained.",
+        "Apply AED pads as soon as available and follow voice prompts.",
+        "Continue compressions without stopping until ER resuscitation team arrives."
+      ],
+      doNotDo: "❌ Do NOT elevate head with pillows. ❌ Do NOT give liquids. ❌ Do NOT stop compressions to check pulse over 10s.",
+      calmingScript: "🗣️ Bystanders: 'Stay back! Giving CPR to keep blood flowing to the brain. Ambulance is en route!'"
     },
-    respiratory: {
-      title: "🫁 Respiratory Distress / ICU — Emergency First-Aid",
+    chest_pain: {
+      category: "Severe Chest Pain",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "❤️ Severe Chest Pain / Heart Attack — Emergency Protocol",
+      struggling: "Assess crushing chest pain radiating to left arm/jaw, cold sweating, dyspnea, nausea.",
+      doNow: "Sit patient upright at 45° angle (Semi-Fowler). Unbutton collar & loosen belt immediately.",
       steps: [
-        { num: "1", text: "Check if Patient is Struggling: Assess lip blueness (cyanosis) and speech capability." },
-        { num: "2", text: "Something You Can DO: Open surrounding windows. Keep patient strictly seated upright." },
-        { num: "3", text: "Possible Reasons: Severe Asthma Flare / Acute Pulmonary Edema / Anaphylaxis." },
-        { num: "4", text: "How to do: Use Salbutamol inhaler (2-4 puffs via spacer) if available." },
-        { num: "5", text: "Reassurance: High-flow Oxygen bed reserved. Keep patient calm and slow their breathing." }
-      ]
+        "Chew one 300mg Soluble Aspirin (Disprin) if conscious and not allergic.",
+        "Use sublingual Nitroglycerin spray/tablet under tongue if prescribed.",
+        "Keep patient completely still; prohibit walking or physical exertion.",
+        "Open windows for maximum room ventilation.",
+        "Continuously monitor radial pulse rate and breathing.",
+        "ER Resuscitation Bay & Cath Lab auto-notified with live GPS ETA."
+      ],
+      doNotDo: "❌ Do NOT lie patient flat (causes fluid backup in lungs). ❌ Do NOT allow walking or stairs. ❌ Do NOT give heavy food/drinks.",
+      calmingScript: "🗣️ Bystanders: 'Breathe slowly: In through nose, out through mouth. Emergency cardiac bed is prepped.'"
     },
-    trauma: {
-      title: "🩹 Severe Trauma & Hemorrhage — Emergency Protocol",
+    stroke: {
+      category: "Acute Stroke",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🧠 Acute Stroke (FAST Protocol) — Brain Attack Triage",
+      struggling: "Apply FAST: Facial droop, Arm weakness, Speech slurring, Time of symptom onset.",
+      doNow: "Lay patient on side in Recovery Position with head elevated 15-30° to protect airway.",
       steps: [
-        { num: "1", text: "Check if Patient is Struggling: Identify active bleeding site and consciousness." },
-        { num: "2", text: "Something You Can DO: Apply firm direct pressure with clean cloth over wound." },
-        { num: "3", text: "Possible Reasons: Arterial Laceration / Traumatic Shock (ESI-1 Acuity)." },
-        { num: "4", text: "How to do: Elevate limb above heart level. Do not remove blood-soaked cloths." },
-        { num: "5", text: "Reassurance: Universal O- PRBC blood reserved at hospital desk." }
-      ]
+        "Record EXACT time symptom onset began (vital for 4.5-hour thrombolysis window).",
+        "Check blood glucose level if diabetic (hypoglycemia mimics stroke).",
+        "Turn head to side if saliva/drooling occurs.",
+        "Do not leave patient unattended.",
+        "Gather patient medication list & history for stroke team.",
+        "Transport directly to Stroke-Ready Center with CT Scan."
+      ],
+      doNotDo: "❌ Do NOT give Aspirin or blood thinners (can cause fatal brain hemorrhage). ❌ Do NOT give food, water, or pills.",
+      calmingScript: "🗣️ Bystanders: 'Keep calm. Head is turned safely on side. Exact stroke time recorded for neuro-doctor.'"
+    },
+    bleeding: {
+      category: "Heavy Bleeding",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🩹 Heavy Bleeding / Arterial Hemorrhage — Emergency Protocol",
+      struggling: "Check if blood is spurting bright red (arterial). Look for cold pale skin & rapid pulse.",
+      doNow: "Apply direct continuous heavy pressure over wound with clean cloth. Elevate limb above heart.",
+      steps: [
+        "Press down firmly over wound using thick sterile towel/glove.",
+        "If bleeding continues on limb, apply Tourniquet 2-3 inches ABOVE wound (never over joint).",
+        "Tighten tourniquet until bleeding stops completely; write exact time on forehead ('T=14:30').",
+        "Pack deep groin/armpit wounds with clean cloth and hold continuous pressure.",
+        "Keep patient warm with blankets to prevent hypothermic shock.",
+        "Trauma ER blood bank prepped with universal O- Negative blood."
+      ],
+      doNotDo: "❌ Do NOT remove blood-soaked cloths (disrupts initial clot); layer new cloths ON TOP. ❌ Do NOT loosen tourniquet.",
+      calmingScript: "🗣️ Bystanders: 'Holding firm continuous pressure. Tourniquet applied. Trauma blood team notified.'"
+    },
+    breathing: {
+      category: "Severe Respiratory Distress",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🫁 Severe Breathing Difficulty / Asthma / Pulmonary Edema",
+      struggling: "Assess lip blueness (cyanosis), chest rib retractions, inability to speak full sentences.",
+      doNow: "Sit patient strictly upright leaning slightly forward (Tripod Position). Open all windows.",
+      steps: [
+        "Administer Salbutamol/Albuterol inhaler (2-4 puffs via spacer every 5 mins).",
+        "Open doors and windows; remove surrounding crowd.",
+        "Practice pursed-lip breathing (In for 2s, Out through pursed lips for 4s).",
+        "Unbutton collar, necktie, and tight chest wear.",
+        "Keep patient warm, still, and calm.",
+        "High-Flow Oxygen ICU bed reserved at target hospital."
+      ],
+      doNotDo: "❌ Do NOT force patient to lie flat. ❌ Do NOT crowd patient in enclosed room.",
+      calmingScript: "🗣️ Bystanders: 'Breathe with me: In... two... Out... two... three... four. High-flow oxygen bed is locked.'"
+    },
+    anaphylaxis: {
+      category: "Anaphylaxis",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🐝 Severe Allergic Reaction / Anaphylaxis Protocol",
+      struggling: "Check throat tightness, swollen tongue/lips, hives, sudden dizziness, raspy voice.",
+      doNow: "Inject EpiPen (Epinephrine auto-injector) into outer middle thigh immediately through clothing.",
+      steps: [
+        "Press EpiPen firmly into outer thigh; hold in place for 3 seconds.",
+        "Lay patient flat with legs raised (if no breathing difficulty).",
+        "If breathing is hard, keep patient seated upright.",
+        "Prepare second EpiPen dose if no improvement in 5-10 mins.",
+        "Scrape off bee stinger or remove allergen source if visible.",
+        "Transport urgently to ER with Adult/Pediatric ICU."
+      ],
+      doNotDo: "❌ Do NOT allow patient to stand up or walk after EpiPen (causes lethal BP collapse). ❌ Do NOT give oral pills if swallowing is hard.",
+      calmingScript: "🗣️ Bystanders: 'EpiPen injected. Patient lying still. ER resuscitation team ready.'"
+    },
+    seizure: {
+      category: "Seizure / Fits",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "⚡ Seizure / Convulsions / Epilepsy — First-Aid Protocol",
+      struggling: "Identify body jerking, unconsciousness, clenched teeth, eye deviation.",
+      doNow: "Cushion head with jacket/pillow immediately. Move sharp objects away.",
+      steps: [
+        "Time the duration of the seizure (>5 mins requires emergency IV drugs).",
+        "Roll patient onto side in Recovery Position as soon as jerking stops.",
+        "Loosen neckwear, tie, and eyeglasses.",
+        "Stay with patient until fully conscious and alert.",
+        "Talk quietly; expect temporary confusion (post-ictal state).",
+        "Monitor breathing continuously until ambulance arrives."
+      ],
+      doNotDo: "❌ Do NOT put spoon, fingers, or anything in mouth. ❌ Do NOT physically hold or restrain limbs.",
+      calmingScript: "🗣️ Bystanders: 'Clear the area! Do not hold them down. Timing seizure duration now.'"
+    },
+    unconscious: {
+      category: "Unconsciousness / Fainting",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "💫 Unconsciousness / Syncope / Fainting Triage",
+      struggling: "Verify airway is open and patient is breathing. Check radial pulse.",
+      doNow: "Lay flat on back and elevate legs 12 inches (30 cm) above heart level.",
+      steps: [
+        "Tap shoulders firmly & shout to check responsiveness.",
+        "Perform Head-Tilt Chin-Lift to maintain open airway.",
+        "Loosen tight neckwear, belt, and shirt buttons.",
+        "Turn onto side into Recovery Position if vomiting occurs.",
+        "Check head/body for injuries from collapse.",
+        "Keep patient lying down for 10 mins after waking up."
+      ],
+      doNotDo: "❌ Do NOT splash cold water. ❌ Do NOT force patient to sit up immediately.",
+      calmingScript: "🗣️ Bystanders: 'Legs elevated to bring blood to brain. Breathing normally. Fresh air circulating.'"
+    },
+    snake_bite: {
+      category: "Snake Bite",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🐍 Venomous Snake Bite — Emergency Anti-Venom Protocol",
+      struggling: "Look for fang marks, rapid spreading swelling, drooping eyelids (ptosis), dark urine.",
+      doNow: "Immobilize limb using splint/sling below heart level. Keep patient 100% still.",
+      steps: [
+        "Keep patient completely calm; physical movement speeds venom spread.",
+        "Remove rings, watch, shoes before limb swelling starts.",
+        "Gently rinse bite area with water (do not scrub).",
+        "Apply broad firm bandage if krait/cobra bite suspected.",
+        "Note snake features from safe distance (do NOT catch snake).",
+        "Transport to Anti-Snake Venom (ASV) equipped hospital."
+      ],
+      doNotDo: "❌ Do NOT cut wound or suck venom. ❌ Do NOT apply tight arterial tourniquet (causes limb loss). ❌ Do NOT apply ice.",
+      calmingScript: "🗣️ Bystanders: 'Stay completely still. Leg immobilized below heart level. Anti-venom hospital notified.'"
+    },
+    febrile_fit: {
+      category: "Pediatric Febrile Seizure",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "👶 High Fever Convulsion in Children — Pediatric Protocol",
+      struggling: "Child temp >102°F (38.9°C) with eye rolling, limb jerking, unresponsiveness.",
+      doNow: "Lay child on side on soft surface. Remove heavy blankets & warm clothes.",
+      steps: [
+        "Tepid sponging: Wipe chest, arms, legs with lukewarm water (NOT ice).",
+        "Loosen all neck and chest clothing.",
+        "Time the convulsion duration.",
+        "Ensure mouth is clear of saliva.",
+        "Give Paracetamol syrup/suppository ONLY after child is fully alert.",
+        "Transport to Pediatric ER for fever evaluation."
+      ],
+      doNotDo: "❌ Do NOT put child in cold ice bath (causes shivering & core temp spike). ❌ Do NOT put anything in mouth.",
+      calmingScript: "🗣️ Bystanders: 'Febrile seizures usually pass in 2 mins. Tepid lukewarm water cooling child down.'"
+    },
+    burns: {
+      category: "Severe Burns",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "🔥 Severe Thermal / Chemical Burn Protocol",
+      struggling: "Assess burn depth, skin blistering, facial/airway involvement, raspy voice.",
+      doNow: "Cool burn immediately under cool running tap water for 15-20 minutes.",
+      steps: [
+        "Remove heat source immediately.",
+        "Run cool water over burn for 20 minutes continuously.",
+        "Remove loose clothing around burn (do NOT pull stuck clothing).",
+        "Remove rings/watch before swelling starts.",
+        "Cover burn loosely with clean sterile plastic wrap or towel.",
+        "Transport to Burn Unit with IV fluid resuscitation."
+      ],
+      doNotDo: "❌ Do NOT apply ice or ice water. ❌ Do NOT apply toothpaste, butter, or oil. ❌ Do NOT pop blisters.",
+      calmingScript: "🗣️ Bystanders: 'Cool running water applied 20 mins. Covered loosely. Burn unit ready.'"
+    },
+    head_trauma: {
+      category: "Traumatic Head/Spinal Injury",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🪖 Traumatic Head & Spinal Injury — C-Spine Protocol",
+      struggling: "Check loss of consciousness, fluid from nose/ears, unequal pupils, spinal tenderness.",
+      doNow: "Manually stabilize head & neck in neutral position. Do NOT move head/neck.",
+      steps: [
+        "Kneel at patient head and hold head firmly with both hands.",
+        "Keep patient completely flat on back.",
+        "If vomiting occurs, Log-Roll with 3 helpers keeping spine aligned.",
+        "Apply neck collar if trained.",
+        "Apply gentle direct pressure to scalp bleeding.",
+        "Transport to Neuro Trauma Center with CT Scanner."
+      ],
+      doNotDo: "❌ Do NOT twist, bend, or move neck/spine. ❌ Do NOT remove motorcycle helmet unless breathing stops.",
+      calmingScript: "🗣️ Bystanders: 'Do not touch or move them! Holding head still. Trauma spine team en route.'"
+    },
+    choking: {
+      category: "Choking",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🥖 Choking / Foreign Body Airway Obstruction (Heimlich)",
+      struggling: "Patient clutching throat, unable to speak or breathe, face turning blue.",
+      doNow: "Give 5 sharp Back Blows between shoulder blades, then 5 Abdominal Thrusts (Heimlich).",
+      steps: [
+        "Stand behind patient and lean them slightly forward.",
+        "Deliver 5 firm back blows with heel of hand between shoulder blades.",
+        "Place fist above navel below ribcage; pull inward and upward 5 times.",
+        "Alternate 5 back blows and 5 Heimlich thrusts until object clears.",
+        "If patient collapses, begin CPR & check mouth for visible object before breaths.",
+        "For infants (<1 yr): 5 back slaps & 5 chest thrusts (2 fingers on sternum)."
+      ],
+      doNotDo: "❌ Do NOT perform blind finger sweeps in mouth. ❌ Do NOT give water while choking.",
+      calmingScript: "🗣️ Bystanders: 'Lean forward! Delivering abdominal thrusts now to dislodge object.'"
+    },
+    poisoning: {
+      category: "Poisoning / Overdose",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🧪 Poisoning / Chemical Ingestion / Overdose Triage",
+      struggling: "Locate chemical bottle, check pupil size, mouth chemical burns, altered consciousness.",
+      doNow: "Keep chemical container label for ER doctor. Place patient in Recovery Position.",
+      steps: [
+        "Identify chemical name, dose, and time of ingestion.",
+        "Flush skin/eyes with water for 15 mins if exposed.",
+        "Place unconscious patient on left side in Recovery Position.",
+        "Rinse mouth with water if corrosive swallowed (do NOT induce vomiting).",
+        "Call Poison Control / Emergency helpline.",
+        "Transport to ER with ICU Toxicological support."
+      ],
+      doNotDo: "❌ Do NOT induce vomiting (corrosives burn esophagus twice). ❌ Do NOT give raw eggs or vinegar.",
+      calmingScript: "🗣️ Bystanders: 'Chemical container secured for ER doctor. Patient in safe recovery position.'"
+    },
+    hypoglycemia: {
+      category: "Low Blood Sugar",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "🍬 Severe Hypoglycemia (Diabetic Low Sugar Crisis)",
+      struggling: "Assess cold sweating, shakiness, slurred speech, confusion, rapid heart rate.",
+      doNow: "Administer 15-20g simple fast sugar (fruit juice, sugar cubes, glucose powder) if alert.",
+      steps: [
+        "Measure blood sugar with glucometer if available (<70 mg/dL).",
+        "Give 15g simple sugar orally if conscious and swallowing safely.",
+        "Wait 15 mins and re-check blood glucose level.",
+        "Repeat with 15g sugar if glucose remains below 70 mg/dL.",
+        "Provide complex carb snack (sandwich, bread, milk) once alert.",
+        "If unconscious: Seek immediate IV Dextrose (D50W) at hospital."
+      ],
+      doNotDo: "❌ Do NOT pour liquids/sugar into mouth of unconscious or seizing patient. ❌ Do NOT give insulin.",
+      calmingScript: "🗣️ Bystanders: 'Drinking glucose water now. Sugar level rising. Shaking will stop in 5 mins.'"
+    },
+    heat_stroke: {
+      category: "Heat Stroke",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "☀️ Heat Stroke / Hyperthermia — Active Cooling Protocol",
+      struggling: "Body temp >104°F (40°C), delirium/confusion, hot red dry skin, severe dizziness.",
+      doNow: "Move to cool shade/AC room. Apply ice packs to groin, armpits, and neck immediately.",
+      steps: [
+        "Remove heavy clothing.",
+        "Apply ice packs / cold wet towels to neck, armpits, and groin.",
+        "Fan patient vigorously while spraying cool water on skin.",
+        "Give cold ORS water only if fully alert and conscious.",
+        "Lay patient flat with legs elevated slightly.",
+        "Transport to ER with IV fluid cooling protocol."
+      ],
+      doNotDo: "❌ Do NOT delay active cooling. ❌ Do NOT give caffeinated or alcoholic drinks.",
+      calmingScript: "🗣️ Bystanders: 'Ice packs placed on major neck/armpit arteries. Active cooling in progress.'"
+    },
+    fracture: {
+      category: "Bone Fracture",
+      esi: "ESI-3 MODERATE",
+      esiClass: "esi-blue",
+      title: "🦴 Fractures & Bone Dislocation — Immobilization Triage",
+      struggling: "Visible limb deformity, abnormal bone angle, open wound with exposed bone, extreme pain.",
+      doNow: "Splint and immobilize limb in position found using rolled cardboard/board.",
+      steps: [
+        "Control bleeding around wound with sterile dressing.",
+        "Apply rigid splint above and below fracture joint.",
+        "Secure splint gently with cloth ties (do NOT tie over fracture).",
+        "Check finger/toe color, pulse, and sensation every 15 mins.",
+        "Apply ice pack wrapped in towel to reduce swelling.",
+        "Transport to Orthopedic Trauma Facility."
+      ],
+      doNotDo: "❌ Do NOT attempt to push bone back into place. ❌ Do NOT massage injured limb.",
+      calmingScript: "🗣️ Bystanders: 'Limb splinted securely in place. Orthopedic trauma team notified.'"
+    },
+    childbirth: {
+      category: "Emergency Childbirth",
+      esi: "ESI-1 CRITICAL",
+      esiClass: "esi-red",
+      title: "🤱 Emergency Childbirth / Precipitous Labor Protocol",
+      struggling: "Contractions <2 mins apart, urge to push, baby head visible at vaginal opening (crowning).",
+      doNow: "Lay mother on back with knees bent & feet flat. Prepare clean towels & warm blankets.",
+      steps: [
+        "Do NOT hold baby's head back or stop delivery.",
+        "Support emerging baby head gently as it delivers (do NOT pull).",
+        "Wipe baby mouth & nose with clean cloth; rub back to stimulate crying.",
+        "Dry baby thoroughly & place skin-to-skin on mother's chest under warm blanket.",
+        "Do NOT cut or pull umbilical cord (leave attached until doctor arrives).",
+        "Allow placenta to deliver naturally; save in plastic bag for doctor inspection."
+      ],
+      doNotDo: "❌ Do NOT pull umbilical cord. ❌ Do NOT wash off white coating (vernix) from baby. ❌ Do NOT let mother go to toilet.",
+      calmingScript: "🗣️ Bystanders: 'Breathe smoothly through contractions. Baby head supported gently. Warm blankets ready.'"
     },
     general: {
-      title: "🩺 Emergency Patient Guidance & First-Aid",
+      category: "Emergency Triage",
+      esi: "ESI-2 URGENT",
+      esiClass: "esi-amber",
+      title: "🩺 Emergency Clinical Guidance & Triage Protocol",
+      struggling: "Check airway, breathing, pulse, and level of consciousness (AVPU scale).",
+      doNow: "Keep patient comfortable, warm, quiet, and seated or lying in safe recovery posture.",
       steps: [
-        { num: "1", text: "Check if Patient is Struggling: Check airway, breathing, and responsiveness." },
-        { num: "2", text: "Something You Can DO: Keep patient comfortable, warm, and hydrated if conscious." },
-        { num: "3", text: "Possible Reasons: Acute Medical Acuity requiring priority triage." },
-        { num: "4", text: "How to do: Monitor vital signs closely until emergency response arrival." },
-        { num: "5", text: "Reassurance: Emergency bed soft-locked. Navigation route active." }
-      ]
+        "Call emergency response line (108/102) immediately.",
+        "Check airway for obstructions and verify steady breathing.",
+        "Loosen tight collars, ties, belts, and chest clothing.",
+        "Keep patient calm; talk gently and explain help is on the way.",
+        "Monitor pulse rate and vital signs continuously.",
+        "Hospital bed soft-locked and GPS navigation route activated."
+      ],
+      doNotDo: "❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.",
+      calmingScript: "🗣️ Bystanders: 'Patient is safe and monitored. Navigation active. Hospital bed reserved.'"
     }
   };
+
+  let currentSearchQuery = '';
+
+  function getClinicalGuidance(query) {
+    if (!query) return CLINICAL_DATABASE.general;
+    const q = query.toLowerCase();
+
+    if (q.includes('cpr') || q.includes('cardiac arrest') || q.includes('no pulse') || q.includes('heart stopped') || q.includes('collapsed') || q.includes('unresponsive')) {
+      return CLINICAL_DATABASE.cardiac_arrest;
+    }
+    if (q.includes('chest') || q.includes('heart') || q.includes('angina') || q.includes('coronary') || q.includes('buke')) {
+      return CLINICAL_DATABASE.chest_pain;
+    }
+    if (q.includes('stroke') || q.includes('paralysis') || q.includes('fast') || q.includes('slur') || q.includes('droop') || q.includes('numb')) {
+      return CLINICAL_DATABASE.stroke;
+    }
+    if (q.includes('bleed') || q.includes('blood') || q.includes('cut') || q.includes('stab') || q.includes('wound') || q.includes('roktopat')) {
+      return CLINICAL_DATABASE.bleeding;
+    }
+    if (q.includes('breath') || q.includes('asthma') || q.includes('wheez') || q.includes('shwas') || q.includes('respiratory') || q.includes('suffocat')) {
+      return CLINICAL_DATABASE.breathing;
+    }
+    if (q.includes('allerg') || q.includes('anaphylax') || q.includes('hives') || q.includes('bee') || q.includes('swoll')) {
+      return CLINICAL_DATABASE.anaphylaxis;
+    }
+    if (q.includes('seiz') || q.includes('fit') || q.includes('epilep') || q.includes('convuls') || q.includes('mirgi')) {
+      return CLINICAL_DATABASE.seizure;
+    }
+    if (q.includes('unconscious') || q.includes('faint') || q.includes('pass out') || q.includes('blackout') || q.includes('agyan')) {
+      return CLINICAL_DATABASE.unconscious;
+    }
+    if (q.includes('snake') || q.includes('bite') || q.includes('viper') || q.includes('cobra') || q.includes('saap')) {
+      return CLINICAL_DATABASE.snake_bite;
+    }
+    if (q.includes('baby') || q.includes('child') || q.includes('kid') || q.includes('febrile') || q.includes('bacha jwar')) {
+      return CLINICAL_DATABASE.febrile_fit;
+    }
+    if (q.includes('burn') || q.includes('fire') || q.includes('scald') || q.includes('acid') || q.includes('agun')) {
+      return CLINICAL_DATABASE.burns;
+    }
+    if (q.includes('head') || q.includes('spine') || q.includes('neck') || q.includes('skull') || q.includes('accident')) {
+      return CLINICAL_DATABASE.head_trauma;
+    }
+    if (q.includes('chok') || q.includes('throat') || q.includes('stuck') || q.includes('heimlich') || q.includes('atkecche')) {
+      return CLINICAL_DATABASE.choking;
+    }
+    if (q.includes('poison') || q.includes('toxic') || q.includes('chemical') || q.includes('overdose') || q.includes('vish')) {
+      return CLINICAL_DATABASE.poisoning;
+    }
+    if (q.includes('sugar') || q.includes('diabet') || q.includes('hypoglycem') || q.includes('insulin') || q.includes('shaky')) {
+      return CLINICAL_DATABASE.hypoglycemia;
+    }
+    if (q.includes('heat') || q.includes('sun stroke') || q.includes('hypertherm') || q.includes('gormer')) {
+      return CLINICAL_DATABASE.heat_stroke;
+    }
+    if (q.includes('fracture') || q.includes('bone') || q.includes('dislocat') || q.includes('ankle') || q.includes('bhengeche')) {
+      return CLINICAL_DATABASE.fracture;
+    }
+    if (q.includes('labor') || q.includes('pregnant') || q.includes('deliver') || q.includes('birth') || q.includes('hocche')) {
+      return CLINICAL_DATABASE.childbirth;
+    }
+
+    return CLINICAL_DATABASE.general;
+  }
 
   /* ── State ── */
   let allHospitals         = [];
@@ -328,20 +693,18 @@
     const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
     const totalA = totalAvail(h);
 
-    const guidance = (activeFilter === 'cardiac') ? FIRST_AID_GUIDANCE.cardiac
-                   : (activeFilter === 'adult_icu') ? FIRST_AID_GUIDANCE.respiratory
-                   : FIRST_AID_GUIDANCE.general;
+    const guidance = getClinicalGuidance(currentSearchQuery);
 
-    const guidanceItemsHtml = guidance.steps.map(s => `
+    const guidanceItemsHtml = guidance.steps.map((s, idx) => `
       <div class="first-aid-item">
-        <span class="first-aid-num">${s.num})</span>
-        <span>${s.text}</span>
+        <span class="first-aid-num">${idx + 1}.</span>
+        <span>${s}</span>
       </div>
     `).join('');
 
     const blood = h.blood_stock_summary || {};
     const bloodHtml = Object.entries(blood).map(([t, v]) =>
-      `<span style="padding:2px 8px; border-radius:6px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#f43f5e; font-size:0.72rem; font-weight:700;">${t}: ${v}u</span>`
+      `<span style="padding:3px 8px; border-radius:6px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#f43f5e; font-size:0.72rem; font-weight:700;">${t}: ${v}u</span>`
     ).join(' ');
 
     const card = document.createElement('div');
@@ -375,16 +738,42 @@
         🛏 ${totalA} Beds Available!
       </div>
 
-      <!-- EMERGENCY FIRST-AID GUIDANCE (Drawing 3: "Things to Check and DO") -->
+      <!-- DOCTOR-GRADE EMERGENCY CLINICAL GUIDANCE (Drawing 3: "Things to Check and DO") -->
       <div class="first-aid-card">
-        <div class="first-aid-title">
-          🩺 Things to Check and DO
+        <div class="first-aid-header">
+          <div class="first-aid-title">${guidance.title}</div>
+          <span class="esi-badge ${guidance.esiClass}">${guidance.esi}</span>
         </div>
-        <div class="first-aid-list">
-          ${guidanceItemsHtml}
+
+        <div class="clinical-box struggling-box">
+          <div class="clinical-box-title">🔍 Check if Patient is Struggling</div>
+          <div class="clinical-box-text">${guidance.struggling}</div>
         </div>
-        <div style="margin-top:8px; font-size:0.75rem; color:#94a3b8;">
-          🩸 Blood Groups Available: ${bloodHtml}
+
+        <div class="clinical-box donow-box">
+          <div class="clinical-box-title">⚡ Something You Can DO Right NOW</div>
+          <div class="clinical-box-text">${guidance.doNow}</div>
+        </div>
+
+        <div class="clinical-box protocol-box">
+          <div class="clinical-box-title">📋 Step-by-Step Tactical Protocol</div>
+          <div class="first-aid-list">
+            ${guidanceItemsHtml}
+          </div>
+        </div>
+
+        <div class="clinical-warning-box">
+          <div class="warning-title">⚠️ CRITICAL DO NOT DOs</div>
+          <div class="warning-text">${guidance.doNotDo}</div>
+        </div>
+
+        <div class="calming-script-box">
+          <div class="calming-title">🧘 Bystander Calming & De-escalation Script</div>
+          <div class="calming-text">${guidance.calmingScript}</div>
+        </div>
+
+        <div class="blood-breakdown-row">
+          🩸 Live Blood Stock Available: ${bloodHtml}
         </div>
       </div>`;
 
@@ -521,6 +910,7 @@
   /* ── Triage Search ── */
   async function runTriage(text) {
     if (!text.trim()) return;
+    currentSearchQuery = text;
     try {
       const result = await API.triage(text);
       let filtered = allHospitals;
