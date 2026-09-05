@@ -101,15 +101,22 @@
           id="symptom-input"
           class="search-input"
           type="text"
-          placeholder="Describe symptoms… e.g. 'I have stomach pain and I'm feeling dizzy'"
+          placeholder="Describe symptoms… e.g. 'amar chhati fatya jacche' or 'pet me dard'"
           autocomplete="off"
         >
+        <button id="voice-mic-btn" class="voice-mic-btn" title="Tap for Voice Triage (Hinglish & Benglish auto-detect)">
+          🎙️
+        </button>
         <button id="triage-btn" class="search-btn">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Analyse</span>
         </button>
+      </div>
+      <div id="voice-recording-banner" class="voice-recording-banner" style="display:none;">
+        <span class="live-rec-dot"></span>
+        <span>🔴 Listening... Speak emergency symptoms in Benglish, Hinglish, or English</span>
       </div>
     </div>
 
@@ -1022,10 +1029,82 @@ function runJudgeDemo(scenarioId) {
   }
 }
 
+/* ── Web Speech API: Voice Triage (Hinglish & Benglish Auto-Detection) ── */
+function initVoiceTriage() {
+  const micBtn = document.getElementById('voice-mic-btn');
+  const banner = document.getElementById('voice-recording-banner');
+  const input = document.getElementById('symptom-input');
+
+  if (!micBtn) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.title = "Voice recognition not supported on this browser (use Chrome/Safari/Edge)";
+    micBtn.style.opacity = "0.5";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  // hi-IN natively handles Hinglish, Benglish & English phonetics in Indian browsers
+  recognition.lang = 'hi-IN';
+
+  let isListening = false;
+
+  micBtn.addEventListener('click', () => {
+    if (!isListening) {
+      try {
+        recognition.start();
+      } catch(err) {
+        console.log("Speech recognition start err:", err);
+      }
+    } else {
+      recognition.stop();
+    }
+  });
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    if (banner) banner.style.display = 'flex';
+    input.placeholder = "Listening… speak in Benglish, Hinglish, or English…";
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    input.value = transcript;
+    if (event.results[0].isFinal) {
+      runTriage(transcript);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    console.warn("Speech recognition error:", event.error);
+    stopListening();
+  };
+
+  recognition.onend = () => {
+    stopListening();
+  };
+
+  function stopListening() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    if (banner) banner.style.display = 'none';
+    input.placeholder = "Describe symptoms… e.g. 'amar chhati fatya jacche' or 'pet me dard'";
+  }
+}
+
 /* ── Boot ── */
 loadHospitals();
+initVoiceTriage();
 // Auto-refresh every 60s to simulate live updates
 setInterval(loadHospitals, 60000);
 </script>
 </body>
 </html>
+
