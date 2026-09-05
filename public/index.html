@@ -6,10 +6,12 @@
   <title>PulseGrid | Real-Time Emergency Bed & Blood Finder</title>
   <meta name="description" content="Find emergency hospital beds and blood stock in real time across Kolkata. Instant triage, guaranteed 15-minute bed holds, no sign-up required.">
 
-  <!-- Fonts -->
+  <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <!-- Leaflet Map Engine -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
@@ -44,7 +46,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════
-       2. TOP HEADER BAR (Drawing 1: Three dots & App Logo)
+       2. TOP HEADER BAR (Drawing 1: Three dots, Dynamic Island, App Logo)
   ════════════════════════════════════════ -->
   <div class="top-header-bar">
     <button class="header-menu-btn" id="header-menu-btn" title="Emergency Menu">
@@ -53,7 +55,15 @@
       <div class="hamburger-line"></div>
     </button>
 
+    <!-- Center Dynamic Island Status Pill -->
+    <div class="dynamic-island-status">
+      <span class="status-dot-green"></span>
+      <span class="status-text">PULSEGRID EMERGENCY ACTIVE</span>
+    </div>
+
+    <!-- Right Single Round Logo Badge (NO text label) -->
     <div class="header-logo-badge" title="PulseGrid">
+      <div class="logo-breathe-ring"></div>
       <div class="logo-circle">P</div>
     </div>
   </div>
@@ -701,9 +711,12 @@
     `).join('');
 
     const blood = h.blood_stock_summary || {};
-    const bloodHtml = Object.entries(blood).map(([t, v]) =>
-      `<span style="padding:3px 8px; border-radius:6px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#f43f5e; font-size:0.72rem; font-weight:700;">${t}: ${v}u</span>`
-    ).join(' ');
+    const bloodTilesHtml = Object.entries(blood).map(([t, v]) => `
+      <div class="blood-unit-tile">
+        <div class="blood-type-lbl">${t}</div>
+        <div class="blood-count-val">${v}u</div>
+      </div>
+    `).join('');
 
     const card = document.createElement('div');
     card.className = 'gmaps-hosp-card';
@@ -721,7 +734,10 @@
       <!-- Action Buttons Row (Drawing 2 & 3: 3 Primary Buttons) -->
       <div class="gmaps-action-row">
         <button class="gmaps-btn-primary hold-btn" data-id="${h.id}">
-          🔒 Book MY Slot And Start
+          <div class="gmaps-btn-primary-shimmer"></div>
+          <div class="gmaps-btn-primary-inner">
+            🔒 Book MY Slot And Start
+          </div>
         </button>
         <a class="gmaps-btn-secondary gmaps-btn-amb" href="tel:108">
           🚑 Call Ambulance
@@ -771,7 +787,10 @@
         </div>
 
         <div class="blood-breakdown-row">
-          🩸 Live Blood Stock Available: ${bloodHtml}
+          <div style="font-weight:700; margin-bottom:6px; color:#e2e8f0; font-family:var(--font-heading);">🩸 Live Blood Stock Available:</div>
+          <div class="blood-grid-matrix">
+            ${bloodTilesHtml || '<span style="color:#94a3b8; font-size:0.75rem;">Units available on request</span>'}
+          </div>
         </div>
       </div>`;
 
