@@ -187,6 +187,49 @@ def blood_inventory():
     inventory = database.get_blood_inventory(hospital_id)
     return jsonify(inventory)
 
+# ============================================================
+# ROUTE: Create Blood Hold
+# POST /api/blood/hold
+# Body: { "hospital_id": "...", "blood_group": "...", "component": "...", "units": 1, "requester_phone": "..." }
+# ============================================================
+@app.route("/api/blood/hold", methods=["POST"])
+def blood_hold():
+    """Reserves blood units."""
+    data = request.json or {}
+    hospital_id = data.get("hospital_id")
+    blood_group = data.get("blood_group")
+    component = data.get("component")
+    units = int(data.get("units", 1))
+    phone = data.get("requester_phone", "000-000-0000")
+
+    if not all([hospital_id, blood_group, component]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    result = database.create_blood_hold(hospital_id, blood_group, component, units, phone)
+    if "error" in result:
+        return jsonify(result), 400
+
+    return jsonify(result)
+
+# ============================================================
+# ROUTE: Redeem Blood Hold
+# POST /api/blood/redeem
+# Body: { "otp": "1234" }
+# ============================================================
+@app.route("/api/blood/redeem", methods=["POST"])
+def redeem_blood_hold():
+    """Redeems a blood hold with an OTP."""
+    data = request.json or {}
+    otp = data.get("otp")
+
+    if not otp:
+        return jsonify({"error": "Missing otp"}), 400
+
+    result = database.redeem_blood_hold(otp)
+    if "error" in result:
+        return jsonify(result), 400
+
+    return jsonify(result)
 
 # ============================================================
 # START THE SERVER
