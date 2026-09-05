@@ -212,7 +212,84 @@ VALUES
      'Panchasayar, EM Bypass, Kolkata 700094',
      22.4862, 88.3929, '033-24625000',
      ARRAY['general','cardiac'],
-     8, 5, 0,   3, 2, 0,   6, 4, 0,   20, 14, 1);
+     8, 5, 0,   3, 2, 0,   6, 4, 0,   20, 14, 1),
+
+    -- 13. Tata Medical Center (Newtown Action Area I)
+    ('Tata Medical Center',
+     '14 MAR(EW), Action Area I, Newtown, Rajarhat, Kolkata 700156',
+     22.5714, 88.4735, '033-6605-7000',
+     ARRAY['oncology','trauma','general','pediatric','radiology'],
+     40, 28, 2,   15, 10, 1,   12, 8, 1,   250, 185, 5),
+
+    -- 14. Ohio Hospital & Diabetes Centre (Newtown Action Area II near Amity)
+    ('Ohio Hospital & Diabetes Centre',
+     'Plot No. DG-6, Action Area II, Newtown (near Amity University), Kolkata 700161',
+     22.5810, 88.4780, '033-6616-6000',
+     ARRAY['general','endocrinology','cardiac','orthopedics','diabetology'],
+     25, 17, 1,   8, 5, 0,   12, 8, 1,   120, 85, 3),
+
+    -- 15. Bhagirathi Neotia Woman & Child Care (Newtown)
+    ('Bhagirathi Neotia Woman & Child Care Centre',
+     'Premises No. 27-0327, Street No. 327, Action Area I, Newtown, Kolkata 700156',
+     22.5775, 88.4635, '033-6640-5000',
+     ARRAY['maternity','pediatric','gynecology','general'],
+     15, 10, 1,   30, 21, 2,   5, 3, 0,   140, 100, 4),
+
+    -- 16. HCG EKO Cancer Centre (Newtown)
+    ('HCG EKO Cancer Centre',
+     'Plot No. DG-4, Action Area II, Newtown, Kolkata 700156',
+     22.5792, 88.4680, '033-6655-0000',
+     ARRAY['oncology','radiology','general','neurosurgery'],
+     20, 14, 1,   8, 5, 0,   8, 5, 0,   110, 78, 3),
+
+    -- 17. Glocal Hospital Newtown (Newtown Action Area II)
+    ('Glocal Hospital Newtown',
+     'Action Area II, Newtown, Kolkata 700156',
+     22.5840, 88.4820, '033-3050-0000',
+     ARRAY['general','trauma','orthopedics','cardiac'],
+     20, 14, 1,   6, 4, 0,   8, 5, 0,   100, 70, 2),
+
+    -- 18. ILS Hospitals Dum Dum (Nagerbazar Mall Road)
+    ('ILS Hospitals Dum Dum',
+     '1/85 Mall Road, Nagerbazar, Dum Dum, Kolkata 700080',
+     22.6215, 88.4120, '033-4031-9000',
+     ARRAY['general','trauma','orthopedics','cardiac','urology'],
+     35, 25, 2,   12, 8, 1,   15, 10, 1,   180, 130, 4),
+
+    -- 19. Apex General Hospital (Nagerbazar Crossing)
+    ('Apex General Hospital',
+     '124 Jessore Road, Nagerbazar Crossing, Dum Dum, Kolkata 700074',
+     22.6240, 88.4170, '033-2560-1200',
+     ARRAY['general','trauma','orthopedics','maternity'],
+     18, 13, 1,   6, 4, 0,   6, 4, 0,   90, 65, 2),
+
+    -- 20. Spandan Hospital & Diagnostic (Nagerbazar)
+    ('Spandan Hospital & Diagnostic',
+     '36 Nagerbazar Main Road, Dum Dum, Kolkata 700074',
+     22.6205, 88.4150, '033-2551-8888',
+     ARRAY['general','cardiac','diagnostics','orthopedics'],
+     15, 10, 1,   5, 3, 0,   8, 5, 0,   80, 56, 2),
+
+    -- 21. Dum Dum Municipal Specialized Hospital (Nagerbazar)
+    ('Dum Dum Municipal Specialized Hospital',
+     '4 Imperial Park, Nagerbazar, Dum Dum, Kolkata 700074',
+     22.6230, 88.4110, '033-2550-0000',
+     ARRAY['general','maternity','pediatric','trauma'],
+     20, 15, 1,   10, 7, 0,   6, 4, 0,   150, 118, 4),
+
+    -- 22. Charnock Hospital (Teghoria / Nagerbazar Emergency Hub)
+    ('Charnock Hospital',
+     'VIP Road, Teghoria, Major Emergency Hub near Nagerbazar, Kolkata 700157',
+     22.6178, 88.4350, '033-4050-0000',
+     ARRAY['cardiac','trauma','pulmonology','neurology','general'],
+     40, 28, 2,   12, 8, 1,   20, 14, 1,   200, 145, 5),
+
+    -- 23. Matri Sadan Hospital (Dum Dum Nagerbazar)
+    ('Matri Sadan Hospital',
+     '154 KB Sarani, Nagerbazar, Dum Dum, Kolkata 700080',
+     22.6190, 88.4090, '033-2551-0101',
+     ARRAY['maternity','pediatric','general'],
+     12, 8, 1,   15, 10, 1,   4, 2, 0,   100, 75, 3);
 
 
 -- ============================================================
@@ -294,6 +371,32 @@ FROM public.hospitals h
 CROSS JOIN (VALUES ('O-'), ('O+'), ('A+'), ('A-'), ('B+'), ('B-'), ('AB+'), ('AB-')) AS bg(blood_group)
 CROSS JOIN (VALUES ('PRBC'), ('Platelets'), ('Plasma')) AS comp(component)
 WHERE h.name LIKE 'Medica Super%';
+
+-- Newtown & Nagerbazar Hospitals Blood Inventory
+INSERT INTO public.blood_inventory (hospital_id, blood_group, component, units_available, units_reserved, is_trauma_ready)
+SELECT h.id, bg.blood_group, comp.component,
+    CASE
+        WHEN bg.blood_group IN ('O-', 'O+') THEN floor(random() * 10 + 5)::INT
+        ELSE floor(random() * 6 + 2)::INT
+    END,
+    floor(random() * 2)::INT,
+    (bg.blood_group = 'O-' AND comp.component = 'PRBC')
+FROM public.hospitals h
+CROSS JOIN (VALUES ('O-'), ('O+'), ('A+'), ('A-'), ('B+'), ('B-'), ('AB+'), ('AB-')) AS bg(blood_group)
+CROSS JOIN (VALUES ('PRBC'), ('Platelets'), ('Plasma')) AS comp(component)
+WHERE h.name IN (
+    'Tata Medical Center',
+    'Ohio Hospital & Diabetes Centre',
+    'Bhagirathi Neotia Woman & Child Care Centre',
+    'HCG EKO Cancer Centre',
+    'Glocal Hospital Newtown',
+    'ILS Hospitals Dum Dum',
+    'Apex General Hospital',
+    'Spandan Hospital & Diagnostic',
+    'Dum Dum Municipal Specialized Hospital',
+    'Charnock Hospital',
+    'Matri Sadan Hospital'
+);
 
 
 -- ============================================================

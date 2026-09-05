@@ -1,0 +1,52 @@
+<USER_REQUEST>
+Here is the comprehensive master prompt. It is structured to provide an AI coding assistant with all domain requirements, tech stack constraints (Python Flask + Supabase + Vercel), pedagogical explanations for first-year teammates, and an automated Git strategy to replicate balanced multi-developer contributions from a single machine.
+THE MASTER PROMPT (COPY EVERYTHING BELOW)
+# SYSTEM DIRECTIVE: FULL-STACK DEVELOPMENT OF "PULSEGRID"
+## Real-Time Emergency Hospital Bed & Blood Triage Logistics Engine
+### Track: Smart India Hackathon (SIH 2026) - Student Innovation Category (AICTE / MIC)
+### Primary Tech Stack: Python (Flask) + Supabase (PostgreSQL) + Vercel / Static Frontend
+
+---
+
+### PART 1: TEAM SITUATION, PEDAGOGICAL MODEL & HACKATHON CONSTRAINTS
+
+#### 1. The Realities of First-Year Team Composition
+We are a team of six first-year undergraduate engineering students competing in SIH 2026. Our programming background is almost entirely limited to basic Java and Python. We do not have deep experience with microservices, complex React state management, container orchestration (Docker/Kubernetes), or enterprise design patterns.
+
+#### 2. The Development Reality: Single-PC Development with Multi-Member Replication
+I (the team lead) will generate and assemble the entire codebase on my local PC. However, our other 5 teammates must each completely master and present an assigned segment of the application one week prior to the competition. 
+
+Judges at SIH specifically inspect the GitHub Insights tab (Pulse, Commit History, and Pull Requests) to ensure all 6 members actively contributed. If all commits originate from one account or appear as a single massive initial commit, the team risks immediate scrutiny for code dumping or plagiarism. 
+
+Therefore, you must provide:
+1. Dead-simple, beginner-readable code split strictly into independent, single-responsibility files.
+2. A complete shell script / Git workflow strategy that allows me, on my single machine, to stage and push each teammate's assigned files under
+<truncated 10280 bytes>
+at they tell the judge they built.
+ * Code Walkthrough Script: Step-by-step explanation of their assigned file.
+ * The 2 Toughest Judge Questions: Specific technical and edge-case challenges, with word-for-word winning responses.
+EXECUTION REQUIREMENTS
+ * Generate the project structure and all code files completely. Do not leave placeholder comments like "// add logic here". Write out the full, working implementation.
+ * Keep the backend code strictly in Python using simple, readable paradigms.
+ * Provide the full Supabase SQL initialization script so we can create our database tables in one click.
+ * Provide the exact Git branch script to replicate the 6-person commit history seamlessly.
+
+***
+
+### What to Do Next
+1. Copy the entire markdown block above.
+2. Paste it directly into your AI coding tool (Claude 3.7 Sonnet, ChatGPT, or Cursor).
+3. Once generated, create your free project on [Supabase](https://supabase.com), copy your Database API keys, and paste them into your `.env` file to see the live system run.
+
+
+
+
+
+FIRST OF ALL, CREATE ALL THE DOCUMETNS AND THE GUIDES NEEDED TO CREATE THIS APP FLAWLESSLY. THEN BEFORE STARTING TO CODE, PLEASE UNDERSTAND THAT THE UI SHOULD BE CLEAN BEAUTIFULLY ANNIMATED LIQUID GLASS. PLEASE UNDERSTAND THAT THE BACKEND CODE SHOULD BE EASY TO UNDETRSTAND, AND U CAN ASK ME AS MANY QUESTIONS AS U WANT. FIRST CREATE GUIDELINES BASED ON WHAT YOU UNDERSTAND ABOUT THE PROJECT. ITS CREATED BY FIRST YEAR STUDENTS. IT SHOULD BE BEATIFUL IN FRONT END AND SIMPLE IN BACK END BUT IT SHOULD FUNCTION 100000% PROPERLY. U WILL ALSO EXPLAIN THINGS LATER ON TO ME SO TAHT I CAN UNDERSTAND. NOW PROCEED
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-05T02:08:31+05:30.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Claude Opus 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

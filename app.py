@@ -52,20 +52,52 @@ def health_check():
 
 
 # ============================================================
-# ROUTE: Triage
-# POST /api/triage
-# Body: { "text": "patient has chest pain" }
-# Returns: { severity, recommended_ward, ward, explanation }
+# ROUTE: Triage & Unified Search
+# POST /api/triage & POST /api/search
+# Body: { "text": "patient has chest pain", "lat": 22.5, "lng": 88.3 }
+# Returns: { severity, recommended_ward, ward, explanation, is_blood_query, blood_group, recommended_hospitals }
 # ============================================================
 @app.route("/api/triage", methods=["POST"])
-def triage():
-    """Classifies patient symptoms into RED/YELLOW/GREEN urgency."""
-    data = request.get_json()
-    if not data or "text" not in data:
+@app.route("/api/search", methods=["POST"])
+def triage_and_search():
+    """Classifies patient symptoms and blood terms, returning urgency & hospital matches."""
+    data = request.get_json() or {}
+    text = data.get("text") or data.get("query") or ""
+    if not text:
         return jsonify({"error": "Missing 'text' field in request body"}), 400
 
-    result = triage_service.classify_symptoms(data["text"])
-    return jsonify(result)
+    # 1. Symptom classification
+    result = triage_service.classify_symptoms(text)
+
+    # 2. Blood search parsing
+    blood_group = triage_service.parse_blood_search(text)
+    is_blood_query = blood_group is not None
+
+    # 3. Facilities query
+    specialty = data.get("specialty")
+    ward = result.get("recommended_ward")
+    hospitals = database.get_all_hospitals(specialty_filter=specialty, ward_filter=ward)
+
+    blood_matches = []
+    if is_blood_query:
+        inventory = database.get_blood_inventory()
+        blood_matches = [b for b in inventory if b.get("blood_group") == blood_group]
+
+    response = {
+        "success": True,
+        "ok": True,
+        "severity": result.get("severity"),
+        "recommended_ward": result.get("recommended_ward"),
+        "ward": result.get("ward"),
+        "explanation": result.get("explanation"),
+        "matched_keywords": result.get("matched_keywords", []),
+        "is_blood_query": is_blood_query,
+        "blood_group": blood_group,
+        "recommended_hospitals": hospitals,
+        "hospitals": hospitals,
+        "blood_matches": blood_matches
+    }
+    return jsonify(response)
 
 
 # ============================================================
@@ -83,32 +115,30 @@ def facilities():
 
 
 # ============================================================
-# ROUTE: Create Hold
+# ROUTE: Create Hold (Soft-Lock)
 # POST /api/holds/create
-# Body: { hospital_id, resource_type, hold_type, phone/requester_phone, severity }
-# Returns: { otp, hold_id, expires_at }
+# Body: { hospital_id, resource_type/ward_code, hold_type, phone/requester_phone, severity }
+# Returns: { success, hold_id, otp_code, expires_at, bed_count }
 # ============================================================
 @app.route("/api/holds/create", methods=["POST"])
 def create_hold():
-    """Creates a temporary bed reservation with a 4-digit OTP."""
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Missing request body"}), 400
+    """Creates a temporary bed soft-lock reservation with a 4-digit OTP."""
+    data = request.get_json() or {}
+    hospital_id = data.get("hospital_id")
+    resource_type = data.get("resource_type") or data.get("ward_code") or "general_ward"
+    hold_type = data.get("hold_type", "CITIZEN")
+    phone = data.get("requester_phone") or data.get("phone", "9999999999")
+    severity = data.get("severity", "RED")
 
-    # Accept both 'phone' and 'requester_phone' for compatibility
-    phone = data.get("requester_phone") or data.get("phone", "")
-
-    # Validate required fields
-    required = ["hospital_id", "resource_type", "hold_type", "severity"]
-    if not all(k in data for k in required) or not phone:
-        return jsonify({"error": "Missing required fields: hospital_id, resource_type, hold_type, phone, severity"}), 400
+    if not hospital_id:
+        return jsonify({"error": "Missing required field: hospital_id"}), 400
 
     result = database.create_live_hold(
-        data["hospital_id"],
-        data["resource_type"],
-        data["hold_type"],
+        hospital_id,
+        resource_type,
+        hold_type,
         phone,
-        data["severity"]
+        severity
     )
 
     if "error" in result:
@@ -117,22 +147,96 @@ def create_hold():
 
 
 # ============================================================
-# ROUTE: Redeem Hold
+# ROUTE: Redeem Hold (Hard-Lock)
 # POST /api/holds/redeem
-# Body: { hospital_id, otp_code }
-# Returns: { success: true } or { error: "..." }
+# Body: { hospital_id, otp_code } or { hold_id, otp_code }
+# Returns: { success: true, status: "REDEEMED", bed_count }
 # ============================================================
 @app.route("/api/holds/redeem", methods=["POST"])
 def redeem_hold():
-    """Validates the 4-digit OTP when patient arrives at hospital."""
-    data = request.get_json()
-    if not data or "hospital_id" not in data or "otp_code" not in data:
-        return jsonify({"error": "Missing hospital_id or otp_code"}), 400
+    """Validates the 4-digit OTP when patient arrives at hospital, hard-locking the bed."""
+    data = request.get_json() or {}
+    otp_code = data.get("otp_code") or data.get("otp")
+    hospital_id = data.get("hospital_id")
+    hold_id = data.get("hold_id")
 
-    result = database.redeem_hold(data["hospital_id"], data["otp_code"])
+    if not otp_code:
+        return jsonify({"error": "Missing otp_code"}), 400
+
+    if hold_id and not hospital_id:
+        hold_info = database.get_hold_by_id(hold_id)
+        if "hospital_id" in hold_info:
+            hospital_id = hold_info["hospital_id"]
+
+    if not hospital_id:
+        return jsonify({"error": "Missing hospital_id or valid hold_id"}), 400
+
+    result = database.redeem_hold(hospital_id, str(otp_code))
     if "error" in result:
         return jsonify(result), 400
     return jsonify(result)
+
+
+# ============================================================
+# ROUTE: Manual Cancel Hold
+# POST /api/holds/cancel
+# Body: { hold_id, phone }
+# Returns: { success: true, status: "CANCELLED", bed_count }
+# ============================================================
+@app.route("/api/holds/cancel", methods=["POST"])
+def cancel_hold():
+    """Manually cancels active soft lock and restores bed count to pool."""
+    data = request.get_json() or {}
+    hold_id = data.get("hold_id")
+    phone = data.get("requester_phone") or data.get("phone")
+
+    if not hold_id:
+        return jsonify({"error": "Missing hold_id"}), 400
+
+    result = database.cancel_hold(hold_id, phone)
+    if "error" in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+# ============================================================
+# ROUTE: GPS Location & Vector Update
+# POST /api/holds/location_update
+# Body: { hold_id, user_lat, user_lng, heading, speed }
+# Returns: { status, movement_direction, current_eta_minutes, wrong_direction_count }
+# ============================================================
+@app.route("/api/holds/location_update", methods=["POST"])
+def update_location():
+    """Processes patient GPS updates, tracking directional vector and auto-cancelling if off-track."""
+    data = request.get_json() or {}
+    hold_id = data.get("hold_id")
+    user_lat = data.get("user_lat") if data.get("user_lat") is not None else data.get("lat")
+    user_lng = data.get("user_lng") if data.get("user_lng") is not None else data.get("lng")
+    heading = data.get("heading")
+    speed = data.get("speed")
+
+    if not hold_id or user_lat is None or user_lng is None:
+        return jsonify({"error": "Missing required fields: hold_id, user_lat, user_lng"}), 400
+
+    result = database.update_hold_location(hold_id, float(user_lat), float(user_lng), heading, speed)
+    if "error" in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+# ============================================================
+# ROUTE: Get Hold Details
+# GET /api/holds/<hold_id>
+# Returns: hold details object
+# ============================================================
+@app.route("/api/holds/<hold_id>", methods=["GET"])
+def get_hold_details(hold_id):
+    """Gets details and live countdown status of a specific hold."""
+    result = database.get_hold_by_id(hold_id)
+    if "error" in result:
+        return jsonify(result), 404
+    return jsonify(result)
+
 
 
 # ============================================================

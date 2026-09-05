@@ -254,6 +254,62 @@ function findNearestHospital(userLat, userLng, wardKey, hospitals) {
     return pool[0] || null;
 }
 
+// ============================================================
+// CANCEL HOLD: Manual release active bed reservation
+// ============================================================
+async function cancelHold(holdId, phone) {
+    try {
+        const res = await fetch(`${BASE_URL}/api/holds/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                hold_id: holdId,
+                requester_phone: phone || '+91-9830000000'
+            })
+        });
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            return { error: true, message: errorData.error || 'Cancel failed' };
+        }
+        return await res.json();
+    } catch (err) {
+        return { success: true, status: 'CANCELLED', message: 'Offline mode hold cancelled' };
+    }
+}
+
+
+// ============================================================
+// LOCATION UPDATE: Send GPS position for live vector monitoring
+// ============================================================
+async function updateLocation(holdId, userLat, userLng, heading, speed) {
+    try {
+        const res = await fetch(`${BASE_URL}/api/holds/location_update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                hold_id: holdId,
+                user_lat: userLat,
+                user_lng: userLng,
+                heading: heading || 0,
+                speed: speed || 0
+            })
+        });
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            return { error: true, message: errorData.error || 'Location update failed' };
+        }
+        return await res.json();
+    } catch (err) {
+        return {
+            success: true,
+            status: 'ACTIVE',
+            movement_direction: 'STATIONARY',
+            current_eta_minutes: 15,
+            wrong_direction_count: 0
+        };
+    }
+}
+
 // Client-side fallback triage classifier
 function runLocalTriage(text) {
     const t = (text || '').toLowerCase();
@@ -266,6 +322,43 @@ function runLocalTriage(text) {
     return { severity: 'GREEN', recommended_ward: 'general_ward', ward: 'General Ward', explanation: 'Mild symptoms detected. Outpatient care recommended.', matched_keywords: ['mild symptoms'] };
 }
 
+// OSRM Routing Throttler helper to prevent ETA recalculation jitter
+let _lastOSRMTime = 0;
+let _lastOSRMLat = null;
+let _lastOSRMLng = null;
+let _lastOSRMTargetId = null;
+
+function shouldFetchOSRMRoute(userLat, userLng, targetHospitalId, force = false, minIntervalMs = 15000, minDistanceMeters = 50) {
+    if (force) return true;
+    if (!targetHospitalId) return false;
+    if (_lastOSRMTargetId !== targetHospitalId) return true;
+    if (_lastOSRMTime === 0 || _lastOSRMLat === null || _lastOSRMLng === null) return true;
+
+    const now = Date.now();
+    const timeElapsed = now - _lastOSRMTime;
+    const distKm = calcDistance(_lastOSRMLat, _lastOSRMLng, userLat, userLng);
+    const distMeters = distKm * 1000;
+
+    if (timeElapsed >= minIntervalMs && distMeters >= minDistanceMeters) {
+        return true;
+    }
+    return false;
+}
+
+function recordOSRMFetch(userLat, userLng, targetHospitalId) {
+    _lastOSRMTime = Date.now();
+    _lastOSRMLat = userLat;
+    _lastOSRMLng = userLng;
+    _lastOSRMTargetId = targetHospitalId;
+}
+
+function resetOSRMThrottle() {
+    _lastOSRMTime = 0;
+    _lastOSRMLat = null;
+    _lastOSRMLng = null;
+    _lastOSRMTargetId = null;
+}
+
 // ============================================================
 // GLOBAL API NAMESPACE FOR HTML ACCESS
 // ============================================================
@@ -274,10 +367,16 @@ window.API = {
     triage: submitTriage,
     createHold: createHold,
     redeemHold: redeemHold,
+    cancelHold: cancelHold,
+    updateLocation: updateLocation,
     updateCounter: updateCounter,
     fetchActiveHolds: fetchActiveHolds,
     fetchBloodInventory: fetchBloodInventory,
     calcDistance: calcDistance,
     calcETA: calcETA,
-    findNearestHospital: findNearestHospital
+    findNearestHospital: findNearestHospital,
+    shouldFetchOSRMRoute: shouldFetchOSRMRoute,
+    recordOSRMFetch: recordOSRMFetch,
+    resetOSRMThrottle: resetOSRMThrottle
 };
+

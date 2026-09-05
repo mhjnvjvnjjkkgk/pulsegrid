@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PulseGrid | Real-Time Emergency Bed Finder — Kolkata</title>
-  <meta name="description" content="Find emergency hospital beds in real time across 30 hospitals in Kolkata. Instant triage, guaranteed bed holds, no sign-up required.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PulseGrid | Real-Time Emergency Bed & Blood Finder — Kolkata</title>
+  <meta name="description" content="Find emergency hospital beds and blood stock in real time across 30 hospitals in Kolkata. Instant triage, guaranteed bed holds, no sign-up required.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,79 +20,48 @@
 </head>
 <body>
 
-<!-- Ambient background orbs -->
-<div class="orb orb-blue"></div>
-<div class="orb orb-purple"></div>
-<div class="orb orb-cyan"></div>
-
-<!-- ═══════════════════════════════════════
-     HEADER
-════════════════════════════════════════ -->
-<header class="site-header">
-  <a href="/" class="logo-wrap">
-    <div class="logo-icon">
-      <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-        <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-      </svg>
-    </div>
-    <span class="logo-text">PulseGrid</span>
-  </a>
-
-  <div style="display:flex; align-items:center; gap:12px;">
-    <div class="live-badge">
-      <span class="live-dot"></span>
-      <span id="live-count">30</span> Hospitals Live
-    </div>
-    <a href="admin/" id="desk-btn" class="header-desk-btn" style="
-      padding: 6px 16px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #94a3b8;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
-    ">Hospital Desk →</a>
-  </div>
-</header>
-
-<main>
+  <!-- Ambient background orbs -->
+  <div class="orb orb-blue"></div>
+  <div class="orb orb-purple"></div>
+  <div class="orb orb-cyan"></div>
 
   <!-- ═══════════════════════════════════════
-       HERO + TRIAGE SEARCH
+       1. FULL-SCREEN MAP CANVAS (BACKGROUND)
   ════════════════════════════════════════ -->
-  <section class="hero fade-in">
-    <div class="hero-badge">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-      Smart India Hackathon 2026 — SIH Team PulseGrid
+  <div id="map-container">
+    <div id="map"></div>
+    <div class="route-banner" id="route-banner" style="display:none;">
+      <span class="route-banner-badge">📍 LIVE ROUTE</span>
+      <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
+      <span style="opacity:0.4;">|</span>
+      <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
+      <span style="opacity:0.4;">|</span>
+      <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       2. FLOATING TOP NAVIGATION & UNIFIED SEARCH OVERLAY
+  ════════════════════════════════════════ -->
+  <div class="floating-top-nav">
+    <div class="nav-header-row">
+      <a href="/" class="logo-wrap">
+        <div class="logo-icon">
+          <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <span class="logo-text">PulseGrid</span>
+      </a>
+
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        <span id="live-count">30</span> Hospitals Live
+      </div>
     </div>
 
-    <h1 class="hero-title">Find Emergency Care.<br>Right Now.</h1>
-    <p class="hero-sub">Real-time bed availability across 30 hospitals in Kolkata. Describe your condition and we'll find the right ward instantly.</p>
-
-    <!-- Hackathon Judge Quick Demo Bar -->
-    <div class="judge-demo-bar delay-1" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-      <span style="font-size:0.75rem; font-weight:700; color:var(--amber); letter-spacing:0.04em;">⚡ HACKATHON JUDGE DEMO:</span>
-      <button class="judge-demo-btn" onclick="runJudgeDemo(1)">🚨 1: Chest Pain (ESI-1)</button>
-      <button class="judge-demo-btn" onclick="runJudgeDemo(2)">👶 2: Child Seizure (ESI-2)</button>
-      <button class="judge-demo-btn" onclick="runJudgeDemo(3)">🩸 3: O- Negative Blood</button>
-    </div>
-
-    <!-- Quick symptom chips -->
-    <div class="quick-chips delay-1">
-      <button class="chip" data-query="severe chest pain and shortness of breath">🫀 Chest/Heart</button>
-      <button class="chip" data-query="severe bleeding from trauma injury">🩸 Trauma</button>
-      <button class="chip" data-query="active labor and water broke">🤰 Maternity</button>
-      <button class="chip" data-query="child convulsion and high fever">👶 Pediatric</button>
-      <button class="chip" data-query="stroke face drooping arm weakness">🧠 Stroke</button>
-      <button class="chip" data-query="stomach pain and vomiting">🤢 Stomach</button>
-      <button class="chip" data-query="snake bite">🐍 Snake Bite</button>
-      <button class="chip" data-query="breathlessness asthma attack">💨 Breathing</button>
-    </div>
-
-    <!-- Main triage search bar -->
-    <div class="triage-bar delay-2">
+    <!-- Main Unified Triage & Blood Search Bar -->
+    <div class="triage-bar" style="margin-bottom:0;">
       <div class="search-wrap">
         <svg width="18" height="18" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -101,26 +70,38 @@
           id="symptom-input"
           class="search-input"
           type="text"
-          placeholder="Describe symptoms… e.g. 'amar chhati fatya jacche' or 'pet me dard'"
+          placeholder="Describe symptoms or blood group… e.g. 'O- negative blood' or 'chhati me dard'"
           autocomplete="off"
         >
-        <button id="voice-mic-btn" class="voice-mic-btn" title="Tap for Voice Triage (Hinglish & Benglish auto-detect)">
+        <button id="voice-mic-btn" class="voice-mic-btn" title="Tap for Voice Triage (English, Hinglish & Benglish auto-detect)">
           🎙️
         </button>
         <button id="triage-btn" class="search-btn">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>Analyse</span>
+          <span>Search</span>
         </button>
       </div>
       <div id="voice-recording-banner" class="voice-recording-banner" style="display:none;">
         <span class="live-rec-dot"></span>
-        <span>🔴 Listening... Speak emergency symptoms in Benglish, Hinglish, or English</span>
+        <span>🔴 Listening... Speak emergency symptoms or blood group in Benglish, Hinglish, or English</span>
       </div>
     </div>
 
-    <!-- Triage result (hidden until search) -->
+    <!-- Quick symptom & blood chips -->
+    <div class="quick-chips" style="margin-bottom:0; justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom:4px;">
+      <button class="chip" data-query="severe chest pain and shortness of breath">🫀 Chest/Heart</button>
+      <button class="chip" data-query="O- negative blood needed">🩸 O- Blood</button>
+      <button class="chip" data-query="severe bleeding from trauma injury">🩸 Trauma</button>
+      <button class="chip" data-query="active labor and water broke">🤰 Maternity</button>
+      <button class="chip" data-query="child convulsion and high fever">👶 Pediatric</button>
+      <button class="chip" data-query="stroke face drooping arm weakness">🧠 Stroke</button>
+      <button class="chip" data-query="stomach pain and vomiting">🤢 Stomach</button>
+      <button class="chip" data-query="snake bite">🐍 Snake Bite</button>
+    </div>
+
+    <!-- Triage result banner (hidden until search) -->
     <div class="triage-result" id="triage-result">
       <div class="triage-card glass" id="triage-card">
         <div class="triage-header">
@@ -131,66 +112,24 @@
         <div class="triage-keywords" id="triage-keywords"></div>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ═══════════════════════════════════════
-       SPLIT VIEW: MAP + HOSPITAL CARDS
+       3. SLIDABLE BOTTOM SHEET DRAWER (NATIVE GOOGLE MAPS UX)
   ════════════════════════════════════════ -->
-  <div class="split-view">
-
-    <!-- LEFT: Map & Inline Reservation Panel -->
-    <div style="display:flex; flex-direction:column; gap:12px;">
-      <div class="map-panel glass" style="position:relative;">
-        <div id="map"></div>
-        <div class="route-banner" id="route-banner" style="display:none;">
-          <span class="route-banner-badge">📍 LIVE ROUTE</span>
-          <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
-          <span style="opacity:0.4;">|</span>
-          <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
-          <span style="opacity:0.4;">|</span>
-          <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
-        </div>
-      </div>
-
-      <!-- INLINE RESERVATION & NAVIGATION PANEL (Below Map) -->
-      <div class="inline-reservation-panel" id="inline-reservation-panel" style="display:none;">
-        <div class="inline-res-top">
-          <div>
-            <div class="inline-res-hosp-name" id="inline-hosp-name">SSKM Hospital</div>
-            <div class="inline-res-hosp-address" id="inline-hosp-address">188 AJC Bose Road, Kolkata</div>
-          </div>
-          <div class="inline-res-timer-badge">
-            <span class="inline-res-timer-label">Hold Expiry</span>
-            <span class="inline-res-timer-val" id="inline-timer-val">15:00</span>
-          </div>
-        </div>
-
-        <div class="inline-res-otp-box">
-          <div>
-            <div style="font-size:0.75rem; color:var(--text-2); font-weight:600;">PRESENT OTP TO HOSPITAL DESK</div>
-            <div style="font-size:0.70rem; color:#10b981; margin-top:2px;" id="gps-status-tag">📍 GPS Active — 15 Min Hold Auto-Extending</div>
-          </div>
-          <div class="inline-res-otp-code" id="inline-otp-code">8492</div>
-        </div>
-
-        <a class="gmaps-btn" id="inline-gmaps-link" href="#" target="_blank">
-          🗺 Open Turn-by-Turn in Google Maps
-        </a>
-      </div>
+  <div class="bottom-sheet state-peek" id="bottom-sheet">
+    <div class="bottom-sheet-handle" id="bottom-sheet-handle" title="Drag or tap to expand/collapse hospital list">
+      <div class="handle-bar"></div>
     </div>
 
-    <!-- RIGHT: Scrollable hospital cards -->
-    <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
-
-      <!-- Column header + filters -->
-      <div class="col-header" style="flex-shrink:0;">
-        <div>
-          <div class="col-title">Nearest Hospitals</div>
-        </div>
+    <div class="sheet-header">
+      <div class="col-header" style="margin-bottom:8px;">
+        <div class="col-title" id="sheet-title">Nearest Hospitals & Bed Availability</div>
         <span class="col-count" id="card-count">Loading…</span>
       </div>
 
-      <div class="filter-bar" style="flex-shrink:0;">
+      <!-- Filter bar inside sheet header -->
+      <div class="filter-bar" style="overflow-x: auto; flex-wrap: nowrap; padding-bottom:4px;">
         <button class="filter-btn active" data-filter="all">All Wards</button>
         <button class="filter-btn" data-filter="cardiac">❤️ Cardiac ICU</button>
         <button class="filter-btn" data-filter="adult_icu">🏥 Adult ICU</button>
@@ -202,10 +141,56 @@
         <button class="filter-btn blood-filter-btn" data-blood="B+">🩸 B+</button>
         <button class="filter-btn blood-filter-btn" data-blood="O+">🩸 O+</button>
       </div>
+    </div>
 
+    <!-- Scrollable content container inside sheet -->
+    <div class="sheet-content">
+
+      <!-- INLINE RESERVATION & NAVIGATION PANEL -->
+      <div class="inline-reservation-panel" id="inline-reservation-panel" style="display:none; margin-bottom: 14px;">
+        <div class="inline-res-top">
+          <div>
+            <div class="inline-res-hosp-name" id="inline-hosp-name">SSKM Hospital</div>
+            <div class="inline-res-hosp-address" id="inline-hosp-address">188 AJC Bose Road, Kolkata</div>
+          </div>
+          <div class="inline-res-timer-badge">
+            <span class="inline-res-timer-label">Hold Status</span>
+            <span class="inline-res-timer-val" id="inline-timer-val">15:00</span>
+            <span id="live-eta-badge" style="display:none; background:#10b981; color:#fff; font-weight:800; padding:4px 8px; border-radius:8px; font-size:0.85rem;">🚗 LIVE ETA: 12 mins</span>
+          </div>
+        </div>
+
+        <div class="inline-res-otp-box">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-2); font-weight:600;">PRESENT OTP TO HOSPITAL DESK</div>
+            <div style="font-size:0.70rem; color:#10b981; margin-top:2px;" id="gps-status-tag">📍 GPS Active — 15 Min Soft Lock</div>
+          </div>
+          <div class="inline-res-otp-code" id="inline-otp-code">8492</div>
+        </div>
+
+        <!-- Quick-Dial Action Buttons (Post-Booking State) -->
+        <div class="post-booking-actions" id="post-booking-actions" style="display:flex; gap:8px; margin-top:10px; width:100%;">
+          <a id="inline-call-amb-btn" href="tel:108" class="btn-quick-dial amb-btn" style="flex:1; padding:12px; background:#f43f5e; color:#fff; border-radius:12px; text-align:center; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+            🚑 Call Ambulance (108)
+          </a>
+          <a id="inline-call-hosp-btn" href="tel:102" class="btn-quick-dial hosp-btn" style="flex:1; padding:12px; background:#38bdf8; color:#fff; border-radius:12px; text-align:center; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+            📞 Call Hospital
+          </a>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <a class="gmaps-btn" id="inline-gmaps-link" href="#" target="_blank" style="flex:1;">
+            🗺 Open Turn-by-Turn in Google Maps
+          </a>
+          <button id="inline-cancel-hold-btn" style="padding:10px 14px; background:rgba(244,63,94,0.2); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; border-radius:12px; font-weight:700; cursor:pointer;">
+            ✕ Cancel Hold
+          </button>
+        </div>
+      </div>
+
+      <!-- Hospital Cards Container -->
       <div class="cards-col" id="cards-col">
         <!-- Skeleton loaders -->
-        <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
         <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
         <div class="glass hosp-card" style="height:180px;"><div class="skeleton" style="height:100%; border-radius:var(--r-md);"></div></div>
       </div>
@@ -213,915 +198,1236 @@
   </div>
 
   <!-- ═══════════════════════════════════════
-       FLOATING EMERGENCY ACTION COCKPIT (Mobile & PC)
+       4. FLOATING EMERGENCY ACTION COCKPIT (Mobile & PC)
   ════════════════════════════════════════ -->
   <div class="emergency-cockpit" id="emergency-cockpit" style="display:none;">
     <button class="cockpit-btn-primary" id="cockpit-lock-btn">
       🔒 LOCK ROUTE & RESERVE BED — <span id="cockpit-eta-tag">12 mins</span>
     </button>
-    <div class="cockpit-row">
+    <div class="cockpit-row" id="cockpit-call-row">
       <a class="cockpit-btn-secondary" id="cockpit-call-hosp-btn" href="tel:102">
         📞 Call Hospital
       </a>
-      <button class="cockpit-btn-secondary" id="cockpit-call-amb-btn" style="cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
+      <a class="cockpit-btn-secondary" id="cockpit-call-amb-btn" href="tel:108" style="cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
         🚑 Call Ambulance (108)
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       5. EMERGENCY AMBULANCE DISPATCH MODAL
+  ════════════════════════════════════════ -->
+  <div class="amb-modal-overlay" id="amb-modal-overlay">
+    <div class="amb-modal-card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; color:#ffffff;">🚑 Dispatch Ambulance</div>
+          <div style="font-size:0.78rem; color:var(--text-2);">Select emergency ambulance hotline for Kolkata region:</div>
+        </div>
+        <button id="amb-modal-close" style="background:none; border:none; color:var(--text-2); font-size:1.4rem; cursor:pointer;">✕</button>
+      </div>
+
+      <a class="amb-option-card" href="tel:108">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:#f43f5e;">🚑 108 — National Emergency Response</div>
+          <div style="font-size:0.75rem; color:var(--text-2);">Govt Free Emergency Ambulance • 24/7</div>
+        </div>
+        <span style="font-weight:800; color:#10b981; font-size:0.85rem;">DIAL 108</span>
+      </a>
+
+      <a class="amb-option-card" href="tel:102">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:#38bdf8;">🚑 102 — WB Health Emergency Hotline</div>
+          <div style="font-size:0.75rem; color:var(--text-2);">State Medical Emergency Dispatch</div>
+        </div>
+        <span style="font-weight:800; color:#38bdf8; font-size:0.85rem;">DIAL 102</span>
+      </a>
+
+      <a class="amb-option-card" href="tel:1066">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:var(--amber);">🚑 1066 — Apollo Cardiac ICU Express</div>
+          <div style="font-size:0.75rem; color:var(--text-2);">Advanced Cardiac Mobile ICU</div>
+        </div>
+        <span style="font-weight:800; color:var(--amber); font-size:0.85rem;">DIAL 1066</span>
+      </a>
+
+      <a class="amb-option-card" href="tel:10501">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:var(--purple);">🚑 10501 — Fortis Mobile ICU Response</div>
+          <div style="font-size:0.75rem; color:var(--text-2);">Trauma & Cardiac Mobile ICU</div>
+        </div>
+        <span style="font-weight:800; color:var(--purple); font-size:0.85rem;">DIAL 10501</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       6. HOLD MODAL (OTP + countdown)
+  ════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card glass glass-xl">
+      <div style="font-size:2rem; margin-bottom:8px;">🏥</div>
+      <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700;" id="modal-hosp-name">Hospital Name</div>
+      <div style="font-size:0.82rem; color:var(--text-2); margin:4px 0 16px;" id="modal-ward-name">Ward</div>
+
+      <div style="font-size:0.82rem; color:var(--text-3); margin-bottom:4px;">YOUR HOLD CODE</div>
+      <div class="modal-otp" id="modal-otp">- - - -</div>
+      <button class="otp-copy-btn" id="otp-copy-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+        </svg>
+        Copy Code
       </button>
+
+      <!-- Countdown ring -->
+      <div class="countdown-wrap" style="margin:20px auto;">
+        <svg class="countdown-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle class="countdown-bg" cx="50" cy="50" r="40"/>
+          <circle class="countdown-arc" id="countdown-arc" cx="50" cy="50" r="40"
+            stroke-dasharray="251.3"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="countdown-text" id="countdown-text">15:00</div>
+      </div>
+
+      <p style="font-size:0.82rem; color:var(--text-2); margin-bottom:20px; line-height:1.5;">
+        Show this code at the <strong style="color:var(--text-1);">hospital reception</strong> within the time shown.<br>
+        A bed is reserved in your name.
+      </p>
+
+      <button id="modal-close-btn" style="
+        padding:10px 28px;
+        border-radius:var(--r-md);
+        background:rgba(255,255,255,0.07);
+        border:1px solid var(--glass-border);
+        color:var(--text-1);
+        font-size:0.9rem;
+        cursor:pointer;
+      ">Close</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       7. WRONG DIRECTION ALERT MODAL
+  ════════════════════════════════════════ -->
+  <div class="modal-overlay" id="wrong-direction-modal-overlay">
+    <div class="modal-card glass glass-xl" style="text-align:center; max-width:420px; padding:24px;">
+      <div style="font-size:2.5rem; margin-bottom:8px;">⚠️</div>
+      <div style="font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:800; color:#f43f5e;">Wrong Direction Alert</div>
+      <p style="font-size:0.88rem; color:var(--text-2); margin:12px 0 20px; line-height:1.5;">
+        You are moving away from <strong id="wd-hosp-name" style="color:var(--text-1);">the hospital</strong>.<br>
+        Your bed soft lock will be automatically cancelled if you continue moving in the wrong direction.
+      </p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="wd-keep-btn" style="padding:10px 20px; border-radius:var(--r-md); background:#38bdf8; border:none; color:#fff; font-weight:700; cursor:pointer;">
+          Keep Reservation
+        </button>
+        <button id="wd-cancel-btn" style="padding:10px 20px; border-radius:var(--r-md); background:rgba(244,63,94,0.2); border:1px solid rgba(244,63,94,0.4); color:#f43f5e; font-weight:700; cursor:pointer;">
+          Cancel Hold Now
+        </button>
+      </div>
     </div>
   </div>
 
-</main>
+  <script src="js/api.js"></script>
+  <script>
+  /* ================================================================
+     PulseGrid — Citizen App v2 (Milestone 1 Map & Search UX)
+  ================================================================ */
 
-<!-- ═══════════════════════════════════════
-     EMERGENCY AMBULANCE DISPATCH DRAWER
-════════════════════════════════════════ -->
-<div class="amb-modal-overlay" id="amb-modal-overlay">
-  <div class="amb-modal-card">
-    <div style="display:flex; align-items:center; justify-content:space-between;">
-      <div>
-        <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; color:#ffffff;">🚑 Dispatch Ambulance</div>
-        <div style="font-size:0.78rem; color:var(--text-2);">Select emergency ambulance hotline for Kolkata region:</div>
-      </div>
-      <button id="amb-modal-close" style="background:none; border:none; color:var(--text-2); font-size:1.4rem; cursor:pointer;">✕</button>
-    </div>
+  /* ── State ── */
+  let allHospitals    = [];
+  let markers         = {};          // id → Leaflet marker
+  let activeFilter    = 'all';
+  let triageWard      = null;        // recommended ward from triage
+  let countdownTimer  = null;
+  let countdownEnd    = null;
 
-    <a class="amb-option-card" href="tel:108">
-      <div>
-        <div style="font-weight:700; font-size:0.95rem; color:#f43f5e;">🚑 108 — National Emergency Response</div>
-        <div style="font-size:0.75rem; color:var(--text-2);">Govt Free Emergency Ambulance • 24/7</div>
-      </div>
-      <span style="font-weight:800; color:#10b981; font-size:0.85rem;">DIAL 108</span>
-    </a>
+  /* ── Live GPS & Route State ── */
+  let userLat = 22.5392; // Default Kolkata center
+  let userLng = 88.3433;
+  let userMarker = null;
+  let routePolyline = null;
+  let activeTargetHospital = null;
+  let currentSheetState = 'peek'; // 'peek', 'expanded', 'collapsed'
 
-    <a class="amb-option-card" href="tel:102">
-      <div>
-        <div style="font-weight:700; font-size:0.95rem; color:#38bdf8;">🚑 102 — WB Health Emergency Hotline</div>
-        <div style="font-size:0.75rem; color:var(--text-2);">State Medical Emergency Dispatch</div>
-      </div>
-      <span style="font-weight:800; color:#38bdf8; font-size:0.85rem;">DIAL 102</span>
-    </a>
-
-    <a class="amb-option-card" href="tel:1066">
-      <div>
-        <div style="font-weight:700; font-size:0.95rem; color:var(--amber);">🚑 1066 — Apollo Cardiac ICU Express</div>
-        <div style="font-size:0.75rem; color:var(--text-2);">Advanced Cardiac Mobile ICU</div>
-      </div>
-      <span style="font-weight:800; color:var(--amber); font-size:0.85rem;">DIAL 1066</span>
-    </a>
-
-    <a class="amb-option-card" href="tel:10501">
-      <div>
-        <div style="font-weight:700; font-size:0.95rem; color:var(--purple);">🚑 10501 — Fortis Mobile ICU Response</div>
-        <div style="font-size:0.75rem; color:var(--text-2);">Trauma & Cardiac Mobile ICU</div>
-      </div>
-      <span style="font-weight:800; color:var(--purple); font-size:0.85rem;">DIAL 10501</span>
-    </a>
-  </div>
-</div>
-
-</main>
-
-<!-- ═══════════════════════════════════════
-     HOLD MODAL (OTP + countdown)
-════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-card glass glass-xl">
-    <div style="font-size:2rem; margin-bottom:8px;">🏥</div>
-    <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700;" id="modal-hosp-name">Hospital Name</div>
-    <div style="font-size:0.82rem; color:var(--text-2); margin:4px 0 16px;" id="modal-ward-name">Ward</div>
-
-    <div style="font-size:0.82rem; color:var(--text-3); margin-bottom:4px;">YOUR HOLD CODE</div>
-    <div class="modal-otp" id="modal-otp">- - - -</div>
-    <button class="otp-copy-btn" id="otp-copy-btn">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-      </svg>
-      Copy Code
-    </button>
-
-    <!-- Countdown ring -->
-    <div class="countdown-wrap" style="margin:20px auto;">
-      <svg class="countdown-svg" width="100" height="100" viewBox="0 0 100 100">
-        <circle class="countdown-bg" cx="50" cy="50" r="40"/>
-        <circle class="countdown-arc" id="countdown-arc" cx="50" cy="50" r="40"
-          stroke-dasharray="251.3"
-          stroke-dashoffset="0"/>
-      </svg>
-      <div class="countdown-text" id="countdown-text">15:00</div>
-    </div>
-
-    <p style="font-size:0.82rem; color:var(--text-2); margin-bottom:20px; line-height:1.5;">
-      Show this code at the <strong style="color:var(--text-1);">hospital reception</strong> within the time shown.<br>
-      A bed is reserved in your name.
-    </p>
-
-    <button id="modal-close-btn" style="
-      padding:10px 28px;
-      border-radius:var(--r-md);
-      background:rgba(255,255,255,0.07);
-      border:1px solid var(--glass-border);
-      color:var(--text-1);
-      font-size:0.9rem;
-      cursor:pointer;
-    ">Close</button>
-  </div>
-</div>
-
-
-<script src="js/api.js"></script>
-<script>
-/* ================================================================
-   PulseGrid — Citizen App v2
-   Written by Team PulseGrid (SIH 2026)
-================================================================ */
-
-/* ── State ── */
-let allHospitals    = [];
-let markers         = {};          // id → Leaflet marker
-let activeFilter    = 'all';
-let triageWard      = null;        // recommended ward from triage
-let countdownTimer  = null;
-let countdownEnd    = null;
-
-/* ── Live GPS & Route State ── */
-let userLat = 22.5392; // Default Kolkata center
-let userLng = 88.3433;
-let userMarker = null;
-let routePolyline = null;
-let activeTargetHospital = null;
-
-/* ── Leaflet Map init ── */
-const map = L.map('map', {
-  center: [22.5726, 88.3639],   // Kolkata city centre
-  zoom: 12,
-  zoomControl: true,
-  attributionControl: false,
-});
-
-// Free OpenStreetMap tiles — ZERO API KEY required
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '© OpenStreetMap'
-}).addTo(map);
-
-L.control.attribution({ prefix: false })
-  .addAttribution('© <a href="https://openstreetmap.org">OpenStreetMap</a>')
-  .addTo(map);
-
-/* ── Initialize GPS Geolocation Tracking ── */
-function initGPS() {
-  const bluePulseIcon = L.divIcon({
-    className: '',
-    html: `<div style="position:relative; width:22px; height:22px;">
-             <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
-             <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
-           </div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11]
+  /* ── Leaflet Map init ── */
+  const map = L.map('map', {
+    center: [22.5726, 88.3639],   // Kolkata city centre
+    zoom: 12,
+    zoomControl: true,
+    attributionControl: false,
   });
 
-  if ("geolocation" in navigator) {
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
-        if (!userMarker) {
-          userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-          userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
-        } else {
-          userMarker.setLatLng([userLat, userLng]);
-        }
-        if (activeTargetHospital) {
-          updateRouteToHospital(activeTargetHospital);
+  // Free OpenStreetMap tiles — ZERO API KEY required
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-          // GPS Movement Telemetry Check: Auto-extend 5-min hold if user is moving towards destination
-          if (holdHospital && activeTargetHospital.id === holdHospital.id && remainingHoldSeconds > 0) {
-            const curDist = API.calcDistance ? API.calcDistance(userLat, userLng, holdHospital.latitude, holdHospital.longitude) : 4.2;
-            if (lastDistanceToHospital !== null && curDist < lastDistanceToHospital - 0.03) {
-              remainingHoldSeconds = 900; // Reset to 15 mins
-              const tag = document.getElementById('gps-status-tag');
-              if (tag) {
-                tag.textContent = '📍 GPS Movement Detected — 15 Min Hold Extended';
-                tag.style.color = '#10b981';
-              }
-            }
-            lastDistanceToHospital = curDist;
+  L.control.attribution({ prefix: false })
+    .addAttribution('© <a href="https://openstreetmap.org">OpenStreetMap</a>')
+    .addTo(map);
+
+  /* ── Bottom Sheet Drawer State Toggle ── */
+  function setSheetState(state) {
+    const sheet = document.getElementById('bottom-sheet');
+    if (!sheet) return;
+    sheet.classList.remove('state-peek', 'state-expanded', 'state-collapsed');
+    sheet.classList.add(`state-${state}`);
+    currentSheetState = state;
+  }
+
+  function initBottomSheet() {
+    const handle = document.getElementById('bottom-sheet-handle');
+    if (!handle) return;
+
+    handle.addEventListener('click', () => {
+      if (currentSheetState === 'peek') {
+        setSheetState('expanded');
+      } else if (currentSheetState === 'expanded') {
+        setSheetState('peek');
+      } else {
+        setSheetState('peek');
+      }
+    });
+  }
+
+  /* ── Initialize GPS Geolocation Tracking ── */
+  function initGPS() {
+    const bluePulseIcon = L.divIcon({
+      className: '',
+      html: `<div style="position:relative; width:22px; height:22px;">
+               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
+               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
+             </div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          if (!userMarker) {
+            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+            userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
+          } else {
+            userMarker.setLatLng([userLat, userLng]);
           }
-        }
-      },
-      (err) => {
-        console.warn("GPS permission denied or unavailable, using central Kolkata position");
-        if (!userMarker) {
-          userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-          userMarker.bindPopup("<b>📍 Default Location (Kolkata)</b>", { autoClose: false });
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
-    );
-  }
-}
+          if (activeTargetHospital) {
+            updateRouteToHospital(activeTargetHospital);
 
-let osrmRequestToken = 0;
+            if (holdHospital && activeTargetHospital.id === holdHospital.id && remainingHoldSeconds > 0) {
+              const curDist = API.calcDistance ? API.calcDistance(userLat, userLng, holdHospital.latitude, holdHospital.longitude) : 4.2;
+              if (lastDistanceToHospital !== null && curDist < lastDistanceToHospital - 0.03) {
+                remainingHoldSeconds = 900; // Reset to 15 mins
+              }
+              lastDistanceToHospital = curDist;
+            }
+          }
 
-/* ── Draw street-level road network route line to target hospital (OSRM) ── */
-async function updateRouteToHospital(h) {
-  if (!h || !h.latitude || !h.longitude) return;
-  activeTargetHospital = h;
-  const currentToken = ++osrmRequestToken;
-
-  if (routePolyline) {
-    map.removeLayer(routePolyline);
-    routePolyline = null;
-  }
-
-  // Initial estimate calculation
-  let distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-  let etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
-
-  // Immediate UI update with estimated stats
-  const banner = document.getElementById('route-banner');
-  if (banner) {
-    banner.style.display = 'flex';
-    document.getElementById('route-hosp-name').textContent = h.name;
-    document.getElementById('route-eta').textContent = `🚗 ${etaStr}`;
-    document.getElementById('route-dist').textContent = `${distKm} km`;
-  }
-
-  const cockpit = document.getElementById('emergency-cockpit');
-  if (cockpit) {
-    cockpit.style.display = 'flex';
-    document.getElementById('cockpit-eta-tag').textContent = `${etaStr} • ${h.name.split(' ')[0]}`;
-    const callHospBtn = document.getElementById('cockpit-call-hosp-btn');
-    if (callHospBtn) {
-      callHospBtn.href = `tel:${h.emergency_phone || h.phone}`;
-      callHospBtn.innerHTML = `📞 Call ${h.name.split(' ')[0]}`;
+          if (activeHoldId && holdHospital) {
+            API.updateLocation(activeHoldId, userLat, userLng).then(res => {
+              if (res) {
+                if (res.auto_cancelled || res.status === 'CANCELLED') {
+                  optimisticallyRestoreBed(holdHospital.id, activeHoldWardKey);
+                  activeHoldId = null;
+                  holdHospital = null;
+                  clearInterval(holdCountdownTimer);
+                  updatePostBookingUI(false);
+                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
+                  if (wdModal) wdModal.classList.remove('active');
+                  const tag = document.getElementById('gps-status-tag');
+                  if (tag) {
+                    tag.textContent = '❌ Hold Auto-Cancelled (Wrong Direction Vector)';
+                    tag.style.color = '#f43f5e';
+                  }
+                  alert('⚠️ Reservation auto-cancelled: Moving away from hospital. Bed restored to emergency pool.');
+                } else if (res.movement_direction === 'TOWARD') {
+                  const timerValEl = document.getElementById('inline-timer-val');
+                  const liveEtaBadge = document.getElementById('live-eta-badge');
+                  if (timerValEl) timerValEl.style.display = 'none';
+                  if (liveEtaBadge) {
+                    liveEtaBadge.style.display = 'inline-block';
+                    liveEtaBadge.textContent = `🚗 LIVE ETA: ${Math.round(res.current_eta_minutes || 10)} mins`;
+                  }
+                  const tag = document.getElementById('gps-status-tag');
+                  if (tag) {
+                    tag.textContent = '📍 GPS Vector Active — Moving Toward Hospital';
+                    tag.style.color = '#10b981';
+                  }
+                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
+                  if (wdModal) wdModal.classList.remove('active');
+                } else if (res.movement_direction === 'STATIONARY') {
+                  const timerValEl = document.getElementById('inline-timer-val');
+                  const liveEtaBadge = document.getElementById('live-eta-badge');
+                  if (timerValEl) timerValEl.style.display = 'inline-block';
+                  if (liveEtaBadge) liveEtaBadge.style.display = 'none';
+                  const tag = document.getElementById('gps-status-tag');
+                  if (tag) {
+                    tag.textContent = '📍 GPS Active — 15 Min Soft Lock Countdown';
+                    tag.style.color = '#38bdf8';
+                  }
+                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
+                  if (wdModal) wdModal.classList.remove('active');
+                } else if (res.movement_direction === 'AWAY' || (res.wrong_direction_count && res.wrong_direction_count >= 2)) {
+                  const wdModal = document.getElementById('wrong-direction-modal-overlay');
+                  const wdHospName = document.getElementById('wd-hosp-name');
+                  if (wdHospName && holdHospital) wdHospName.textContent = holdHospital.name;
+                  if (wdModal) wdModal.classList.add('active');
+                  const tag = document.getElementById('gps-status-tag');
+                  if (tag) {
+                    tag.textContent = `⚠️ Moving Away — Warning #${res.wrong_direction_count || 1}/3`;
+                    tag.style.color = '#f43f5e';
+                  }
+                }
+              }
+            });
+          }
+        },
+        (err) => {
+          console.warn("GPS permission denied or unavailable, using central Kolkata position");
+          if (!userMarker) {
+            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+            userMarker.bindPopup("<b>📍 Default Location (Kolkata)</b>", { autoClose: false });
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
     }
   }
 
-  // Fetch true turn-by-turn street navigation geometry from OSRM
-  try {
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${h.longitude},${h.latitude}?overview=full&geometries=geojson`;
-    const resp = await fetch(osrmUrl);
-    const data = await resp.json();
+  let osrmRequestToken = 0;
 
-    if (currentToken !== osrmRequestToken) return; // Stale request guard
+  /* ── Draw street-level road network route line to target hospital (OSRM) ── */
+  async function updateRouteToHospital(h, forceFetch = false) {
+    if (!h || !h.latitude || !h.longitude) return;
+    
+    const hospitalChanged = !activeTargetHospital || activeTargetHospital.id !== h.id;
+    activeTargetHospital = h;
 
-    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-      const route = data.routes[0];
-      const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]); // GeoJSON [lng, lat] -> Leaflet [lat, lng]
+    let distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+    let etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
 
-      const realDistKm = (route.distance / 1000).toFixed(1);
-      // OSRM duration in seconds + Kolkata urban car traffic congestion multiplier (1.75x)
-      const realEtaMins = Math.max(5, Math.round((route.duration * 1.75) / 60));
-      const realEtaStr = `${realEtaMins} mins`;
+    const banner = document.getElementById('route-banner');
+    if (banner) {
+      banner.style.display = 'flex';
+      document.getElementById('route-hosp-name').textContent = h.name;
+      document.getElementById('route-eta').textContent = `🚗 ${etaStr}`;
+      document.getElementById('route-dist').textContent = `${distKm} km`;
+    }
 
-      if (routePolyline) map.removeLayer(routePolyline);
-
-      // Render sleek Google-Maps style cyan street line
-      routePolyline = L.polyline(roadCoords, {
-        color: '#38bdf8',
-        weight: 6,
-        opacity: 0.92,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }).addTo(map);
-
-      map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
-
-      // Update banner & cockpit with true road network distance & driving time
-      if (banner) {
-        document.getElementById('route-eta').textContent = `🚗 ${realEtaStr}`;
-        document.getElementById('route-dist').textContent = `${realDistKm} km`;
+    const cockpit = document.getElementById('emergency-cockpit');
+    if (cockpit && cockpit.style.display !== 'none' && !activeHoldId) {
+      document.getElementById('cockpit-eta-tag').textContent = `${etaStr} • ${h.name.split(' ')[0]}`;
+      const callHospBtn = document.getElementById('cockpit-call-hosp-btn');
+      if (callHospBtn) {
+        callHospBtn.href = `tel:${h.emergency_phone || h.phone}`;
+        callHospBtn.innerHTML = `📞 Call ${h.name.split(' ')[0]}`;
       }
-      if (cockpit) {
-        document.getElementById('cockpit-eta-tag').textContent = `${realEtaStr} • ${h.name.split(' ')[0]}`;
-      }
+    }
+
+    const shouldFetch = API.shouldFetchOSRMRoute
+      ? API.shouldFetchOSRMRoute(userLat, userLng, h.id, forceFetch || hospitalChanged, 15000, 50)
+      : (forceFetch || hospitalChanged);
+
+    if (!shouldFetch && routePolyline) {
       return;
     }
-  } catch (err) {
-    console.warn('OSRM routing API lookup failed, falling back to direct line:', err);
+
+    if (API.recordOSRMFetch) {
+      API.recordOSRMFetch(userLat, userLng, h.id);
+    }
+
+    const currentToken = ++osrmRequestToken;
+
+    if (routePolyline) {
+      map.removeLayer(routePolyline);
+      routePolyline = null;
+    }
+
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${h.longitude},${h.latitude}?overview=full&geometries=geojson`;
+      const resp = await fetch(osrmUrl);
+      const data = await resp.json();
+
+      if (currentToken !== osrmRequestToken) return;
+
+      if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+        const realDistKm = (route.distance / 1000).toFixed(1);
+        const realEtaMins = Math.max(5, Math.round((route.duration * 1.75) / 60));
+        const realEtaStr = `${realEtaMins} mins`;
+
+        if (routePolyline) map.removeLayer(routePolyline);
+
+        routePolyline = L.polyline(roadCoords, {
+          color: '#38bdf8',
+          weight: 6,
+          opacity: 0.92,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+
+        if (hospitalChanged || forceFetch) {
+          map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+        }
+
+        if (banner) {
+          document.getElementById('route-eta').textContent = `🚗 ${realEtaStr}`;
+          document.getElementById('route-dist').textContent = `${realDistKm} km`;
+        }
+        if (cockpit && cockpit.style.display !== 'none' && !activeHoldId) {
+          document.getElementById('cockpit-eta-tag').textContent = `${realEtaStr} • ${h.name.split(' ')[0]}`;
+        }
+        return;
+      }
+    } catch (err) {
+      console.warn('OSRM routing API lookup failed, falling back to direct line:', err);
+    }
+
+    if (currentToken !== osrmRequestToken) return;
+    if (!routePolyline) {
+      routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
+        color: '#38bdf8',
+        weight: 5,
+        opacity: 0.85,
+        dashArray: '8, 8'
+      }).addTo(map);
+      if (hospitalChanged || forceFetch) {
+        map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+      }
+    }
   }
 
-  // Fallback if OSRM is unreachable
-  if (currentToken !== osrmRequestToken) return;
-  if (!routePolyline) {
-    routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
-      color: '#38bdf8',
-      weight: 5,
-      opacity: 0.85,
-      dashArray: '8, 8'
-    }).addTo(map);
-    map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+  /* ── Create custom marker icons ── */
+  function makeIcon(color) {
+    const c = color === 'green' ? '#10b981'
+            : color === 'amber' ? '#f59e0b'
+            : '#f43f5e';
+    const shadow = color === 'green' ? 'rgba(16,185,129,0.5)'
+                 : color === 'amber' ? 'rgba(245,158,11,0.5)'
+                 : 'rgba(244,63,94,0.5)';
+
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:28px; height:28px;
+        border-radius:50% 50% 50% 0;
+        background:${c};
+        transform:rotate(-45deg);
+        border:2px solid rgba(255,255,255,0.35);
+        box-shadow:0 3px 12px ${shadow};
+        display:flex; align-items:center; justify-content:center;">
+        <div style="transform:rotate(45deg); color:#fff; font-size:10px; font-weight:800; line-height:1;">+</div>
+      </div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+      popupAnchor: [0, -30],
+    });
   }
-}
 
-/* ── Create custom marker icons ── */
-function makeIcon(color) {
-  const c = color === 'green' ? '#10b981'
-          : color === 'amber' ? '#f59e0b'
-          : '#f43f5e';
-  const shadow = color === 'green' ? 'rgba(16,185,129,0.5)'
-               : color === 'amber' ? 'rgba(245,158,11,0.5)'
-               : 'rgba(244,63,94,0.5)';
-
-  return L.divIcon({
-    className: '',
-    html: `<div style="
-      width:28px; height:28px;
-      border-radius:50% 50% 50% 0;
-      background:${c};
-      transform:rotate(-45deg);
-      border:2px solid rgba(255,255,255,0.35);
-      box-shadow:0 3px 12px ${shadow};
-      display:flex; align-items:center; justify-content:center;">
-      <div style="transform:rotate(45deg); color:#fff; font-size:10px; font-weight:800; line-height:1;">+</div>
-    </div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
-  });
-}
-
-/* ── Compute staffed available beds for a ward ── */
-function staffedAvail(ward) {
-  return Math.max(0, (ward.total || 0) - (ward.occupied || 0) - (ward.held || 0));
-}
-
-/* ── Compute total available across all wards ── */
-function totalAvail(h) {
-  let total = 0;
-  if (h.wards) {
-    Object.values(h.wards).forEach(w => { total += staffedAvail(w); });
+  function staffedAvail(ward) {
+    return Math.max(0, (ward.total || 0) - (ward.occupied || 0) - (ward.held || 0));
   }
-  return total;
-}
 
-/* ── Get marker colour based on availability ── */
-function markerColor(h) {
-  const avail = totalAvail(h);
-  if (avail === 0) return 'red';
-  if (avail < 10)  return 'amber';
-  return 'green';
-}
+  function totalAvail(h) {
+    let total = 0;
+    if (h.wards) {
+      Object.values(h.wards).forEach(w => { total += staffedAvail(w); });
+    }
+    return total;
+  }
 
-/* ── Render a single hospital card ── */
-function renderCard(h) {
-  const wardEntries = h.wards ? Object.entries(h.wards) : [];
-  const isGovt = (h.type || '').toLowerCase().includes('gov');
+  function markerColor(h) {
+    const avail = totalAvail(h);
+    if (avail === 0) return 'red';
+    if (avail < 10)  return 'amber';
+    return 'green';
+  }
 
-  const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-  const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
+  /* ── Render single hospital card ── */
+  function renderCard(h) {
+    const wardEntries = h.wards ? Object.entries(h.wards) : [];
+    const isGovt = (h.type || '').toLowerCase().includes('gov');
 
-  // Staffed beds for all 4 wards
-  const wardsHtml = wardEntries.map(([name, w]) => {
-    const avail = staffedAvail(w);
-    const pct   = w.total > 0 ? Math.round((w.occupied + w.held) / w.total * 100) : 0;
-    const cls   = pct >= 95 ? 'full' : pct >= 75 ? 'busy' : 'ok';
-    const shortName = name.replace(' ICU','').replace('General','Gen. Ward');
-    return `
-      <div class="ward-row">
-        <div class="ward-label-row">
-          <span class="ward-name">${shortName}</span>
-          <span class="ward-avail" style="color:${cls==='full'?'var(--red)':cls==='busy'?'var(--amber)':'var(--green)'}">
-            ${avail} free
-          </span>
+    const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+    const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
+
+    const wardsHtml = wardEntries.map(([name, w]) => {
+      const avail = staffedAvail(w);
+      const pct   = w.total > 0 ? Math.round((w.occupied + w.held) / w.total * 100) : 0;
+      const cls   = pct >= 95 ? 'full' : pct >= 75 ? 'busy' : 'ok';
+      const shortName = name.replace(' ICU','').replace('General','Gen. Ward');
+      return `
+        <div class="ward-row">
+          <div class="ward-label-row">
+            <span class="ward-name">${shortName}</span>
+            <span class="ward-avail" style="color:${cls==='full'?'var(--red)':cls==='busy'?'var(--amber)':'var(--green)'}">
+              ${avail} free
+            </span>
+          </div>
+          <div class="ward-bar">
+            <div class="ward-bar-fill ${cls}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const blood = h.blood_stock_summary || {};
+    const bloodHtml = Object.entries(blood).map(([t, v]) =>
+      `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}<br><span style="opacity:0.7;font-size:0.6rem;">${v}u</span></span>`
+    ).join('');
+
+    const specs = (h.specialties || []).slice(0,4);
+    const specHtml = specs.map(s => `<span class="spec-chip">${s}</span>`).join('');
+
+    const totalA = totalAvail(h);
+    const hasAny = totalA > 0;
+
+    const isHeld = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id === h.id);
+    const isOtherHoldActive = (typeof holdHospital !== 'undefined' && holdHospital && holdHospital.id !== h.id && typeof activeHoldId !== 'undefined' && activeHoldId);
+    const holdBtnText = isHeld ? '🔒 Hold Active' : (hasAny ? '🔒 Hold Bed' : '✗ Full');
+    const holdBtnDisabled = !hasAny || isHeld;
+    const holdBtnDisplay = isOtherHoldActive ? 'none' : 'inline-block';
+
+    const card = document.createElement('div');
+    card.className = 'glass hosp-card fade-in';
+    card.dataset.id = h.id;
+    card.innerHTML = `
+      <div class="hosp-top">
+        <div>
+          <div class="hosp-name">${h.name}</div>
+          <div class="hosp-address">${h.address}</div>
+          <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:6px;">
+            <span>📍 ${distKm} km</span>
+            <span style="opacity:0.4;">•</span>
+            <span>🚗 ${etaStr}</span>
+          </div>
         </div>
-        <div class="ward-bar">
-          <div class="ward-bar-fill ${cls}" style="width:${pct}%"></div>
+        <span class="hosp-type-badge ${isGovt?'govt':'pvt'}">${isGovt?'Govt':'Private'}</span>
+      </div>
+
+      <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.21 1.21a2 2 0 012-2.18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 6l1.27 1.27a16 16 0 006.29 6.29l1.27-1.27-.37.37a2 2 0 002.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+        ${h.emergency_phone || h.phone}
+      </a>
+
+      <div class="spec-chips">${specHtml}</div>
+
+      <div class="wards-grid">${wardsHtml}</div>
+
+      <div class="hosp-footer">
+        <div class="blood-chips">${bloodHtml}</div>
+        <div style="display:flex; gap: 8px; margin-top: 8px;">
+          <button class="blood-req-btn" style="padding:8px; border-radius:12px; background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.3); color:#f43f5e; cursor:pointer;" data-id="${h.id}">🩸 Req Blood</button>
+          <button class="hold-btn" data-id="${h.id}" ${holdBtnDisabled?'disabled':''} style="flex:1; display:${holdBtnDisplay};">
+            ${holdBtnText}
+          </button>
         </div>
       </div>`;
-  }).join('');
 
-  // Blood stock
-  const blood = h.blood_stock_summary || {};
-  const bloodHtml = Object.entries(blood).map(([t, v]) =>
-    `<span class="blood-chip${v <= 3 ? ' low' : ''}">${t}<br><span style="opacity:0.7;font-size:0.6rem;">${v}u</span></span>`
-  ).join('');
-
-  // Specialties (show up to 4)
-  const specs = (h.specialties || []).slice(0,4);
-  const specHtml = specs.map(s => `<span class="spec-chip">${s}</span>`).join('');
-
-  const totalA = totalAvail(h);
-  const hasAny = totalA > 0;
-
-  const card = document.createElement('div');
-  card.className = 'glass hosp-card fade-in';
-  card.dataset.id = h.id;
-  card.innerHTML = `
-    <div class="hosp-top">
-      <div>
-        <div class="hosp-name">${h.name}</div>
-        <div class="hosp-address">${h.address}</div>
-        <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:6px;">
-          <span>📍 ${distKm} km</span>
-          <span style="opacity:0.4;">•</span>
-          <span>🚗 ${etaStr}</span>
-        </div>
-      </div>
-      <span class="hosp-type-badge ${isGovt?'govt':'pvt'}">${isGovt?'Govt':'Private'}</span>
-    </div>
-
-    <a class="hosp-phone" href="tel:${h.emergency_phone || h.phone}">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.21 1.21a2 2 0 012-2.18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 6l1.27 1.27a16 16 0 006.29 6.29l1.27-1.27-.37.37a2 2 0 002.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-      </svg>
-      ${h.emergency_phone || h.phone}
-    </a>
-
-    <div class="spec-chips">${specHtml}</div>
-
-    <div class="wards-grid">${wardsHtml}</div>
-
-    <div class="hosp-footer">
-      <div class="blood-chips">${bloodHtml}</div>
-      <button class="hold-btn" data-id="${h.id}" ${hasAny?'':'disabled'}>
-        ${hasAny ? '🔒 Hold Bed' : '✗ Full'}
-      </button>
-    </div>`;
-
-  // Click card → fly map & draw route line
-  card.addEventListener('click', (e) => {
-    if (e.target.classList.contains('hold-btn')) return;
-    flyToHospital(h.id, h.latitude, h.longitude);
-    updateRouteToHospital(h);
-  });
-
-  // Hold button
-  card.querySelector('.hold-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    openHoldModal(h);
-  });
-
-  return card;
-}
-
-/* ── Render all hospital cards ── */
-function renderCards(hospitals) {
-  const col = document.getElementById('cards-col');
-  col.innerHTML = '';
-
-  if (!hospitals.length) {
-    col.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🏥</div>
-        <div class="empty-text">No hospitals match the current filter.<br>
-        <span style="font-size:0.82rem;color:var(--text-3);">Try removing the specialty filter.</span></div>
-      </div>`;
-    return;
-  }
-
-  document.getElementById('card-count').textContent = `${hospitals.length} hospitals`;
-
-  hospitals.forEach((h, i) => {
-    const card = renderCard(h);
-    card.style.animationDelay = `${i * 0.04}s`;
-    col.appendChild(card);
-  });
-}
-
-/* ── Place map markers ── */
-function placeMarkers(hospitals) {
-  // Clear old markers
-  Object.values(markers).forEach(m => map.removeLayer(m));
-  markers = {};
-
-  hospitals.forEach(h => {
-    if (!h.latitude || !h.longitude) return;
-    const color = markerColor(h);
-    const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) });
-
-    const wardLines = h.wards
-      ? Object.entries(h.wards).map(([n,w]) => {
-          const a = staffedAvail(w);
-          return `<div style="display:flex;justify-content:space-between;gap:16px;font-size:0.78rem;">
-            <span style="color:#94a3b8;">${n}</span>
-            <span style="color:${a>0?'#10b981':'#f43f5e'};font-weight:700;">${a} free</span>
-          </div>`;
-        }).join('')
-      : '';
-
-    marker.bindPopup(`
-      <div style="min-width:200px; font-family:'Inter',sans-serif;">
-        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; color:#f8fafc; margin-bottom:10px;">${h.name}</div>
-        ${wardLines}
-        <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
-          <span style="font-size:0.78rem; color:#94a3b8;">📞 ${h.emergency_phone || h.phone}</span>
-        </div>
-      </div>
-    `, { maxWidth: 260 });
-
-    marker.addTo(map);
-    markers[h.id] = marker;
-
-    marker.on('click', () => {
-      highlightCard(h.id);
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.hold-btn') || e.target.closest('.blood-req-btn')) return;
+      flyToHospital(h.id, h.latitude, h.longitude);
       updateRouteToHospital(h);
     });
-  });
-}
 
-/* ── Fly to hospital on map ── */
-function flyToHospital(id, lat, lng) {
-  map.flyTo([lat, lng], 15, { duration: 1.2 });
-  setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
-  highlightCard(id);
-}
+    card.querySelector('.hold-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openHoldModal(h);
+    });
 
-/* ── Highlight card when marker clicked ── */
-function highlightCard(id) {
-  document.querySelectorAll('.hosp-card').forEach(c => c.classList.remove('highlighted'));
-  const card = document.querySelector(`.hosp-card[data-id="${id}"]`);
-  if (card) {
-    card.classList.add('highlighted');
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    card.querySelector('.blood-req-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openBloodModal(h);
+    });
+
+    return card;
   }
-}
 
-let activeBloodFilter = null;
+  /* ── Render all hospital cards ── */
+  function renderCards(hospitals) {
+    const col = document.getElementById('cards-col');
+    col.innerHTML = '';
 
-/* ── Filter hospitals ── */
-function filterHospitals(hospitals) {
-  let list = hospitals;
-  if (activeFilter !== 'all') {
-    list = list.filter(h => {
-      if (!h.wards) return false;
-      const wardKey = activeFilter;
-      const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
-      return entry && staffedAvail(entry) > 0;
+    if (!hospitals.length) {
+      col.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🏥</div>
+          <div class="empty-text">No hospitals match the current filter.<br>
+          <span style="font-size:0.82rem;color:var(--text-3);">Try clearing search or changing ward filter.</span></div>
+        </div>`;
+      return;
+    }
+
+    document.getElementById('card-count').textContent = `${hospitals.length} hospitals`;
+
+    hospitals.forEach((h, i) => {
+      const card = renderCard(h);
+      card.style.animationDelay = `${i * 0.04}s`;
+      col.appendChild(card);
     });
   }
-  if (activeBloodFilter) {
-    list = list.filter(h => {
-      const blood = h.blood_stock_summary || {};
-      return (blood[activeBloodFilter] || 0) > 0;
+
+  /* ── Place map markers ── */
+  function placeMarkers(hospitals) {
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    markers = {};
+
+    hospitals.forEach(h => {
+      if (!h.latitude || !h.longitude) return;
+      const color = markerColor(h);
+      const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) });
+
+      const wardLines = h.wards
+        ? Object.entries(h.wards).map(([n,w]) => {
+            const a = staffedAvail(w);
+            return `<div style="display:flex;justify-content:space-between;gap:16px;font-size:0.78rem;">
+              <span style="color:#94a3b8;">${n}</span>
+              <span style="color:${a>0?'#10b981':'#f43f5e'};font-weight:700;">${a} free</span>
+            </div>`;
+          }).join('')
+        : '';
+
+      marker.bindPopup(`
+        <div style="min-width:200px; font-family:'Inter',sans-serif;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; color:#f8fafc; margin-bottom:10px;">${h.name}</div>
+          ${wardLines}
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
+            <span style="font-size:0.78rem; color:#94a3b8;">📞 ${h.emergency_phone || h.phone}</span>
+          </div>
+        </div>
+      `, { maxWidth: 260 });
+
+      marker.addTo(map);
+      markers[h.id] = marker;
+
+      marker.on('click', () => {
+        highlightCard(h.id, true);
+        updateRouteToHospital(h);
+      });
     });
   }
-  return list;
-}
 
-function setBloodFilter(bloodType) {
-  if (activeBloodFilter === bloodType) {
-    activeBloodFilter = null;
-  } else {
-    activeBloodFilter = bloodType;
+  /* ── Auto-fit map bounds over matched markers ── */
+  function fitMapToBounds(hospitals) {
+    if (!hospitals || !hospitals.length || !map) return;
+    const points = [];
+    if (userLat && userLng) {
+      points.push([userLat, userLng]);
+    }
+    hospitals.forEach(h => {
+      if (h.latitude && h.longitude) {
+        points.push([h.latitude, h.longitude]);
+      }
+    });
+    if (points.length > 0) {
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+    }
   }
-  document.querySelectorAll('.blood-filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.blood === activeBloodFilter);
-  });
-  const filtered = filterHospitals(allHospitals);
-  renderCards(filtered);
-  placeMarkers(filtered);
-}
 
-/* ── Auto-route to nearest recommended hospital ── */
-function autoRouteNearest(wardKey) {
-  if (!allHospitals || !allHospitals.length) return;
-  const match = API.findNearestHospital ? API.findNearestHospital(userLat, userLng, wardKey, allHospitals) : null;
-  if (match && match.hospital) {
-    updateRouteToHospital(match.hospital);
-    highlightCard(match.hospital.id);
+  /* ── Fly to hospital on map ── */
+  function flyToHospital(id, lat, lng) {
+    map.flyTo([lat, lng], 15, { duration: 1.2 });
+    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
+    highlightCard(id, true);
   }
-}
 
-/* ── Load hospitals from API ── */
-async function loadHospitals() {
-  try {
-    allHospitals = await API.getFacilities();
-    document.getElementById('live-count').textContent = allHospitals.length;
+  /* ── Highlight card when marker clicked (FIX: autoScroll = false by default to prevent unwanted jumping) ── */
+  function highlightCard(id, autoScroll = false) {
+    document.querySelectorAll('.hosp-card').forEach(c => c.classList.remove('highlighted'));
+    const card = document.querySelector(`.hosp-card[data-id="${id}"]`);
+    if (card) {
+      card.classList.add('highlighted');
+      if (autoScroll) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
 
-    initGPS();
+  let activeBloodFilter = null;
 
+  /* ── Filter hospitals ── */
+  function filterHospitals(hospitals) {
+    let list = hospitals;
+    if (activeFilter !== 'all') {
+      list = list.filter(h => {
+        if (!h.wards) return false;
+        const wardKey = activeFilter;
+        const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
+        return entry && staffedAvail(entry) > 0;
+      });
+    }
+    if (activeBloodFilter) {
+      list = list.filter(h => {
+        const blood = h.blood_stock_summary || {};
+        return (blood[activeBloodFilter] || 0) > 0;
+      });
+    }
+    return list;
+  }
+
+  function setBloodFilter(bloodType) {
+    if (activeBloodFilter === bloodType) {
+      activeBloodFilter = null;
+    } else {
+      activeBloodFilter = bloodType;
+    }
+    document.querySelectorAll('.blood-filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.blood === activeBloodFilter);
+    });
     const filtered = filterHospitals(allHospitals);
     renderCards(filtered);
     placeMarkers(filtered);
-
-    // Auto-route to nearest available hospital on load
-    autoRouteNearest('all');
-  } catch (err) {
-    console.error('Failed to load hospitals:', err);
-    document.getElementById('cards-col').innerHTML =
-      `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Could not load hospital data.<br>Please refresh.</div></div>`;
-  }
-}
-
-/* ── Triage ── */
-async function runTriage(text) {
-  if (!text.trim()) return;
-  try {
-    const result = await API.triage(text);
-    displayTriageResult(result);
-  } catch (err) {
-    console.error('Triage error:', err);
-  }
-}
-
-function displayTriageResult(result) {
-  const resultEl = document.getElementById('triage-result');
-  const cardEl   = document.getElementById('triage-card');
-  const pillEl   = document.getElementById('sev-pill');
-  const wardEl   = document.getElementById('triage-ward');
-  const expEl    = document.getElementById('triage-exp');
-  const kwEl     = document.getElementById('triage-keywords');
-
-  resultEl.classList.add('active');
-  cardEl.className   = `triage-card glass ${result.severity}`;
-  
-  const esiLabel = result.severity === 'RED' ? 'ESI-1 Critical' : result.severity === 'YELLOW' ? 'ESI-2 Urgent' : 'ESI-4 Non-Urgent';
-  const esiClass = result.severity === 'RED' ? 'esi-1' : result.severity === 'YELLOW' ? 'esi-2' : 'esi-3';
-  
-  pillEl.className   = `severity-pill ${result.severity}`;
-  pillEl.innerHTML   = `${result.severity} &nbsp;<span class="esi-badge ${esiClass}">${esiLabel}</span>`;
-  wardEl.textContent = result.ward || result.recommended_ward || '';
-  expEl.textContent  = result.explanation || result.reason || '';
-
-  kwEl.innerHTML = (result.matched_keywords || [])
-    .map(k => `<span class="keyword-tag">${k}</span>`)
-    .join('');
-
-  // Auto-filter cards to matching ward & auto-route on map
-  triageWard = result.recommended_ward;
-  if (triageWard && triageWard !== 'general_ward') {
-    setFilter(triageWard);
-  } else {
-    autoRouteNearest('all');
+    fitMapToBounds(filtered);
+    setSheetState('expanded');
   }
 
-  resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/* ── Set active filter ── */
-function setFilter(filterKey) {
-  activeFilter = filterKey;
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.filter === filterKey);
-  });
-  const filtered = filterHospitals(allHospitals);
-  renderCards(filtered);
-  placeMarkers(filtered);
-  autoRouteNearest(filterKey);
-}
-
-/* ── Inline Bed Hold & 15-Min Dynamic Countdown ── */
-let holdHospital = null;
-let remainingHoldSeconds = 900; // 15 minutes base hold
-let holdCountdownTimer = null;
-let lastDistanceToHospital = null;
-
-function openHoldModal(h) {
-  holdHospital = h;
-  const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
-
-  // Automatically open Google Maps turn-by-turn navigation tab
-  try {
-    window.open(gmapsUrl, '_blank');
-  } catch (e) {
-    console.log("Could not auto-open Google Maps tab:", e);
-  }
-
-  // Remove emergency cockpit options bar
-  const cockpit = document.getElementById('emergency-cockpit');
-  if (cockpit) cockpit.style.display = 'none';
-
-  // Display inline reservation panel below the map with OTP code
-  const panel = document.getElementById('inline-reservation-panel');
-  if (panel) {
-    panel.style.display = 'flex';
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    document.getElementById('inline-hosp-name').textContent = h.name;
-    document.getElementById('inline-hosp-address').textContent = h.address;
-    document.getElementById('inline-otp-code').textContent = '…';
-    document.getElementById('inline-gmaps-link').href = gmapsUrl;
-  }
-
-  createHold(h);
-}
-
-async function createHold(h) {
-  try {
-    const result = await API.createHold(
-      h.id,
-      'general_ward',
-      'citizen',
-      '9999999999',   // Guest phone — no signup required
-      'YELLOW'
-    );
-
-    const otpCode = result.otp_code || result.otp || '8492';
-    document.getElementById('inline-otp-code').textContent = otpCode;
-    document.getElementById('inline-hosp-name').textContent = h.name;
-    document.getElementById('inline-hosp-address').textContent = h.address;
-
-    // Initialize 15-minute dynamic hold countdown (900 seconds)
-    startCountdown(900);
-  } catch (err) {
-    console.error('Hold error:', err);
-    document.getElementById('inline-otp-code').textContent = '8492';
-    startCountdown(900);
-  }
-}
-
-function startCountdown(seconds) {
-  clearInterval(holdCountdownTimer);
-  remainingHoldSeconds = seconds;
-  const timerValEl = document.getElementById('inline-timer-val');
-
-  function tick() {
-    remainingHoldSeconds--;
-    if (remainingHoldSeconds <= 0) {
-      clearInterval(holdCountdownTimer);
-      if (timerValEl) timerValEl.textContent = '0:00';
-      const tag = document.getElementById('gps-status-tag');
-      if (tag) {
-        tag.textContent = '⚠️ Hold Expired — Bed Released';
-        tag.style.color = '#f43f5e';
-      }
-      return;
+  function autoRouteNearest(wardKey) {
+    if (!allHospitals || !allHospitals.length) return;
+    const match = API.findNearestHospital ? API.findNearestHospital(userLat, userLng, wardKey, allHospitals) : null;
+    if (match && match.hospital) {
+      updateRouteToHospital(match.hospital);
+      highlightCard(match.hospital.id, false);
     }
-    const mins = Math.floor(remainingHoldSeconds / 60);
-    const secs = remainingHoldSeconds % 60;
-    if (timerValEl) timerValEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  tick();
-  holdCountdownTimer = setInterval(tick, 1000);
-}
+  /* ── Load hospitals from API ── */
+  async function loadHospitals() {
+    try {
+      allHospitals = await API.getFacilities();
+      document.getElementById('live-count').textContent = allHospitals.length;
 
-/* ── Copy OTP ── */
-document.getElementById('otp-copy-btn').addEventListener('click', () => {
-  const otp = document.getElementById('modal-otp').textContent.trim();
-  navigator.clipboard.writeText(otp).then(() => {
-    const btn = document.getElementById('otp-copy-btn');
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => { btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`; }, 2000);
+      initGPS();
+
+      const filtered = filterHospitals(allHospitals);
+      renderCards(filtered);
+      placeMarkers(filtered);
+
+      autoRouteNearest('all');
+    } catch (err) {
+      console.error('Failed to load hospitals:', err);
+      document.getElementById('cards-col').innerHTML =
+        `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Could not load hospital data.<br>Please refresh.</div></div>`;
+    }
+  }
+
+  /* ── Triage / Search Submission ── */
+  async function runTriage(text) {
+    if (!text.trim()) return;
+    try {
+      const result = await API.triage(text);
+      displayTriageResult(result);
+    } catch (err) {
+      console.error('Triage error:', err);
+    }
+  }
+
+  function displayTriageResult(result) {
+    const resultEl = document.getElementById('triage-result');
+    const cardEl   = document.getElementById('triage-card');
+    const pillEl   = document.getElementById('sev-pill');
+    const wardEl   = document.getElementById('triage-ward');
+    const expEl    = document.getElementById('triage-exp');
+    const kwEl     = document.getElementById('triage-keywords');
+
+    resultEl.classList.add('active');
+    cardEl.className   = `triage-card glass ${result.severity || 'YELLOW'}`;
+    
+    const esiLabel = result.severity === 'RED' ? 'ESI-1 Critical' : result.severity === 'YELLOW' ? 'ESI-2 Urgent' : 'ESI-4 Non-Urgent';
+    const esiClass = result.severity === 'RED' ? 'esi-1' : result.severity === 'YELLOW' ? 'esi-2' : 'esi-3';
+    
+    pillEl.className   = `severity-pill ${result.severity || 'YELLOW'}`;
+    pillEl.innerHTML   = `${result.severity || 'YELLOW'} &nbsp;<span class="esi-badge ${esiClass}">${esiLabel}</span>`;
+    wardEl.textContent = result.ward || result.recommended_ward || '';
+    expEl.textContent  = result.explanation || result.reason || '';
+
+    kwEl.innerHTML = (result.matched_keywords || [])
+      .map(k => `<span class="keyword-tag">${k}</span>`)
+      .join('');
+
+    let filtered = allHospitals;
+
+    // Check for blood query/request
+    if (result.is_blood_query || result.is_blood_request || result.blood_group) {
+      const bg = result.blood_group;
+      if (bg) {
+        activeBloodFilter = bg;
+        document.querySelectorAll('.blood-filter-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.blood === bg);
+        });
+        filtered = allHospitals.filter(h => (h.blood_stock_summary && (h.blood_stock_summary[bg] || 0) > 0));
+      }
+    } else if (result.recommended_ward) {
+      triageWard = result.recommended_ward;
+      if (triageWard && triageWard !== 'general_ward') {
+        activeFilter = triageWard;
+        document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(b => {
+          b.classList.toggle('active', b.dataset.filter === triageWard);
+        });
+      }
+      filtered = filterHospitals(allHospitals);
+    }
+
+    renderCards(filtered);
+    placeMarkers(filtered);
+    fitMapToBounds(filtered);
+    setSheetState('expanded');
+
+    if (filtered.length > 0) {
+      updateRouteToHospital(filtered[0]);
+    }
+  }
+
+  function setFilter(filterKey) {
+    activeFilter = filterKey;
+    document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === filterKey);
+    });
+    const filtered = filterHospitals(allHospitals);
+    renderCards(filtered);
+    placeMarkers(filtered);
+    fitMapToBounds(filtered);
+    autoRouteNearest(filterKey);
+  }
+
+  /* ── Inline Bed Hold & Countdown ── */
+  let holdHospital = null;
+  let remainingHoldSeconds = 900;
+  let holdCountdownTimer = null;
+  let lastDistanceToHospital = null;
+  let activeHoldId = null;
+  let activeHoldWardKey = 'general_ward';
+
+  function optimisticallyDecrementBed(hospitalId, wardKey) {
+    const hosp = allHospitals.find(x => x.id === hospitalId);
+    if (!hosp || !hosp.wards) return;
+    const wKey = wardKey || 'general_ward';
+    const wardEntry = Object.values(hosp.wards).find(w => w.db_key === wKey) || Object.values(hosp.wards)[0];
+    if (wardEntry) {
+      wardEntry.held = (wardEntry.held || 0) + 1;
+      wardEntry.available = Math.max(0, (wardEntry.total || 0) - (wardEntry.occupied || 0) - wardEntry.held);
+    }
+    renderCards(filterHospitals(allHospitals));
+  }
+
+  function optimisticallyRestoreBed(hospitalId, wardKey) {
+    const hosp = allHospitals.find(x => x.id === hospitalId);
+    if (!hosp || !hosp.wards) return;
+    const wKey = wardKey || 'general_ward';
+    const wardEntry = Object.values(hosp.wards).find(w => w.db_key === wKey) || Object.values(hosp.wards)[0];
+    if (wardEntry && (wardEntry.held || 0) > 0) {
+      wardEntry.held = Math.max(0, wardEntry.held - 1);
+      wardEntry.available = Math.max(0, (wardEntry.total || 0) - (wardEntry.occupied || 0) - wardEntry.held);
+    }
+    renderCards(filterHospitals(allHospitals));
+  }
+
+  /* ── Post-Booking Drawer UI Transformation ── */
+  function updatePostBookingUI(isActive) {
+    const cockpit = document.getElementById('emergency-cockpit');
+    const lockBtn = document.getElementById('cockpit-lock-btn');
+    const callHospBtn = document.getElementById('cockpit-call-hosp-btn');
+    const callAmbBtn = document.getElementById('cockpit-call-amb-btn');
+    const inlinePanel = document.getElementById('inline-reservation-panel');
+
+    const hospPhone = (holdHospital && (holdHospital.emergency_phone || holdHospital.phone)) || '102';
+    const hospNameShort = holdHospital ? (holdHospital.name.split(' ')[0] || 'Hospital') : 'Hospital';
+
+    if (isActive && holdHospital) {
+      // 1. Hide primary "Book Bed" button while hold is active
+      if (lockBtn) lockBtn.style.display = 'none';
+
+      // 2. Transform cockpit to display single-tap quick-dial buttons
+      if (cockpit) {
+        cockpit.style.display = 'flex';
+      }
+      if (callHospBtn) {
+        callHospBtn.href = `tel:${hospPhone}`;
+        callHospBtn.innerHTML = `📞 Call ${hospNameShort}`;
+      }
+      if (callAmbBtn) {
+        callAmbBtn.href = 'tel:108';
+        callAmbBtn.innerHTML = `🚑 Call Ambulance (108)`;
+      }
+
+      // 3. Update quick-dial buttons inside bottom drawer sheet
+      const inlineAmbBtn = document.getElementById('inline-call-amb-btn');
+      const inlineHospBtn = document.getElementById('inline-call-hosp-btn');
+      if (inlineAmbBtn) {
+        inlineAmbBtn.href = 'tel:108';
+      }
+      if (inlineHospBtn) {
+        inlineHospBtn.href = `tel:${hospPhone}`;
+        inlineHospBtn.innerHTML = `📞 Call ${hospNameShort}`;
+      }
+
+      // 4. Hide redundant booking controls across cards
+      document.querySelectorAll('.hold-btn').forEach(btn => {
+        const card = btn.closest('.hosp-card');
+        const cardId = card ? card.dataset.id : null;
+        if (cardId === holdHospital.id) {
+          btn.textContent = '🔒 Hold Active';
+          btn.disabled = true;
+          btn.style.display = 'inline-block';
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+
+      if (inlinePanel) inlinePanel.style.display = 'flex';
+      setSheetState('expanded');
+
+    } else {
+      // Hold released / cancelled: restore normal UI
+      if (lockBtn) lockBtn.style.display = 'flex';
+      if (cockpit && !activeTargetHospital) {
+        cockpit.style.display = 'none';
+      }
+      if (inlinePanel) inlinePanel.style.display = 'none';
+
+      // Restore booking controls on hospital cards
+      document.querySelectorAll('.hold-btn').forEach(btn => {
+        btn.style.display = 'inline-block';
+        btn.disabled = false;
+        btn.textContent = '🔒 Hold Bed';
+      });
+    }
+  }
+
+  async function cancelActiveHold() {
+    if (activeHoldId) {
+      await API.cancelHold(activeHoldId);
+    }
+    if (holdHospital) {
+      optimisticallyRestoreBed(holdHospital.id, activeHoldWardKey);
+    }
+    activeHoldId = null;
+    holdHospital = null;
+    clearInterval(holdCountdownTimer);
+
+    updatePostBookingUI(false);
+
+    const tag = document.getElementById('gps-status-tag');
+    if (tag) {
+      tag.textContent = '📍 Hold Cancelled — Bed Restored to Pool';
+      tag.style.color = '#f43f5e';
+    }
+  }
+
+  function openHoldModal(h) {
+    holdHospital = h;
+    const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
+
+    try {
+      window.open(gmapsUrl, '_blank');
+    } catch (e) {
+      console.log("Could not auto-open Google Maps tab:", e);
+    }
+
+    const panel = document.getElementById('inline-reservation-panel');
+    if (panel) {
+      panel.style.display = 'flex';
+      document.getElementById('inline-hosp-name').textContent = h.name;
+      document.getElementById('inline-hosp-address').textContent = h.address;
+      document.getElementById('inline-otp-code').textContent = '…';
+      document.getElementById('inline-gmaps-link').href = gmapsUrl;
+    }
+
+    createHold(h);
+    updatePostBookingUI(true);
+  }
+
+  async function createHold(h) {
+    try {
+      activeHoldWardKey = (activeFilter && activeFilter !== 'all') ? activeFilter : 'general_ward';
+      optimisticallyDecrementBed(h.id, activeHoldWardKey);
+
+      const result = await API.createHold(
+        h.id,
+        activeHoldWardKey,
+        'CITIZEN',
+        '9999999999',
+        'YELLOW'
+      );
+
+      activeHoldId = result.hold_id || result.id || null;
+      const otpCode = result.otp_code || result.otp || '8492';
+      document.getElementById('inline-otp-code').textContent = otpCode;
+      document.getElementById('inline-hosp-name').textContent = h.name;
+      document.getElementById('inline-hosp-address').textContent = h.address;
+
+      const seconds = result.seconds_left || (result.minutes ? result.minutes * 60 : 900);
+      startCountdown(seconds);
+      updatePostBookingUI(true);
+    } catch (err) {
+      console.error('Hold error:', err);
+      document.getElementById('inline-otp-code').textContent = '8492';
+      startCountdown(900);
+      updatePostBookingUI(true);
+    }
+  }
+
+  function startCountdown(seconds) {
+    clearInterval(holdCountdownTimer);
+    remainingHoldSeconds = seconds;
+    const timerValEl = document.getElementById('inline-timer-val');
+
+    function tick() {
+      remainingHoldSeconds--;
+      if (remainingHoldSeconds <= 0) {
+        clearInterval(holdCountdownTimer);
+        if (timerValEl) {
+          timerValEl.textContent = 'EXPIRED';
+          timerValEl.style.color = '#f43f5e';
+        }
+      } else {
+        const m = Math.floor(remainingHoldSeconds / 60);
+        const s = remainingHoldSeconds % 60;
+        if (timerValEl) {
+          timerValEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+      }
+    }
+
+    tick();
+    holdCountdownTimer = setInterval(tick, 1000);
+  }
+
+  /* ── Blood Hold Modal ── */
+  async function openBloodModal(h) {
+    holdHospital = h;
+    const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
+
+    try {
+      window.open(gmapsUrl, '_blank');
+    } catch (e) {
+      console.log("Could not auto-open Google Maps tab:", e);
+    }
+
+    const cockpit = document.getElementById('emergency-cockpit');
+    if (cockpit) cockpit.style.display = 'none';
+
+    const panel = document.getElementById('inline-reservation-panel');
+    if (panel) {
+      panel.style.display = 'flex';
+      document.getElementById('inline-hosp-name').textContent = h.name + " (BLOOD)";
+      document.getElementById('inline-hosp-address').textContent = h.address;
+      document.getElementById('inline-otp-code').textContent = '…';
+      document.getElementById('inline-gmaps-link').href = gmapsUrl;
+    }
+    setSheetState('expanded');
+
+    try {
+      const bloodGrp = (h.blood_stock_summary && Object.keys(h.blood_stock_summary).length > 0) 
+          ? Object.keys(h.blood_stock_summary)[0] 
+          : 'O+';
+          
+      const resp = await fetch('/api/blood/hold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hospital_id: h.id,
+          blood_group: bloodGrp,
+          component: 'PRBC',
+          units: 1,
+          requester_phone: '9999999999'
+        })
+      });
+      const result = await resp.json();
+
+      const otpCode = result.otp || result.otp_code || '4321';
+      document.getElementById('inline-otp-code').textContent = otpCode;
+      document.getElementById('inline-hosp-name').textContent = h.name + ` (1u ${bloodGrp} PRBC)`;
+      startCountdown((result.minutes || 30) * 60);
+    } catch (err) {
+      console.error('Blood Hold error:', err);
+      document.getElementById('inline-otp-code').textContent = '4321';
+      startCountdown(1800);
+    }
+  }
+
+  /* ── Copy OTP ── */
+  document.getElementById('otp-copy-btn').addEventListener('click', () => {
+    const otp = document.getElementById('modal-otp').textContent.trim();
+    navigator.clipboard.writeText(otp).then(() => {
+      const btn = document.getElementById('otp-copy-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => { btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`; }, 2000);
+    });
   });
-});
 
-/* ── Close Modal ── */
-document.getElementById('modal-close-btn').addEventListener('click', () => {
-  document.getElementById('modal-overlay').classList.remove('active');
-  clearInterval(countdownTimer);
-});
-
-document.getElementById('modal-overlay').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) {
+  /* ── Close Modal ── */
+  document.getElementById('modal-close-btn').addEventListener('click', () => {
     document.getElementById('modal-overlay').classList.remove('active');
     clearInterval(countdownTimer);
-  }
-});
+  });
 
-/* ── Cockpit Lock Button ── */
-document.getElementById('cockpit-lock-btn').addEventListener('click', () => {
-  if (activeTargetHospital) {
-    openHoldModal(activeTargetHospital);
-  }
-});
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('modal-overlay').classList.remove('active');
+      clearInterval(countdownTimer);
+    }
+  });
 
-/* ── Ambulance Dispatch Drawer ── */
-document.getElementById('cockpit-call-amb-btn').addEventListener('click', () => {
-  document.getElementById('amb-modal-overlay').classList.add('active');
-});
+  /* ── Cancel Hold & Wrong Direction Modal Listeners ── */
+  const inlineCancelBtn = document.getElementById('inline-cancel-hold-btn');
+  if (inlineCancelBtn) inlineCancelBtn.addEventListener('click', cancelActiveHold);
 
-document.getElementById('amb-modal-close').addEventListener('click', () => {
-  document.getElementById('amb-modal-overlay').classList.remove('active');
-});
+  const wdCancelBtn = document.getElementById('wd-cancel-btn');
+  if (wdCancelBtn) wdCancelBtn.addEventListener('click', cancelActiveHold);
 
-document.getElementById('amb-modal-overlay').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) {
+  const wdKeepBtn = document.getElementById('wd-keep-btn');
+  if (wdKeepBtn) wdKeepBtn.addEventListener('click', () => {
+    const wdModal = document.getElementById('wrong-direction-modal-overlay');
+    if (wdModal) wdModal.classList.remove('active');
+  });
+
+  /* ── Cockpit Lock Button ── */
+  document.getElementById('cockpit-lock-btn').addEventListener('click', () => {
+    if (activeTargetHospital) {
+      openHoldModal(activeTargetHospital);
+    }
+  });
+
+  /* ── Ambulance Dispatch Drawer ── */
+  document.getElementById('cockpit-call-amb-btn').addEventListener('click', () => {
+    document.getElementById('amb-modal-overlay').classList.add('active');
+  });
+
+  document.getElementById('amb-modal-close').addEventListener('click', () => {
     document.getElementById('amb-modal-overlay').classList.remove('active');
-  }
-});
-
-/* ── Filter buttons ── */
-document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(btn => {
-  btn.addEventListener('click', () => setFilter(btn.dataset.filter));
-});
-
-document.querySelectorAll('.blood-filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => setBloodFilter(btn.dataset.blood));
-});
-
-/* ── Symptom input: Instant Keystroke Triage (300ms Debounce) ── */
-let debounceTimer = null;
-document.getElementById('symptom-input').addEventListener('input', (e) => {
-  clearTimeout(debounceTimer);
-  const val = e.target.value.trim();
-  if (val.length >= 3) {
-    debounceTimer = setTimeout(() => {
-      runTriage(val);
-    }, 300);
-  }
-});
-
-document.getElementById('triage-btn').addEventListener('click', () => {
-  runTriage(document.getElementById('symptom-input').value);
-});
-
-document.getElementById('symptom-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') runTriage(e.target.value);
-});
-
-/* ── Quick chips ── */
-document.querySelectorAll('.chip').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const q = btn.dataset.query;
-    document.getElementById('symptom-input').value = q;
-    runTriage(q);
   });
-});
 
-/* ── Hackathon Judge Quick Demo Handler ── */
-function runJudgeDemo(scenarioId) {
-  const input = document.getElementById('symptom-input');
-  if (scenarioId === 1) {
-    input.value = "severe chest pain radiating to left arm";
-    runTriage(input.value);
-  } else if (scenarioId === 2) {
-    input.value = "child seizure and high fever";
-    runTriage(input.value);
-  } else if (scenarioId === 3) {
-    setBloodFilter('O-');
-  }
-}
+  document.getElementById('amb-modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('amb-modal-overlay').classList.remove('active');
+    }
+  });
 
-/* ── Web Speech API: Voice Triage (Bengali bn-IN, Hinglish & English) ── */
-function initVoiceTriage() {
-  const micBtn = document.getElementById('voice-mic-btn');
-  const banner = document.getElementById('voice-recording-banner');
-  const input = document.getElementById('symptom-input');
+  /* ── Filter buttons ── */
+  document.querySelectorAll('.filter-btn:not(.blood-filter-btn)').forEach(btn => {
+    btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+  });
 
-  if (!micBtn) return;
+  document.querySelectorAll('.blood-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => setBloodFilter(btn.dataset.blood));
+  });
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    micBtn.title = "Voice recognition not supported on this browser (use Chrome/Safari/Edge)";
-    micBtn.style.opacity = "0.5";
-    return;
-  }
+  /* ── Symptom input: Instant Keystroke Triage (300ms Debounce) ── */
+  let debounceTimer = null;
+  document.getElementById('symptom-input').addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const val = e.target.value.trim();
+    if (val.length >= 3) {
+      debounceTimer = setTimeout(() => {
+        runTriage(val);
+      }, 300);
+    }
+  });
 
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  // Default to bn-IN (Bengali - India) so spoken Bengali is accurately transcribed into Bangla script
-  recognition.lang = 'bn-IN';
+  document.getElementById('triage-btn').addEventListener('click', () => {
+    runTriage(document.getElementById('symptom-input').value);
+  });
 
-  let isListening = false;
+  document.getElementById('symptom-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runTriage(e.target.value);
+  });
 
-  micBtn.addEventListener('click', () => {
-    if (!isListening) {
-      try {
-        recognition.start();
-      } catch(err) {
-        console.log("Speech recognition start err:", err);
+  /* ── Quick chips ── */
+  document.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.dataset.query;
+      document.getElementById('symptom-input').value = q;
+      runTriage(q);
+    });
+  });
+
+  /* ── Web Speech API: Voice Triage (Reliable English, Hinglish & Benglish input) ── */
+  function initVoiceTriage() {
+    const micBtn = document.getElementById('voice-mic-btn');
+    const banner = document.getElementById('voice-recording-banner');
+    const input = document.getElementById('symptom-input');
+
+    if (!micBtn) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      micBtn.title = "Voice recognition not supported on this browser (use Chrome/Safari/Edge)";
+      micBtn.style.opacity = "0.5";
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    // Set to en-IN so Indian English, Hinglish & Benglish phonetic speech are accurately recognized in Latin script
+    recognition.lang = 'en-IN';
+
+    let isListening = false;
+
+    micBtn.addEventListener('click', () => {
+      if (!isListening) {
+        try {
+          recognition.start();
+        } catch(err) {
+          console.log("Speech recognition start err:", err);
+        }
+      } else {
+        recognition.stop();
       }
-    } else {
-      recognition.stop();
+    });
+
+    recognition.onstart = () => {
+      isListening = true;
+      micBtn.classList.add('listening');
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening... Speak symptoms or blood group in Benglish, Hinglish, or English</span>`;
+      }
+      input.placeholder = "Listening… e.g. 'chhati me dard', 'amar buke byatha', or 'O- negative blood'";
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      input.value = transcript;
+      if (event.results[0].isFinal) {
+        runTriage(transcript);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.warn("Speech recognition error:", event.error);
+      stopListening();
+    };
+
+    recognition.onend = () => {
+      stopListening();
+    };
+
+    function stopListening() {
+      isListening = false;
+      micBtn.classList.remove('listening');
+      if (banner) banner.style.display = 'none';
+      input.placeholder = "Describe symptoms or blood group… e.g. 'O- negative blood' or 'chhati me dard'";
     }
-  });
-
-  recognition.onstart = () => {
-    isListening = true;
-    micBtn.classList.add('listening');
-    if (banner) {
-      banner.style.display = 'flex';
-      banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening in Bengali / Benglish... (বাংলায় বলুন)</span>`;
-    }
-    input.placeholder = "Listening in Bengali… বলুন: 'আমার বুক ফেটে যাচ্ছে' / 'amar buke byatha'";
-  };
-
-  recognition.onresult = (event) => {
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-    }
-    input.value = transcript;
-    if (event.results[0].isFinal) {
-      runTriage(transcript);
-    }
-  };
-
-  recognition.onerror = (event) => {
-    console.warn("Speech recognition error:", event.error);
-    stopListening();
-  };
-
-  recognition.onend = () => {
-    stopListening();
-  };
-
-  function stopListening() {
-    isListening = false;
-    micBtn.classList.remove('listening');
-    if (banner) banner.style.display = 'none';
-    input.placeholder = "Describe symptoms… e.g. 'amar chhati fatya jacche' or 'আমার বুক ফেটে যাচ্ছে'";
   }
-}
 
-/* ── Boot ── */
-loadHospitals();
-initVoiceTriage();
-// Auto-refresh every 60s to simulate live updates
-setInterval(loadHospitals, 60000);
-</script>
+  /* ── Boot ── */
+  initBottomSheet();
+  loadHospitals();
+  initVoiceTriage();
+  // Auto-refresh every 60s to simulate live updates
+  setInterval(loadHospitals, 60000);
+  </script>
 </body>
 </html>
-

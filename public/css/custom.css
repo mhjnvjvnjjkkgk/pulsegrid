@@ -1147,33 +1147,6 @@ main { position: relative; z-index: 1; }
   }
 }
 
-/* ── Hackathon Judge Quick Demo Bar ── */
-.judge-demo-btn {
-  padding: 6px 16px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.16);
-  border: 2px solid #f59e0b;
-  color: #fbbf24;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 3px 3px 0px #000000;
-  transition: all 0.18s ease;
-}
-
-.judge-demo-btn:hover {
-  background: rgba(245, 158, 11, 0.3);
-  color: #ffffff;
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px #000000;
-}
-
-.judge-demo-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0px #000000;
-}
-
 /* ── Emergency Ambulance Dispatch Sheet ── */
 .amb-modal-overlay {
   position: fixed; inset: 0; z-index: 20000;
@@ -1262,4 +1235,132 @@ main { position: relative; z-index: 1; }
   background: #f43f5e;
   animation: recPulse 1.2s infinite;
 }
+
+/* ── Full-Screen Map Canvas Layout ── */
+#map-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+}
+
+/* ── Floating Top Navigation Bar ── */
+.floating-top-nav {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 768px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.nav-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: var(--r-lg);
+  background: rgba(13, 21, 38, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Slidable Bottom Sheet Drawer (Google Maps Native Style) ── */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 840px;
+  z-index: 1500;
+  background: linear-gradient(180deg, rgba(13, 21, 38, 0.96) 0%, rgba(6, 10, 20, 0.98) 100%);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.bottom-sheet-handle {
+  width: 100%;
+  padding: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.bottom-sheet-handle .handle-bar {
+  width: 48px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.2s;
+}
+
+.bottom-sheet-handle:hover .handle-bar {
+  background: rgba(56, 189, 248, 0.8);
+}
+
+.bottom-sheet.state-peek {
+  height: 250px;
+}
+
+.bottom-sheet.state-expanded {
+  height: 75vh;
+}
+
+.bottom-sheet.state-collapsed {
+  height: 72px;
+}
+
+.sheet-header {
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+}
+
+.sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+/* Blood Filter Button styling */
+.filter-btn.blood-filter-btn {
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+}
+.filter-btn.blood-filter-btn:hover, .filter-btn.blood-filter-btn.active {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+  color: #ffffff;
+}
+
 

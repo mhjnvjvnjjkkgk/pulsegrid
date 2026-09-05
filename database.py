@@ -9,6 +9,7 @@
 
 import os
 import random
+import math
 from datetime import datetime, timezone, timedelta
 
 try:
@@ -54,8 +55,8 @@ MOCK_HOSPITALS = [
     {
         "id": "33333333-3333-3333-3333-333333333333",
         "name": "RG Kar Medical College & Hospital",
-        "address": "1 Khudiram Bose Sarani, Belgachia, Kolkata 700004",
-        "latitude": 22.6042, "longitude": 88.3734,
+        "address": "1 Khudiram Bose Sarani, Belgachia (Nagerbazar Route), Kolkata 700004",
+        "latitude": 22.6040, "longitude": 88.3780,
         "phone": "+91-33-2555-7675", "emergency_phone": "102",
         "type": "Government",
         "doctors_on_duty": 28, "nurses_on_duty": 54,
@@ -354,17 +355,17 @@ MOCK_HOSPITALS = [
     {
         "id": "88888888-9999-aaaa-bbbb-cccccccccccc",
         "name": "Charnock Hospital",
-        "address": "Premises No. 45, Rajdanga Main Road, Kasba, Kolkata 700107",
-        "latitude": 22.4966, "longitude": 88.4063,
-        "phone": "+91-33-4044-4444", "emergency_phone": "+91-33-4044-4444",
+        "address": "VIP Road, Teghoria, Major Emergency Hub near Nagerbazar, Kolkata 700157",
+        "latitude": 22.6178, "longitude": 88.4350,
+        "phone": "+91-33-4050-0000", "emergency_phone": "033-4050-0000",
         "type": "Private",
-        "doctors_on_duty": 14, "nurses_on_duty": 28,
-        "adult_icu_total": 18, "adult_icu_occupied": 13, "adult_icu_held": 1,
-        "pediatric_icu_total": 6, "pediatric_icu_occupied": 4, "pediatric_icu_held": 0,
-        "cardiac_icu_total": 8, "cardiac_icu_occupied": 6, "cardiac_icu_held": 0,
-        "general_ward_total": 100, "general_ward_occupied": 74, "general_ward_held": 2,
-        "specialties": ["general", "orthopedics", "cardiac", "maternity"],
-        "blood_stock_summary": {"A+": 6, "B+": 9, "O+": 12, "O-": 2, "AB+": 4, "A-": 1, "B-": 2, "AB-": 1}
+        "doctors_on_duty": 32, "nurses_on_duty": 64,
+        "adult_icu_total": 40, "adult_icu_occupied": 28, "adult_icu_held": 2,
+        "pediatric_icu_total": 12, "pediatric_icu_occupied": 8, "pediatric_icu_held": 1,
+        "cardiac_icu_total": 20, "cardiac_icu_occupied": 14, "cardiac_icu_held": 1,
+        "general_ward_total": 200, "general_ward_occupied": 145, "general_ward_held": 5,
+        "specialties": ["cardiac", "trauma", "pulmonology", "neurology", "general"],
+        "blood_stock_summary": {"A+": 20, "B+": 28, "O+": 38, "O-": 7, "AB+": 11, "A-": 4, "B-": 6, "AB-": 3}
     },
     {
         "id": "99999999-aaaa-bbbb-cccc-dddddddddddd",
@@ -471,6 +472,155 @@ MOCK_HOSPITALS = [
         "specialties": ["general", "cardiac", "orthopedics", "pediatric"],
         "blood_stock_summary": {"A+": 8, "B+": 11, "O+": 15, "O-": 2, "AB+": 5, "A-": 2, "B-": 3, "AB-": 1}
     },
+    {
+        "id": "a1111111-1111-4111-a111-111111111111",
+        "name": "Tata Medical Center",
+        "address": "14 MAR(EW), Action Area I, Newtown, Rajarhat, Kolkata 700156",
+        "latitude": 22.5714, "longitude": 88.4735,
+        "type": "Private",
+        "doctors_on_duty": 45, "nurses_on_duty": 80,
+        "adult_icu_total": 50, "adult_icu_occupied": 38, "adult_icu_held": 2,
+        "pediatric_icu_total": 20, "pediatric_icu_occupied": 14, "pediatric_icu_held": 1,
+        "cardiac_icu_total": 15, "cardiac_icu_occupied": 10, "cardiac_icu_held": 1,
+        "general_ward_total": 300, "general_ward_occupied": 230, "general_ward_held": 5,
+        "specialties": ["oncology", "trauma", "adult_icu", "pediatric_icu", "surgery", "general"],
+        "blood_stock_summary": {"A+": 30, "B+": 35, "O+": 45, "O-": 12, "AB+": 15, "A-": 8, "B-": 10, "AB-": 4}
+    },
+    {
+        "id": "nt-ohio-0001-0002-0003-000400050006",
+        "name": "Ohio Hospital & Diabetes Centre",
+        "address": "Action Area II, Near Amity University, Newtown, Kolkata 700135",
+        "latitude": 22.5810, "longitude": 88.4780,
+        "phone": "+91-33-6616-6000", "emergency_phone": "+91-33-6616-6000",
+        "type": "Private",
+        "doctors_on_duty": 22, "nurses_on_duty": 40,
+        "adult_icu_total": 30, "adult_icu_occupied": 21, "adult_icu_held": 1,
+        "pediatric_icu_total": 10, "pediatric_icu_occupied": 6, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 12, "cardiac_icu_occupied": 8, "cardiac_icu_held": 1,
+        "general_ward_total": 160, "general_ward_occupied": 115, "general_ward_held": 3,
+        "specialties": ["cardiac", "endocrinology", "adult_icu", "trauma", "general"],
+        "blood_stock_summary": {"A+": 14, "B+": 18, "O+": 25, "O-": 5, "AB+": 8, "A-": 3, "B-": 5, "AB-": 2}
+    },
+    {
+        "id": "nt-neotia-001-0002-0003-000400050006",
+        "name": "Bhagirathi Neotia Woman & Child Care",
+        "address": "Premises 27-0327, Street 0327, Action Area I, Newtown, Kolkata 700156",
+        "latitude": 22.5775, "longitude": 88.4635,
+        "phone": "+91-33-6640-5000", "emergency_phone": "+91-33-6640-5000",
+        "type": "Private",
+        "doctors_on_duty": 25, "nurses_on_duty": 50,
+        "adult_icu_total": 20, "adult_icu_occupied": 14, "adult_icu_held": 1,
+        "pediatric_icu_total": 30, "pediatric_icu_occupied": 22, "pediatric_icu_held": 2,
+        "cardiac_icu_total": 8, "cardiac_icu_occupied": 5, "cardiac_icu_held": 0,
+        "general_ward_total": 150, "general_ward_occupied": 105, "general_ward_held": 3,
+        "specialties": ["pediatric", "maternity", "pediatric_icu", "obstetrics", "general"],
+        "blood_stock_summary": {"A+": 16, "B+": 22, "O+": 30, "O-": 6, "AB+": 10, "A-": 4, "B-": 6, "AB-": 3}
+    },
+    {
+        "id": "nt-hcgeko-01-0002-0003-000400050006",
+        "name": "HCG EKO Cancer Centre",
+        "address": "Plot DG-4, Action Area I, Newtown, Kolkata 700156",
+        "latitude": 22.5792, "longitude": 88.4680,
+        "phone": "+91-33-6655-0000", "emergency_phone": "+91-33-6655-0000",
+        "type": "Private",
+        "doctors_on_duty": 20, "nurses_on_duty": 36,
+        "adult_icu_total": 25, "adult_icu_occupied": 18, "adult_icu_held": 1,
+        "pediatric_icu_total": 8, "pediatric_icu_occupied": 5, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 8, "cardiac_icu_occupied": 5, "cardiac_icu_held": 0,
+        "general_ward_total": 120, "general_ward_occupied": 85, "general_ward_held": 2,
+        "specialties": ["oncology", "radiation", "adult_icu", "surgery", "general"],
+        "blood_stock_summary": {"A+": 12, "B+": 16, "O+": 22, "O-": 4, "AB+": 7, "A-": 3, "B-": 4, "AB-": 2}
+    },
+    {
+        "id": "nt-glocal-01-0002-0003-000400050006",
+        "name": "Glocal Hospital Newtown",
+        "address": "Action Area II, Near Eco Park, Newtown, Kolkata 700135",
+        "latitude": 22.5840, "longitude": 88.4820,
+        "phone": "+91-33-3050-0000", "emergency_phone": "+91-33-3050-0000",
+        "type": "Private",
+        "doctors_on_duty": 18, "nurses_on_duty": 32,
+        "adult_icu_total": 20, "adult_icu_occupied": 13, "adult_icu_held": 1,
+        "pediatric_icu_total": 6, "pediatric_icu_occupied": 4, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 8, "cardiac_icu_occupied": 5, "cardiac_icu_held": 0,
+        "general_ward_total": 110, "general_ward_occupied": 78, "general_ward_held": 2,
+        "specialties": ["trauma", "general", "cardiac", "adult_icu", "orthopedics"],
+        "blood_stock_summary": {"A+": 10, "B+": 14, "O+": 18, "O-": 3, "AB+": 6, "A-": 2, "B-": 3, "AB-": 1}
+    },
+    {
+        "id": "dd-ils-0001-0002-0003-000400050006",
+        "name": "ILS Hospitals Dum Dum (Nagerbazar)",
+        "address": "1-8C, Mall Road, Nagerbazar, Dum Dum, Kolkata 700080",
+        "latitude": 22.6215, "longitude": 88.4120,
+        "phone": "+91-33-4031-9000", "emergency_phone": "+91-33-4031-9000",
+        "type": "Private",
+        "doctors_on_duty": 30, "nurses_on_duty": 55,
+        "adult_icu_total": 35, "adult_icu_occupied": 24, "adult_icu_held": 2,
+        "pediatric_icu_total": 12, "pediatric_icu_occupied": 8, "pediatric_icu_held": 1,
+        "cardiac_icu_total": 15, "cardiac_icu_occupied": 10, "cardiac_icu_held": 1,
+        "general_ward_total": 200, "general_ward_occupied": 145, "general_ward_held": 4,
+        "specialties": ["trauma", "cardiac", "adult_icu", "pediatric", "orthopedics", "urology"],
+        "blood_stock_summary": {"A+": 20, "B+": 25, "O+": 35, "O-": 7, "AB+": 12, "A-": 5, "B-": 7, "AB-": 3}
+    },
+    {
+        "id": "dd-apex-0001-0002-0003-000400050006",
+        "name": "Apex General Hospital",
+        "address": "128 Jessore Road, Nagerbazar Crossing, Dum Dum, Kolkata 700074",
+        "latitude": 22.6240, "longitude": 88.4170,
+        "phone": "+91-33-2560-1200", "emergency_phone": "+91-33-2560-1200",
+        "type": "Private",
+        "doctors_on_duty": 16, "nurses_on_duty": 30,
+        "adult_icu_total": 18, "adult_icu_occupied": 12, "adult_icu_held": 1,
+        "pediatric_icu_total": 6, "pediatric_icu_occupied": 4, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 6, "cardiac_icu_occupied": 4, "cardiac_icu_held": 0,
+        "general_ward_total": 100, "general_ward_occupied": 72, "general_ward_held": 2,
+        "specialties": ["general", "maternity", "trauma", "orthopedics"],
+        "blood_stock_summary": {"A+": 8, "B+": 11, "O+": 15, "O-": 2, "AB+": 5, "A-": 2, "B-": 3, "AB-": 1}
+    },
+    {
+        "id": "dd-spandan-01-0002-0003-000400050006",
+        "name": "Spandan Hospital & Diagnostic",
+        "address": "36 Nagerbazar Road, Dum Dum, Kolkata 700074",
+        "latitude": 22.6205, "longitude": 88.4150,
+        "phone": "+91-33-2551-8888", "emergency_phone": "+91-33-2551-8888",
+        "type": "Private",
+        "doctors_on_duty": 15, "nurses_on_duty": 28,
+        "adult_icu_total": 15, "adult_icu_occupied": 10, "adult_icu_held": 1,
+        "pediatric_icu_total": 5, "pediatric_icu_occupied": 3, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 8, "cardiac_icu_occupied": 5, "cardiac_icu_held": 0,
+        "general_ward_total": 85, "general_ward_occupied": 60, "general_ward_held": 2,
+        "specialties": ["cardiac", "general", "adult_icu", "gastroenterology"],
+        "blood_stock_summary": {"A+": 7, "B+": 10, "O+": 14, "O-": 2, "AB+": 4, "A-": 1, "B-": 2, "AB-": 1}
+    },
+    {
+        "id": "dd-dumdum-01-0002-0003-000400050006",
+        "name": "Dum Dum Municipal Specialized Hospital",
+        "address": "4 Central Road, Nagerbazar, Dum Dum, Kolkata 700028",
+        "latitude": 22.6230, "longitude": 88.4110,
+        "phone": "+91-33-2550-0000", "emergency_phone": "102",
+        "type": "Government",
+        "doctors_on_duty": 20, "nurses_on_duty": 42,
+        "adult_icu_total": 22, "adult_icu_occupied": 16, "adult_icu_held": 1,
+        "pediatric_icu_total": 10, "pediatric_icu_occupied": 7, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 6, "cardiac_icu_occupied": 4, "cardiac_icu_held": 0,
+        "general_ward_total": 180, "general_ward_occupied": 140, "general_ward_held": 4,
+        "specialties": ["general", "maternity", "pediatric", "trauma"],
+        "blood_stock_summary": {"A+": 12, "B+": 16, "O+": 22, "O-": 3, "AB+": 6, "A-": 2, "B-": 4, "AB-": 1}
+    },
+    {
+        "id": "dd-matris-01-0002-0003-000400050006",
+        "name": "Matri Sadan Hospital Dum Dum",
+        "address": "15 Nagerbazar Main Road, Dum Dum, Kolkata 700074",
+        "latitude": 22.6190, "longitude": 88.4090,
+        "phone": "+91-33-2551-0101", "emergency_phone": "+91-33-2551-0101",
+        "type": "Government",
+        "doctors_on_duty": 12, "nurses_on_duty": 25,
+        "adult_icu_total": 12, "adult_icu_occupied": 8, "adult_icu_held": 0,
+        "pediatric_icu_total": 8, "pediatric_icu_occupied": 5, "pediatric_icu_held": 0,
+        "cardiac_icu_total": 4, "cardiac_icu_occupied": 2, "cardiac_icu_held": 0,
+        "general_ward_total": 110, "general_ward_occupied": 82, "general_ward_held": 2,
+        "specialties": ["maternity", "pediatric", "general"],
+        "blood_stock_summary": {"A+": 6, "B+": 8, "O+": 12, "O-": 2, "AB+": 3, "A-": 1, "B-": 2, "AB-": 0}
+    },
 ]
 MOCK_HOLDS = []
 
@@ -554,7 +704,11 @@ def _format_hospital(h):
     return h
 
 
-def get_all_hospitals(specialty_filter=None, ward_filter=None):
+def get_all_hospitals(specialty_filter=None, ward_filter=None, specialty=None, ward=None):
+    if specialty and not specialty_filter:
+        specialty_filter = specialty
+    if ward and not ward_filter:
+        ward_filter = ward
     """
     Gets all hospitals from the database.
     
@@ -632,7 +786,7 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
 
         otp_code = str(random.randint(1000, 9999))
         now_utc = datetime.now(timezone.utc)
-        minutes = 15
+        minutes = 20 if str(hold_type).upper() == 'PARAMEDIC' else 15
         expires_at = now_utc + timedelta(minutes=minutes)
 
         hold_id = f"mock-hold-{random.randint(10000, 99999)}"
@@ -645,18 +799,28 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
             "otp_code": otp_code,
             "status": "ACTIVE",
             "severity": severity,
+            "wrong_direction_count": 0,
+            "movement_direction": "STATIONARY",
             "created_at": now_utc.isoformat(),
             "expires_at": expires_at.isoformat()
         }
         MOCK_HOLDS.append(hold_rec)
         h[f"{resource_type}_held"] = held + 1
-        print(f"[DATABASE MOCK] Hold created: OTP={otp_code}, Hospital={hospital_id}, Ward={resource_type}")
+        new_available = available - 1
+        print(f"[DATABASE MOCK] Hold created: OTP={otp_code}, Hospital={hospital_id}, Ward={resource_type}, Beds left={new_available}")
         return {
+            "success": True,
+            "ok": True,
             "otp_code": otp_code,
+            "otp": otp_code,
             "hold_id": hold_id,
             "expires_at": expires_at.isoformat(),
+            "seconds_left": minutes * 60,
             "hold_type": hold_type,
-            "status": "ACTIVE"
+            "minutes": minutes,
+            "status": "ACTIVE",
+            "bed_count": new_available,
+            "available_beds": new_available
         }
 
     try:
@@ -679,7 +843,7 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
 
         # Step 3: Calculate expiry time
         now_utc = datetime.now(timezone.utc)
-        minutes = 15
+        minutes = 20 if str(hold_type).upper() == 'PARAMEDIC' else 15
         expires_at = now_utc + timedelta(minutes=minutes)
 
         # Step 4: Insert the hold record
@@ -691,6 +855,8 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
             "otp_code": otp_code,
             "status": "ACTIVE",
             "severity": severity,
+            "wrong_direction_count": 0,
+            "movement_direction": "STATIONARY",
             "created_at": now_utc.isoformat(),
             "expires_at": expires_at.isoformat()
         }
@@ -701,15 +867,22 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
             f"{resource_type}_held": held + 1
         }).eq("id", hospital_id).execute()
 
+        new_available = available - 1
         print(f"[DATABASE] Hold created: OTP={otp_code}, Hospital={hospital_id}, Ward={resource_type}, Expires={expires_at}")
 
-        # Return the OTP and hold info to the patient
         return {
+            "success": True,
+            "ok": True,
             "otp": otp_code,
+            "otp_code": otp_code,
             "hold_id": hold_res.data[0]["id"],
             "expires_at": expires_at.isoformat(),
+            "seconds_left": minutes * 60,
             "hold_type": hold_type,
-            "minutes": minutes
+            "minutes": minutes,
+            "status": "ACTIVE",
+            "bed_count": new_available,
+            "available_beds": new_available
         }
     except Exception as e:
         print(f"[DATABASE] Error creating hold: {e}")
@@ -721,24 +894,36 @@ def redeem_hold(hospital_id, otp_code):
     Called when a nurse enters the 4-digit OTP at the hospital desk.
     """
     if not supabase:
-        hold = next((x for x in MOCK_HOLDS if x["hospital_id"] == hospital_id and x["otp_code"] == str(otp_code) and x["status"] == "ACTIVE"), None)
+        hold = next((x for x in MOCK_HOLDS if x["hospital_id"] == hospital_id and str(x["otp_code"]) == str(otp_code) and x["status"] == "ACTIVE"), None)
         if not hold:
             return {"error": "Invalid OTP or no active hold found"}
         hold["status"] = "REDEEMED"
         hold["redeemed_at"] = datetime.now(timezone.utc).isoformat()
         h = next((x for x in MOCK_HOSPITALS if x["id"] == hospital_id), None)
+        new_available = 0
         if h:
             res_type = hold["resource_type"]
             h[f"{res_type}_held"] = max(0, _safe_int(h.get(f"{res_type}_held")) - 1)
             h[f"{res_type}_occupied"] = _safe_int(h.get(f"{res_type}_occupied")) + 1
+            total = _safe_int(h.get(f"{res_type}_total"))
+            occupied = _safe_int(h.get(f"{res_type}_occupied"))
+            held_cnt = _safe_int(h.get(f"{res_type}_held"))
+            new_available = max(0, total - occupied - held_cnt)
+
         print(f"[DATABASE MOCK] Hold redeemed: OTP={otp_code}, Hospital={hospital_id}")
-        return {"success": True, "message": "Patient admitted successfully"}
+        return {
+            "success": True,
+            "ok": True,
+            "status": "REDEEMED",
+            "bed_count": new_available,
+            "available_beds": new_available,
+            "message": "Patient admitted successfully"
+        }
 
     try:
-        # Step 1: Find the matching active hold
         holds = supabase.table("holds").select("*") \
             .eq("hospital_id", hospital_id) \
-            .eq("otp_code", otp_code) \
+            .eq("otp_code", str(otp_code)) \
             .eq("status", "ACTIVE") \
             .execute().data
 
@@ -749,14 +934,13 @@ def redeem_hold(hospital_id, otp_code):
         hold_id = hold["id"]
         resource_type = hold["resource_type"]
 
-        # Step 2: Mark the hold as REDEEMED
         now_utc = datetime.now(timezone.utc).isoformat()
         supabase.table("holds").update({
             "status": "REDEEMED",
             "redeemed_at": now_utc
         }).eq("id", hold_id).execute()
 
-        # Step 3: Update hospital bed counts
+        new_available = 0
         hospitals = supabase.table("hospitals").select("*").eq("id", hospital_id).execute().data
         if hospitals:
             h = hospitals[0]
@@ -766,12 +950,341 @@ def redeem_hold(hospital_id, otp_code):
                 f"{resource_type}_held": new_held,
                 f"{resource_type}_occupied": new_occupied
             }).eq("id", hospital_id).execute()
+            total = _safe_int(h.get(f"{resource_type}_total"))
+            new_available = max(0, total - new_occupied - new_held)
 
         print(f"[DATABASE] Hold redeemed: OTP={otp_code}, Hospital={hospital_id}")
-        return {"success": True, "message": "Patient admitted successfully"}
+        return {
+            "success": True,
+            "ok": True,
+            "status": "REDEEMED",
+            "bed_count": new_available,
+            "available_beds": new_available,
+            "message": "Patient admitted successfully"
+        }
     except Exception as e:
         print(f"[DATABASE] Error redeeming hold: {e}")
         return {"error": str(e)}
+
+
+def cancel_hold(hold_id, requester_phone=None):
+    """
+    Cancels an active hold and releases the reserved bed back to the available pool.
+    """
+    if not supabase:
+        hold = next((x for x in MOCK_HOLDS if x["id"] == hold_id and x["status"] == "ACTIVE"), None)
+        if not hold:
+            return {"error": "Active hold not found"}
+        hold["status"] = "CANCELLED"
+        hold["cancelled_at"] = datetime.now(timezone.utc).isoformat()
+        h = next((x for x in MOCK_HOSPITALS if x["id"] == hold["hospital_id"]), None)
+        restored_beds = 0
+        if h:
+            res_type = hold["resource_type"]
+            h[f"{res_type}_held"] = max(0, _safe_int(h.get(f"{res_type}_held")) - 1)
+            total = _safe_int(h.get(f"{res_type}_total"))
+            occupied = _safe_int(h.get(f"{res_type}_occupied"))
+            held_cnt = _safe_int(h.get(f"{res_type}_held"))
+            restored_beds = max(0, total - occupied - held_cnt)
+
+        print(f"[DATABASE MOCK] Hold cancelled: hold_id={hold_id}")
+        return {
+            "success": True,
+            "ok": True,
+            "status": "CANCELLED",
+            "bed_count": restored_beds,
+            "available_beds": restored_beds,
+            "message": "Hold cancelled and bed restored to available pool"
+        }
+
+    try:
+        holds = supabase.table("holds").select("*").eq("id", hold_id).eq("status", "ACTIVE").execute().data
+        if not holds:
+            return {"error": "Active hold not found"}
+        hold = holds[0]
+        hospital_id = hold["hospital_id"]
+        resource_type = hold["resource_type"]
+
+        now_utc = datetime.now(timezone.utc).isoformat()
+        supabase.table("holds").update({
+            "status": "CANCELLED",
+            "cancelled_at": now_utc
+        }).eq("id", hold_id).execute()
+
+        restored_beds = 0
+        hospitals = supabase.table("hospitals").select("*").eq("id", hospital_id).execute().data
+        if hospitals:
+            h = hospitals[0]
+            new_held = max(0, _safe_int(h.get(f"{resource_type}_held")) - 1)
+            supabase.table("hospitals").update({
+                f"{resource_type}_held": new_held
+            }).eq("id", hospital_id).execute()
+            total = _safe_int(h.get(f"{resource_type}_total"))
+            occupied = _safe_int(h.get(f"{resource_type}_occupied"))
+            restored_beds = max(0, total - occupied - new_held)
+
+        return {
+            "success": True,
+            "ok": True,
+            "status": "CANCELLED",
+            "bed_count": restored_beds,
+            "available_beds": restored_beds,
+            "message": "Hold cancelled and bed restored to available pool"
+        }
+    except Exception as e:
+        print(f"[DATABASE] Error cancelling hold: {e}")
+        return {"error": str(e)}
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2.0) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2.0) ** 2)
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return R * c
+
+
+def update_hold_location(hold_id, user_lat, user_lng, heading=None, speed=None):
+    """
+    Updates patient GPS position, calculates vector directional logic (TOWARD, STATIONARY, AWAY),
+    increments wrong direction counter when moving away, and triggers auto-cancellation if counter reaches 3.
+    """
+    if not supabase:
+        hold = next((x for x in MOCK_HOLDS if x["id"] == hold_id and x["status"] == "ACTIVE"), None)
+        if not hold:
+            return {"error": "Active hold not found"}
+
+        hospital = next((h for h in MOCK_HOSPITALS if h["id"] == hold["hospital_id"]), None)
+        if not hospital:
+            return {"error": "Hospital not found for hold"}
+
+        h_lat = float(hospital["latitude"])
+        h_lng = float(hospital["longitude"])
+        dist_curr = _haversine_km(float(user_lat), float(user_lng), h_lat, h_lng)
+
+        direction = "STATIONARY"
+        wrong_count = hold.get("wrong_direction_count", 0)
+
+        if "last_lat" in hold and "last_lng" in hold:
+            dist_prev = _haversine_km(float(hold["last_lat"]), float(hold["last_lng"]), h_lat, h_lng)
+            diff = dist_curr - dist_prev
+            if diff < -0.01:  # Moving closer by > 10 meters
+                direction = "TOWARD"
+                wrong_count = 0
+            elif diff > 0.01:  # Moving further away by > 10 meters
+                direction = "AWAY"
+                wrong_count += 1
+            else:
+                direction = "STATIONARY"
+        else:
+            direction = "STATIONARY"
+
+        hold["last_lat"] = float(user_lat)
+        hold["last_lng"] = float(user_lng)
+        hold["movement_direction"] = direction
+        hold["wrong_direction_count"] = wrong_count
+
+        eta_min = max(1.0, round((dist_curr / 22.0) * 60.0, 1))
+        res_type = hold["resource_type"]
+
+        if wrong_count >= 3:
+            hold["status"] = "CANCELLED"
+            hold["auto_cancelled"] = True
+            hold["cancelled_at"] = datetime.now(timezone.utc).isoformat()
+            hospital[f"{res_type}_held"] = max(0, _safe_int(hospital.get(f"{res_type}_held")) - 1)
+            total_b = _safe_int(hospital.get(f"{res_type}_total"))
+            occupied_b = _safe_int(hospital.get(f"{res_type}_occupied"))
+            held_b = _safe_int(hospital.get(f"{res_type}_held"))
+            avail_b = max(0, total_b - occupied_b - held_b)
+            print(f"[DATABASE MOCK] Hold AUTO-CANCELLED due to wrong direction: hold_id={hold_id}")
+            return {
+                "success": True,
+                "ok": True,
+                "status": "CANCELLED",
+                "movement_direction": direction,
+                "current_eta_minutes": eta_min,
+                "wrong_direction_count": wrong_count,
+                "auto_cancelled": True,
+                "bed_count": avail_b,
+                "available_beds": avail_b,
+                "message": "Hold auto-cancelled due to wrong direction vector movement"
+            }
+
+        total_b = _safe_int(hospital.get(f"{res_type}_total"))
+        occupied_b = _safe_int(hospital.get(f"{res_type}_occupied"))
+        held_b = _safe_int(hospital.get(f"{res_type}_held"))
+        avail_b = max(0, total_b - occupied_b - held_b)
+
+        return {
+            "success": True,
+            "ok": True,
+            "status": "ACTIVE",
+            "movement_direction": direction,
+            "current_eta_minutes": eta_min,
+            "wrong_direction_count": wrong_count,
+            "auto_cancelled": False,
+            "bed_count": avail_b,
+            "available_beds": avail_b,
+            "distance_km": round(dist_curr, 2)
+        }
+
+    try:
+        holds = supabase.table("holds").select("*").eq("id", hold_id).eq("status", "ACTIVE").execute().data
+        if not holds:
+            return {"error": "Active hold not found"}
+        hold = holds[0]
+        hospital_id = hold["hospital_id"]
+        hospitals = supabase.table("hospitals").select("*").eq("id", hospital_id).execute().data
+        if not hospitals:
+            return {"error": "Hospital not found"}
+        hospital = hospitals[0]
+
+        h_lat = float(hospital["latitude"])
+        h_lng = float(hospital["longitude"])
+        dist_curr = _haversine_km(float(user_lat), float(user_lng), h_lat, h_lng)
+
+        direction = "STATIONARY"
+        wrong_count = hold.get("wrong_direction_count") or 0
+
+        if hold.get("last_lat") is not None and hold.get("last_lng") is not None:
+            dist_prev = _haversine_km(float(hold["last_lat"]), float(hold["last_lng"]), h_lat, h_lng)
+            diff = dist_curr - dist_prev
+            if diff < -0.01:
+                direction = "TOWARD"
+                wrong_count = 0
+            elif diff > 0.01:
+                direction = "AWAY"
+                wrong_count += 1
+            else:
+                direction = "STATIONARY"
+        else:
+            direction = "STATIONARY"
+
+        eta_min = max(1.0, round((dist_curr / 22.0) * 60.0, 1))
+        resource_type = hold["resource_type"]
+
+        if wrong_count >= 3:
+            supabase.table("holds").update({
+                "status": "CANCELLED",
+                "last_lat": float(user_lat),
+                "last_lng": float(user_lng),
+                "movement_direction": direction,
+                "wrong_direction_count": wrong_count,
+                "cancelled_at": datetime.now(timezone.utc).isoformat()
+            }).eq("id", hold_id).execute()
+
+            new_held = max(0, _safe_int(hospital.get(f"{resource_type}_held")) - 1)
+            supabase.table("hospitals").update({
+                f"{resource_type}_held": new_held
+            }).eq("id", hospital_id).execute()
+
+            total_b = _safe_int(hospital.get(f"{resource_type}_total"))
+            occupied_b = _safe_int(hospital.get(f"{resource_type}_occupied"))
+            avail_b = max(0, total_b - occupied_b - new_held)
+
+            return {
+                "success": True,
+                "ok": True,
+                "status": "CANCELLED",
+                "movement_direction": direction,
+                "current_eta_minutes": eta_min,
+                "wrong_direction_count": wrong_count,
+                "auto_cancelled": True,
+                "bed_count": avail_b,
+                "available_beds": avail_b,
+                "message": "Hold auto-cancelled due to wrong direction vector movement"
+            }
+
+        supabase.table("holds").update({
+            "last_lat": float(user_lat),
+            "last_lng": float(user_lng),
+            "movement_direction": direction,
+            "wrong_direction_count": wrong_count
+        }).eq("id", hold_id).execute()
+
+        total_b = _safe_int(hospital.get(f"{resource_type}_total"))
+        occupied_b = _safe_int(hospital.get(f"{resource_type}_occupied"))
+        held_b = _safe_int(hospital.get(f"{resource_type}_held"))
+        avail_b = max(0, total_b - occupied_b - held_b)
+
+        return {
+            "success": True,
+            "ok": True,
+            "status": "ACTIVE",
+            "movement_direction": direction,
+            "current_eta_minutes": eta_min,
+            "wrong_direction_count": wrong_count,
+            "auto_cancelled": False,
+            "bed_count": avail_b,
+            "available_beds": avail_b,
+            "distance_km": round(dist_curr, 2)
+        }
+    except Exception as e:
+        print(f"[DATABASE] Error updating location: {e}")
+        return {"error": str(e)}
+
+
+def get_hold_by_id(hold_id):
+    """
+    Returns hold details by ID.
+    """
+    if not supabase:
+        hold = next((x for x in MOCK_HOLDS if x["id"] == hold_id), None)
+        if not hold:
+            return {"error": "Hold not found"}
+        h = next((x for x in MOCK_HOSPITALS if x["id"] == hold["hospital_id"]), None)
+        res_type = hold["resource_type"]
+        now_utc = datetime.now(timezone.utc)
+        expires_at = datetime.fromisoformat(hold["expires_at"])
+        seconds_left = max(0, int((expires_at - now_utc).total_seconds())) if hold["status"] == "ACTIVE" else 0
+        return {
+            "success": True,
+            "ok": True,
+            "hold_id": hold["id"],
+            "hospital_id": hold["hospital_id"],
+            "hospital_name": h["name"] if h else "Hospital",
+            "resource_type": res_type,
+            "status": hold["status"],
+            "otp_code": hold["otp_code"],
+            "otp": hold["otp_code"],
+            "seconds_left": seconds_left,
+            "expires_at": hold["expires_at"],
+            "wrong_direction_count": hold.get("wrong_direction_count", 0),
+            "movement_direction": hold.get("movement_direction", "STATIONARY")
+        }
+
+    try:
+        holds = supabase.table("holds").select("*").eq("id", hold_id).execute().data
+        if not holds:
+            return {"error": "Hold not found"}
+        hold = holds[0]
+        hospitals = supabase.table("hospitals").select("*").eq("id", hold["hospital_id"]).execute().data
+        h_name = hospitals[0]["name"] if hospitals else "Hospital"
+        now_utc = datetime.now(timezone.utc)
+        expires_at = datetime.fromisoformat(hold["expires_at"])
+        seconds_left = max(0, int((expires_at - now_utc).total_seconds())) if hold["status"] == "ACTIVE" else 0
+        return {
+            "success": True,
+            "ok": True,
+            "hold_id": hold["id"],
+            "hospital_id": hold["hospital_id"],
+            "hospital_name": h_name,
+            "resource_type": hold["resource_type"],
+            "status": hold["status"],
+            "otp_code": hold["otp_code"],
+            "otp": hold["otp_code"],
+            "seconds_left": seconds_left,
+            "expires_at": hold["expires_at"],
+            "wrong_direction_count": hold.get("wrong_direction_count", 0),
+            "movement_direction": hold.get("movement_direction", "STATIONARY")
+        }
+    except Exception as e:
+        print(f"[DATABASE] Error getting hold by ID: {e}")
+        return {"error": str(e)}
+
 
 
 def release_expired_holds():

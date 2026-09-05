@@ -42,6 +42,8 @@ SYMPTOM_DATABASE = {
 
     # ---- HINGLISH EMERGENCY PHRASES ----
     "chhati me bahut dard ho raha hai": ("RED", "cardiac_icu", "Acute chest pain (Hinglish). High suspicion for MI. Urgent ECG required."),
+    "chhati me tez dard ho raha hai":   ("RED", "cardiac_icu", "Severe chest pain (Hinglish). High suspicion for MI. Urgent ECG required."),
+    "chhati me tez dard":               ("RED", "cardiac_icu", "Severe chest pain (Hinglish). High suspicion for MI. Urgent ECG required."),
     "chhati me dard ho raha hai":       ("RED", "cardiac_icu", "Chest pain (Hinglish). Urgent cardiac evaluation required."),
     "heart me pain ho raha hai":        ("RED", "cardiac_icu", "Cardiac chest pain (Hinglish). Immediate ECG and vitals."),
     "dil me dard ho raha hai":          ("RED", "cardiac_icu", "Chest pain (Hinglish). Urgent cardiac evaluation."),
@@ -111,12 +113,16 @@ SYMPTOM_DATABASE = {
     "saas nite parchhina":              ("RED", "adult_icu", "Severe dyspnea (Benglish). Emergency oxygen & airway care."),
     "saas nite parini":                 ("RED", "adult_icu", "Severe respiratory failure (Benglish). Emergency oxygen & airway support."),
     "saas nite parche na":              ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
+    "sash nite parche na":              ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
+    "sash nite parchi na":              ("RED", "adult_icu", "Severe dyspnea 1st-person (Benglish). Emergency oxygen & airway care."),
+    "sash nite parchena":               ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "saas nite parchena":               ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "saas nite parchhena":              ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "saas nite parche ne":              ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "shwash nite parche na":            ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "shwash nite parchena":             ("RED", "adult_icu", "Severe dyspnea 3rd-person (Benglish). Emergency oxygen & airway care."),
     "saas nite koshto":                 ("RED", "adult_icu", "Respiratory distress (Benglish). Emergency oxygen support."),
+    "sash nite koshto":                 ("RED", "adult_icu", "Respiratory distress (Benglish). Emergency oxygen support."),
     "buke byatha hocche":               ("RED", "cardiac_icu", "Chest pain 3rd-person (Benglish). Urgent ECG & cardiac workup."),
     "buke byatha korche":               ("RED", "cardiac_icu", "Chest pain 3rd-person (Benglish). Urgent ECG & cardiac workup."),
     "buke pain hocche":                 ("RED", "cardiac_icu", "Chest pain 3rd-person (Benglish). Urgent ECG & cardiac workup."),
@@ -393,7 +399,8 @@ SYMPTOM_DATABASE = {
 
 def classify_symptoms(text):
     """
-    Classifies patient symptoms into RED/YELLOW/GREEN urgency levels.
+    Classifies patient symptoms into RED/YELLOW/GREEN urgency levels,
+    and checks for blood group requests.
     """
     text_lower = (text or "").lower().strip()
 
@@ -404,8 +411,12 @@ def classify_symptoms(text):
             "ward": "General Ward",
             "explanation": "No symptoms provided. Please describe your condition.",
             "reason": "No symptoms provided.",
-            "matched_keywords": []
+            "matched_keywords": [],
+            "is_blood_request": False,
+            "blood_group": None
         }
+
+    blood_grp = parse_blood_search(text_lower)
 
     matched_keywords = []
     best_severity = None
@@ -432,16 +443,30 @@ def classify_symptoms(text):
                 best_ward = ward
                 best_explanation = explanation
 
-    if best_severity is None:
-        best_severity = "YELLOW"
+    is_blood = blood_grp is not None
 
-    ward_display_names = {
-        "cardiac_icu": "Cardiac ICU",
-        "adult_icu": "Adult ICU",
-        "pediatric_icu": "Pediatric ICU",
-        "general_ward": "General Ward"
-    }
-    ward_display = ward_display_names.get(best_ward, "General Ward")
+    if is_blood and f"blood:{blood_grp}" not in matched_keywords:
+        matched_keywords.append(f"blood:{blood_grp}")
+
+    if best_severity is None:
+        if is_blood:
+            best_severity = "YELLOW"
+            best_ward = "general_ward"
+            ward_display = f"Blood Request ({blood_grp})"
+            best_explanation = f"Blood type request detected for group {blood_grp}. Filtering hospitals with matching blood stock."
+        else:
+            best_severity = "YELLOW"
+            ward_display = "General Ward"
+    else:
+        ward_display_names = {
+            "cardiac_icu": "Cardiac ICU",
+            "adult_icu": "Adult ICU",
+            "pediatric_icu": "Pediatric ICU",
+            "general_ward": "General Ward"
+        }
+        ward_display = ward_display_names.get(best_ward, "General Ward")
+        if is_blood:
+            ward_display += f" + Blood ({blood_grp})"
 
     return {
         "severity": best_severity,
@@ -449,5 +474,36 @@ def classify_symptoms(text):
         "ward": ward_display,
         "explanation": best_explanation,
         "reason": best_explanation,
-        "matched_keywords": matched_keywords
+        "matched_keywords": matched_keywords,
+        "is_blood_request": is_blood,
+        "blood_group": blood_grp
     }
+
+
+def parse_blood_search(text):
+    """
+    Parses blood group search terms from user text query (e.g. 'O negative', 'A+', 'B positive', etc.).
+    Returns standard blood group string (e.g. 'O-', 'A+') or None if not a blood query.
+    """
+    if not text:
+        return None
+    import re
+    text_lower = text.lower().strip()
+
+    patterns = [
+        (r'\b(o\s*-\s*negative|o\s*negative|o\s*-)(?!\w)', "O-"),
+        (r'\b(o\s*\+\s*positive|o\s*positive|o\s*\+)(?!\w)', "O+"),
+        (r'\b(ab\s*-\s*negative|ab\s*negative|ab\s*-)(?!\w)', "AB-"),
+        (r'\b(ab\s*\+\s*positive|ab\s*positive|ab\s*\+)(?!\w)', "AB+"),
+        (r'\b(a\s*-\s*negative|a\s*negative|a\s*-)(?!\w)', "A-"),
+        (r'\b(a\s*\+\s*positive|a\s*positive|a\s*\+)(?!\w)', "A+"),
+        (r'\b(b\s*-\s*negative|b\s*negative|b\s*-)(?!\w)', "B-"),
+        (r'\b(b\s*\+\s*positive|b\s*positive|b\s*\+)(?!\w)', "B+"),
+    ]
+
+    for pattern, grp in patterns:
+        if re.search(pattern, text_lower):
+            return grp
+    return None
+
+

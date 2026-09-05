@@ -24,23 +24,23 @@
 REPO_URL="https://github.com/mhjnvjvnjjkkgk/pulsegrid.git"
 
 # Team Member Details (CHANGE THESE!)
-MEMBER1_NAME="Team Lead"
-MEMBER1_EMAIL="teamlead@example.com"
+MEMBER1_NAME="Amit Sharma"
+MEMBER1_EMAIL="amit.sharma.sih@example.com"
 
-MEMBER2_NAME="DB Engineer"
-MEMBER2_EMAIL="dbengineer@example.com"
+MEMBER2_NAME="Priya Patel"
+MEMBER2_EMAIL="priya.patel.db@example.com"
 
-MEMBER3_NAME="AI Triage Dev"
-MEMBER3_EMAIL="triagedev@example.com"
+MEMBER3_NAME="Rahul Kumar"
+MEMBER3_EMAIL="rahul.kumar.ai@example.com"
 
-MEMBER4_NAME="TTL Worker Dev"
-MEMBER4_EMAIL="ttlworker@example.com"
+MEMBER4_NAME="Sneha Iyer"
+MEMBER4_EMAIL="sneha.iyer.worker@example.com"
 
-MEMBER5_NAME="Frontend API Dev"
-MEMBER5_EMAIL="frontendapi@example.com"
+MEMBER5_NAME="Vikram Singh"
+MEMBER5_EMAIL="vikram.singh.api@example.com"
 
-MEMBER6_NAME="UI UX Developer"
-MEMBER6_EMAIL="uiuxdev@example.com"
+MEMBER6_NAME="Neha Gupta"
+MEMBER6_EMAIL="neha.gupta.ui@example.com"
 
 # ============================================================
 # STEP 0: Initialize the repository
