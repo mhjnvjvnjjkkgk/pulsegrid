@@ -95,6 +95,9 @@
         <span class="wave-bar-4"></span>
         <span class="wave-bar-5"></span>
       </div>
+      <button id="lang-toggle-btn" class="lang-toggle-btn" title="Toggle Language (English / বাংলা / हिंदी)">
+        <span id="lang-flag">🇬🇧</span> <span id="lang-code">EN</span>
+      </button>
       <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
     </div>
   </div>
@@ -527,58 +530,58 @@
     if (!query) return CLINICAL_DATABASE.general;
     const q = query.toLowerCase();
 
-    if (q.includes('cpr') || q.includes('cardiac arrest') || q.includes('no pulse') || q.includes('heart stopped') || q.includes('collapsed') || q.includes('unresponsive')) {
+    if (q.includes('cpr') || q.includes('cardiac arrest') || q.includes('no pulse') || q.includes('heart stopped') || q.includes('collapsed') || q.includes('unresponsive') || q.includes('কার্ডিয়াক') || q.includes('হার্ট বন্ধ') || q.includes('পালস নেই') || q.includes('cpr dorkar') || q.includes('heart bandho')) {
       return CLINICAL_DATABASE.cardiac_arrest;
     }
-    if (q.includes('chest') || q.includes('heart') || q.includes('angina') || q.includes('coronary') || q.includes('buke')) {
+    if (q.includes('chest') || q.includes('heart') || q.includes('angina') || q.includes('coronary') || q.includes('buke') || q.includes('বুকে') || q.includes('ব্যথা') || q.includes('বুক') || q.includes('হার্ট') || q.includes('buke betha') || q.includes('seene me dard') || q.includes('sine me dard') || q.includes('dil ka daura') || q.includes('सीने में दर्द')) {
       return CLINICAL_DATABASE.chest_pain;
     }
-    if (q.includes('stroke') || q.includes('paralysis') || q.includes('fast') || q.includes('slur') || q.includes('droop') || q.includes('numb')) {
+    if (q.includes('stroke') || q.includes('paralysis') || q.includes('fast') || q.includes('slur') || q.includes('droop') || q.includes('numb') || q.includes('পক্ষাঘাত') || q.includes('প্যারালাইসিস') || q.includes('মুখ বেকে') || q.includes('pokkhaghat') || q.includes('mukh beke')) {
       return CLINICAL_DATABASE.stroke;
     }
-    if (q.includes('bleed') || q.includes('blood') || q.includes('cut') || q.includes('stab') || q.includes('wound') || q.includes('roktopat')) {
+    if (q.includes('bleed') || q.includes('blood') || q.includes('cut') || q.includes('stab') || q.includes('wound') || q.includes('roktopat') || q.includes('রক্ত') || q.includes('রক্তপাত') || q.includes('কাটা') || q.includes('ropto') || q.includes('khun') || q.includes('khoon') || q.includes('खून')) {
       return CLINICAL_DATABASE.bleeding;
     }
-    if (q.includes('breath') || q.includes('asthma') || q.includes('wheez') || q.includes('shwas') || q.includes('respiratory') || q.includes('suffocat')) {
+    if (q.includes('breath') || q.includes('asthma') || q.includes('wheez') || q.includes('shwas') || q.includes('respiratory') || q.includes('suffocat') || q.includes('শ্বাসকষ্ট') || q.includes('হাঁপানি') || q.includes('শ্বাস') || q.includes('shwas koshto') || q.includes('saans') || q.includes('sans') || q.includes('सांस')) {
       return CLINICAL_DATABASE.breathing;
     }
-    if (q.includes('allerg') || q.includes('anaphylax') || q.includes('hives') || q.includes('bee') || q.includes('swoll')) {
+    if (q.includes('allerg') || q.includes('anaphylax') || q.includes('hives') || q.includes('bee') || q.includes('swoll') || q.includes('এলার্জি') || q.includes('মৌমাছি') || q.includes('allergy')) {
       return CLINICAL_DATABASE.anaphylaxis;
     }
-    if (q.includes('seiz') || q.includes('fit') || q.includes('epilep') || q.includes('convuls') || q.includes('mirgi')) {
+    if (q.includes('seiz') || q.includes('fit') || q.includes('epilep') || q.includes('convuls') || q.includes('mirgi') || q.includes('ফিট') || q.includes('খিঁচুনি') || q.includes('মীরগী') || q.includes('khichuni') || q.includes('fit lagche')) {
       return CLINICAL_DATABASE.seizure;
     }
-    if (q.includes('unconscious') || q.includes('faint') || q.includes('pass out') || q.includes('blackout') || q.includes('agyan')) {
+    if (q.includes('unconscious') || q.includes('faint') || q.includes('pass out') || q.includes('blackout') || q.includes('agyan') || q.includes('অজ্ঞান') || q.includes('অচেতন') || q.includes('বেহুঁশ') || q.includes('behosh') || q.includes('acheton') || q.includes('बेहोश')) {
       return CLINICAL_DATABASE.unconscious;
     }
-    if (q.includes('snake') || q.includes('bite') || q.includes('viper') || q.includes('cobra') || q.includes('saap')) {
+    if (q.includes('snake') || q.includes('bite') || q.includes('viper') || q.includes('cobra') || q.includes('saap') || q.includes('সাপ') || q.includes('সাপের কামড়') || q.includes('saap keteche') || q.includes('saamp') || q.includes('सांप')) {
       return CLINICAL_DATABASE.snake_bite;
     }
-    if (q.includes('baby') || q.includes('child') || q.includes('kid') || q.includes('febrile') || q.includes('bacha jwar')) {
+    if (q.includes('baby') || q.includes('child') || q.includes('kid') || q.includes('febrile') || q.includes('bacha jwar') || q.includes('বাচ্চার জ্বর') || q.includes('জ্বর') || q.includes('bukhar') || q.includes('jwar') || q.includes('jwor') || q.includes('बुखार')) {
       return CLINICAL_DATABASE.febrile_fit;
     }
-    if (q.includes('burn') || q.includes('fire') || q.includes('scald') || q.includes('acid') || q.includes('agun')) {
+    if (q.includes('burn') || q.includes('fire') || q.includes('scald') || q.includes('acid') || q.includes('agun') || q.includes('আগুন') || q.includes('পুড়ে গেছে') || q.includes('pure geche') || q.includes('jalon')) {
       return CLINICAL_DATABASE.burns;
     }
-    if (q.includes('head') || q.includes('spine') || q.includes('neck') || q.includes('skull') || q.includes('accident')) {
+    if (q.includes('head') || q.includes('spine') || q.includes('neck') || q.includes('skull') || q.includes('accident') || q.includes('মাথায় আঘাত') || q.includes('অ্যাকসিডেন্ট') || q.includes('mathay aghat')) {
       return CLINICAL_DATABASE.head_trauma;
     }
-    if (q.includes('chok') || q.includes('throat') || q.includes('stuck') || q.includes('heimlich') || q.includes('atkecche')) {
+    if (q.includes('chok') || q.includes('throat') || q.includes('stuck') || q.includes('heimlich') || q.includes('atkecche') || q.includes('গলায় আটকে') || q.includes('golay atke')) {
       return CLINICAL_DATABASE.choking;
     }
-    if (q.includes('poison') || q.includes('toxic') || q.includes('chemical') || q.includes('overdose') || q.includes('vish')) {
+    if (q.includes('poison') || q.includes('toxic') || q.includes('chemical') || q.includes('overdose') || q.includes('vish') || q.includes('বিষ') || q.includes('bish') || q.includes('zahar')) {
       return CLINICAL_DATABASE.poisoning;
     }
-    if (q.includes('sugar') || q.includes('diabet') || q.includes('hypoglycem') || q.includes('insulin') || q.includes('shaky')) {
+    if (q.includes('sugar') || q.includes('diabet') || q.includes('hypoglycem') || q.includes('insulin') || q.includes('shaky') || q.includes('সুগার') || q.includes('ডায়াবেটিস') || q.includes('sugar kam')) {
       return CLINICAL_DATABASE.hypoglycemia;
     }
-    if (q.includes('heat') || q.includes('sun stroke') || q.includes('hypertherm') || q.includes('gormer')) {
+    if (q.includes('heat') || q.includes('sun stroke') || q.includes('hypertherm') || q.includes('gormer') || q.includes('সান স্ট্রোক') || q.includes('গরম') || q.includes('gormi')) {
       return CLINICAL_DATABASE.heat_stroke;
     }
-    if (q.includes('fracture') || q.includes('bone') || q.includes('dislocat') || q.includes('ankle') || q.includes('bhengeche')) {
+    if (q.includes('fracture') || q.includes('bone') || q.includes('dislocat') || q.includes('ankle') || q.includes('bhengeche') || q.includes('হাড় ভেঙে') || q.includes('হাত ভাঙা') || q.includes('har bhenge') || q.includes('haddi')) {
       return CLINICAL_DATABASE.fracture;
     }
-    if (q.includes('labor') || q.includes('pregnant') || q.includes('deliver') || q.includes('birth') || q.includes('hocche')) {
+    if (q.includes('labor') || q.includes('pregnant') || q.includes('deliver') || q.includes('birth') || q.includes('hocche') || q.includes('প্রসব') || q.includes('গর্ভবতী') || q.includes('prosob') || q.includes('delivery')) {
       return CLINICAL_DATABASE.childbirth;
     }
 
@@ -827,9 +830,14 @@
         🚨 ESI-1 CRITICAL PRIORITY (IMMEDIATE CARDIAC ICU TRIAGE)
       </div>
 
-      <!-- 3. Headline Title & Action Code -->
+      <!-- 3. Headline Title & Action Code & TTS Listen Button -->
       <div class="photo-headline-box">
-        <div class="photo-main-title">${guidance.title || '❤️ Severe Chest Pain / Heart Attack'}</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px;">
+          <div class="photo-main-title">${guidance.title || '❤️ Severe Chest Pain / Heart Attack'}</div>
+          <button class="tts-speak-btn" onclick="toggleTTSGuidance('${h.id}')" title="Listen to Emergency Protocol Out Loud">
+            <span class="tts-icon">🔊</span><span class="tts-text">LISTEN</span>
+          </button>
+        </div>
         <div class="photo-action-code">CLINICAL ACTION PRIORITY CODE: ACS-STEMI-STAT</div>
       </div>
 
@@ -1159,6 +1167,127 @@
     });
   }
 
+  /* ── Multilingual Language & Speech Synthesis Engine (TTS & STT) ── */
+  let currentLang = 'en-IN'; // 'en-IN', 'bn-IN', 'hi-IN'
+  let isSpeakingTTS = false;
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    const flagEl = document.getElementById('lang-flag');
+    const codeEl = document.getElementById('lang-code');
+    const inputEl = document.getElementById('symptom-input');
+
+    if (lang === 'en-IN') {
+      if (flagEl) flagEl.innerText = '🇬🇧';
+      if (codeEl) codeEl.innerText = 'EN';
+      if (inputEl) inputEl.placeholder = 'Say YOUR SYMPTOM HERE...';
+    } else if (lang === 'bn-IN') {
+      if (flagEl) flagEl.innerText = '🇧🇩';
+      if (codeEl) codeEl.innerText = 'BN';
+      if (inputEl) inputEl.placeholder = 'আপনার লক্ষণ বলুন (যেমন: বুকে ব্যথা)...';
+    } else if (lang === 'hi-IN') {
+      if (flagEl) flagEl.innerText = '🇮🇳';
+      if (codeEl) codeEl.innerText = 'HI';
+      if (inputEl) inputEl.placeholder = 'अपने लक्षण कहें (जैसे: सीने में दर्द)...';
+    }
+  }
+
+  function initLangSwitcher() {
+    const btn = document.getElementById('lang-toggle-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (currentLang === 'en-IN') {
+        setLanguage('bn-IN');
+      } else if (currentLang === 'bn-IN') {
+        setLanguage('hi-IN');
+      } else {
+        setLanguage('en-IN');
+      }
+    });
+  }
+
+  function speakText(text, langCode = currentLang) {
+    if (!('speechSynthesis' in window)) {
+      alert('Text-to-speech read aloud is not supported on this browser.');
+      return;
+    }
+    window.speechSynthesis.cancel();
+
+    // Clean text of emojis & HTML markup
+    const cleanText = (text || '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/<[^>]*>?/gm, '');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.92;
+    utterance.pitch = 1.0;
+    utterance.lang = langCode;
+
+    const voices = window.speechSynthesis.getVoices();
+    const langPrefix = langCode.split('-')[0];
+    const preferredVoice = voices.find(v => v.lang.startsWith(langPrefix) || v.lang === langCode);
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => {
+      isSpeakingTTS = true;
+      updateTTSButtons(true);
+    };
+
+    utterance.onend = () => {
+      isSpeakingTTS = false;
+      updateTTSButtons(false);
+    };
+
+    utterance.onerror = () => {
+      isSpeakingTTS = false;
+      updateTTSButtons(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function stopTTS() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    isSpeakingTTS = false;
+    updateTTSButtons(false);
+  }
+
+  function toggleTTSGuidance(hospId) {
+    if (isSpeakingTTS) {
+      stopTTS();
+      return;
+    }
+
+    const h = allHospitals.find(item => String(item.id) === String(hospId)) || activeTargetHospital || allHospitals[0];
+    if (!h) return;
+
+    const guidance = getClinicalGuidance(currentSearchQuery);
+    let speechStr = '';
+    if (currentLang === 'bn-IN') {
+      speechStr = `জরুরী স্বাস্থ্য নির্দেশিকা: ${h.name}। ${guidance.title}। অবিলম্বে করণীয়: ${guidance.doNow}। নিয়মাবলী: ${(guidance.steps || []).join('। ')}`;
+    } else if (currentLang === 'hi-IN') {
+      speechStr = `आपत्कालीन निर्देश: ${h.name}। ${guidance.title}। तुरंत कदम उठाएं: ${guidance.doNow}। चरण: ${(guidance.steps || []).join('. ')}`;
+    } else {
+      speechStr = `Emergency protocol for ${guidance.category || 'Emergency'}. Recommended hospital: ${h.name}. Immediate action: ${guidance.doNow}. Steps: ${(guidance.steps || []).join('. ')}`;
+    }
+
+    speakText(speechStr, currentLang);
+  }
+
+  function updateTTSButtons(speaking) {
+    document.querySelectorAll('.tts-speak-btn').forEach(btn => {
+      if (speaking) {
+        btn.classList.add('speaking');
+        btn.innerHTML = `<span class="tts-icon">⏹️</span><span class="tts-text">STOP</span>`;
+      } else {
+        btn.classList.remove('speaking');
+        btn.innerHTML = `<span class="tts-icon">🔊</span><span class="tts-text">LISTEN</span>`;
+      }
+    });
+  }
+
   function initVoiceTriage() {
     const micBtn = document.getElementById('voice-mic-btn');
     const input = document.getElementById('symptom-input');
@@ -1173,56 +1302,63 @@
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-IN';
-
+    let recognition = null;
     let isListening = false;
 
     micBtn.addEventListener('click', () => {
-      if (isListening) {
+      if (isListening && recognition) {
         recognition.stop();
       } else {
         try {
+          recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+          recognition.lang = currentLang;
+
+          recognition.onstart = () => {
+            isListening = true;
+            micBtn.classList.add('listening');
+            if (waveform) waveform.style.display = 'flex';
+            if (currentLang === 'bn-IN') {
+              input.placeholder = '🔴 শুনছি... আপনার লক্ষণ বলুন';
+            } else if (currentLang === 'hi-IN') {
+              input.placeholder = '🔴 सुन रहे हैं... लक्षण बोलें';
+            } else {
+              input.placeholder = '🔴 Listening... Speak symptoms or blood group';
+            }
+          };
+
+          recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+            }
+            input.value = transcript;
+            if (event.results[0].isFinal) {
+              runTriage(transcript);
+            }
+          };
+
+          recognition.onerror = () => {
+            isListening = false;
+            micBtn.classList.remove('listening');
+            if (waveform) waveform.style.display = 'none';
+            setLanguage(currentLang);
+          };
+
+          recognition.onend = () => {
+            isListening = false;
+            micBtn.classList.remove('listening');
+            if (waveform) waveform.style.display = 'none';
+            setLanguage(currentLang);
+          };
+
           recognition.start();
         } catch (err) {
-          console.log('Mic already active:', err);
+          console.log('Mic error:', err);
         }
       }
     });
-
-    recognition.onstart = () => {
-      isListening = true;
-      micBtn.classList.add('listening');
-      if (waveform) waveform.style.display = 'flex';
-      input.placeholder = '🔴 Listening... Speak symptoms or blood group';
-    };
-
-    recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      input.value = transcript;
-      if (event.results[0].isFinal) {
-        runTriage(transcript);
-      }
-    };
-
-    recognition.onerror = () => {
-      isListening = false;
-      micBtn.classList.remove('listening');
-      if (waveform) waveform.style.display = 'none';
-      input.placeholder = 'Say YOUR SYMPTOM HERE...';
-    };
-
-    recognition.onend = () => {
-      isListening = false;
-      micBtn.classList.remove('listening');
-      if (waveform) waveform.style.display = 'none';
-      input.placeholder = 'Say YOUR SYMPTOM HERE...';
-    };
   }
 
   function highlightCard(id, autoScroll = false) {
@@ -1249,6 +1385,7 @@
   // GPS must fire first so map centers on user location immediately
   initGPS();
   initTouchDrawer();
+  initLangSwitcher();
   loadHospitals();
   initVoiceTriage();
   // Auto-refresh every 60s
