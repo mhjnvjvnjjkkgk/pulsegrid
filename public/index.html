@@ -114,24 +114,6 @@
       <!-- Hospital Cards Container -->
       <div class="cards-col" id="cards-col"></div>
     </div>
-
-    <!-- STICKY ACTION FOOTER (Matching user's exact photo layout) -->
-    <div class="sheet-sticky-footer" id="sheet-sticky-footer">
-      <button class="sticky-book-btn" id="cockpit-lock-btn" onclick="triggerStickyHold()">
-        <span style="font-size:1.15rem;">🔒</span>
-        <span>BOOK MY SLOT AND START ➔</span>
-      </button>
-      <div class="sticky-call-row">
-        <a class="sticky-amb-btn" id="inline-call-amb-btn" href="tel:108">
-          <span style="font-size:1.1rem;">🚑</span>
-          <span>Call Ambulance</span>
-        </a>
-        <a class="sticky-hosp-btn" id="inline-call-hosp-btn" href="tel:102">
-          <span style="font-size:1.1rem;">📞</span>
-          <span>Call Hospital</span>
-        </a>
-      </div>
-    </div>
   </div>
 
   <!-- ═══════════════════════════════════════
@@ -789,6 +771,13 @@
     card.className = 'gmaps-hosp-card';
     card.dataset.id = h.id;
     card.innerHTML = `
+      <!-- 0. TOP TAG ROW (Matching Image 1 EXACTLY) -->
+      <div class="hosp-peek-tag-row">
+        <span class="hosp-peek-tag-red">⚠️ Level-1 Trauma & Cardiac Bay Ready</span>
+        <span class="hosp-peek-tag-verified">TRAUMA VERIFIED</span>
+      </div>
+
+      <!-- 1. HOSPITAL TITLE & RATING BADGE -->
       <div class="hosp-peek-title-row">
         <div>
           <div class="hosp-peek-name">${h.name} <span class="hosp-verified-check">✔</span></div>
@@ -797,6 +786,7 @@
         <div class="hosp-rating-badge">⭐ 4.8</div>
       </div>
 
+      <!-- 2. METRICS GRID (3 CARDS) -->
       <div class="hosp-metrics-grid">
         <div class="metric-card">
           <div class="metric-label">DISTANCE</div>
@@ -815,22 +805,31 @@
         </div>
       </div>
 
-      <!-- 1. Hospital Header Row (Matching Photo top bar) -->
-      <div class="photo-hosp-header">
-        <div class="photo-hosp-icon">🏥</div>
-        <div style="flex:1; min-width:0;">
-          <div class="photo-hosp-title">${h.name}</div>
-          <div class="photo-hosp-sub">• ${h.icubeds || 'Cardiac Care Unit Ready'}</div>
+      <!-- 3. PRIMARY & SECONDARY ACTION BUTTONS (Matching Image 1 EXACTLY!) -->
+      <div class="gmaps-action-row" style="margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
+        <button class="sticky-book-btn" onclick="openHoldModal(allHospitals.find(item => String(item.id) === '${h.id}') || activeTargetHospital)">
+          <span style="font-size:1.15rem;">🔒</span>
+          <span>BOOK MY SLOT AND START ➔</span>
+        </button>
+        <div class="sticky-call-row">
+          <a class="sticky-amb-btn" href="tel:108">
+            <span style="font-size:1.1rem;">🚑</span>
+            <span>Call Ambulance</span>
+          </a>
+          <a class="sticky-hosp-btn" href="tel:${h.emergency_phone || h.phone || '102'}">
+            <span style="font-size:1.1rem;">📞</span>
+            <span>Call Hospital</span>
+          </a>
         </div>
-        <div class="photo-hosp-badge">${h.adult_icu ? (h.adult_icu.total - h.adult_icu.occupied) : 4} ICU BEDS LOCKED</div>
       </div>
 
-      <!-- 2. Red Priority Banner -->
-      <div class="photo-esi-banner">
+      <!-- 4. EXPANDED CLINICAL PROTOCOL & GUIDANCE (Visible when scrolling down) -->
+      <!-- Red Priority Banner -->
+      <div class="photo-esi-banner" style="margin-top: 14px;">
         🚨 ESI-1 CRITICAL PRIORITY (IMMEDIATE CARDIAC ICU TRIAGE)
       </div>
 
-      <!-- 3. Headline Title & Action Code & TTS Listen Button -->
+      <!-- Headline Title & Action Code & TTS Listen Button -->
       <div class="photo-headline-box">
         <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px;">
           <div class="photo-main-title">${guidance.title || '❤️ Severe Chest Pain / Heart Attack'}</div>
@@ -841,7 +840,7 @@
         <div class="photo-action-code">CLINICAL ACTION PRIORITY CODE: ACS-STEMI-STAT</div>
       </div>
 
-      <!-- 4. CHECK PATIENT STATUS 2x2 Grid -->
+      <!-- CHECK PATIENT STATUS 2x2 Grid -->
       <div class="photo-status-box">
         <div class="photo-box-header">
           <span>🔍 CHECK PATIENT STATUS</span>
@@ -855,7 +854,7 @@
         </div>
       </div>
 
-      <!-- 5. IMMEDIATE ACTION Box -->
+      <!-- IMMEDIATE ACTION Box -->
       <div class="photo-action-box">
         <div class="photo-box-header">
           <span>⚡ IMMEDIATE ACTION: SEMI-FOWLER 45° POSITION</span>
@@ -875,11 +874,52 @@
         </div>
       </div>
 
-      <!-- 6. EMERGENCY PROTOCOL STEPS List -->
+      <!-- EMERGENCY PROTOCOL STEPS List -->
       <div class="photo-protocol-section">
         <div class="photo-protocol-header">
           <span>⚫ EMERGENCY PROTOCOL STEPS</span>
           <span style="color:#00F0FF; font-size:0.75rem; font-weight:700;">${guidance.steps ? guidance.steps.length : 6} CLINICAL POINTS</span>
+        </div>
+        <div class="photo-steps-list">
+          ${(guidance.steps || []).map((step, idx) => `
+            <div class="photo-step-card">
+              <span class="photo-step-num">${idx + 1}.</span>
+              <span>${step}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- CRITICAL DO NOT DOs -->
+      <div class="photo-donts-box">
+        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+          <span>⚠️</span> CRITICAL DO NOT DOs
+        </div>
+        <div style="font-size:0.78rem; color:#fda4af; margin-top:5px; line-height:1.4;">
+          ${guidance.doNotDo || '❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.'}
+        </div>
+      </div>
+
+      <!-- Bystander Calming Script -->
+      <div class="photo-calming-box">
+        <div style="font-weight:800; color:#38bdf8; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+          <span>🧘</span> Bystander Calming & De-escalation Script
+        </div>
+        <div style="font-size:0.78rem; color:#93c5fd; font-style:italic; margin-top:5px; line-height:1.4;">
+          ${guidance.calmingScript || '🗣️ Bystanders: \'Patient is safe and monitored. Navigation active. Hospital bed reserved.\''}
+        </div>
+      </div>
+
+      <!-- Live Blood Stock Available -->
+      <div class="photo-blood-box">
+        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span>🩸</span> Live Blood Stock Available:
+        </div>
+        <div class="photo-blood-grid">
+          ${bloodTilesHtml}
+        </div>
+      </div>
+    `;0FF; font-size:0.75rem; font-weight:700;">${guidance.steps ? guidance.steps.length : 6} CLINICAL POINTS</span>
         </div>
         <div class="photo-steps-list">
           ${(guidance.steps || []).map((step, idx) => `
@@ -991,89 +1031,55 @@
     }
   }
 
-  /* ── 60fps Mobile Touch Drag Support for Bottom Sheet Drawer ── */
+  /* ── 60fps Mobile Touch Drag & Scroll Controller (Google Maps Style) ── */
   function initTouchDrawer() {
     const handle = document.getElementById('bottom-sheet-handle');
     const sheet = document.getElementById('bottom-sheet');
     const sheetContent = document.getElementById('sheet-content');
-    if (!handle || !sheet) return;
+    if (!sheet || !sheetContent) return;
 
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
+    let touchStartY = 0;
+    let isTracking = false;
 
-    // Auto-expand sheet on swipe up inside sheet content scroll view
-    if (sheetContent) {
-      let contentStartY = 0;
-      sheetContent.addEventListener('touchstart', (e) => {
-        contentStartY = e.touches[0].clientY;
-      }, { passive: true });
+    sheet.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+      isTracking = true;
+    }, { passive: true });
 
-      sheetContent.addEventListener('touchmove', (e) => {
+    sheet.addEventListener('touchmove', (e) => {
+      if (!isTracking) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - touchStartY;
+
+      if (currentSheetState === 'peek') {
+        // Swiping UP anywhere on drawer expands to full height
+        if (deltaY < -12) {
+          setSheetState('expanded');
+          isTracking = false;
+        }
+      } else if (currentSheetState === 'expanded') {
+        // Swiping DOWN when scrolled to top collapses drawer to peek
+        if (sheetContent.scrollTop <= 0 && deltaY > 25) {
+          setSheetState('peek');
+          isTracking = false;
+        }
+      }
+    }, { passive: true });
+
+    sheet.addEventListener('touchend', () => {
+      isTracking = false;
+    }, { passive: true });
+
+    if (handle) {
+      handle.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (currentSheetState === 'peek') {
-          const currentTouchY = e.touches[0].clientY;
-          if (contentStartY - currentTouchY > 15) { // Swiping up inside drawer content
-            setSheetState('expanded');
-          }
+          setSheetState('expanded');
+        } else {
+          setSheetState('peek');
         }
-      }, { passive: true });
+      });
     }
-
-    handle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (currentSheetState === 'peek') {
-        setSheetState('expanded');
-      } else {
-        setSheetState('peek');
-      }
-    });
-
-    handle.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-      currentY = startY;
-      isDragging = true;
-      sheet.style.transition = 'none';
-    }, { passive: true });
-
-    handle.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
-      currentY = e.touches[0].clientY;
-      const deltaY = currentY - startY;
-
-      if (currentSheetState === 'peek') {
-        const peekOffset = window.innerHeight - 300;
-        const targetY = Math.max(0, peekOffset + deltaY);
-        sheet.style.transform = `translate3d(0, ${targetY}px, 0)`;
-      } else if (currentSheetState === 'expanded') {
-        if (deltaY > 0) {
-          const targetY = Math.min(window.innerHeight - 100, deltaY);
-          sheet.style.transform = `translate3d(0, ${targetY}px, 0)`;
-        }
-      }
-    }, { passive: true });
-
-    handle.addEventListener('touchend', () => {
-      if (!isDragging) return;
-      isDragging = false;
-      sheet.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-      const deltaY = currentY - startY;
-
-      if (currentSheetState === 'peek') {
-        if (deltaY < -50) {
-          setSheetState('expanded');
-        } else if (deltaY > 80) {
-          setSheetState('hidden');
-        } else {
-          setSheetState('peek');
-        }
-      } else if (currentSheetState === 'expanded') {
-        if (deltaY > 80) {
-          setSheetState('peek');
-        } else {
-          setSheetState('expanded');
-        }
-      }
-    }, { passive: true });
   }
 
   /* ── Open Hold Modal & Launch Google Maps Turn-by-Turn Navigation ── */
