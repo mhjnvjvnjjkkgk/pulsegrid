@@ -948,13 +948,6 @@ html, body {
 
   .blood-grid-matrix {
     grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
-    gap: 4px;
-  }
-
-  .blood-type-lbl {
-    font-size: 0.72rem;
-  }
-
   .blood-count-val {
     font-size: 0.68rem;
   }

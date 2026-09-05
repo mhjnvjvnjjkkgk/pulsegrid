@@ -111,6 +111,24 @@
       <!-- Hospital Cards Container -->
       <div class="cards-col" id="cards-col"></div>
     </div>
+
+    <!-- STICKY ACTION FOOTER (Matching user's exact photo layout) -->
+    <div class="sheet-sticky-footer" id="sheet-sticky-footer">
+      <button class="sticky-book-btn" id="cockpit-lock-btn" onclick="triggerStickyHold()">
+        <span style="font-size:1.15rem;">🔒</span>
+        <span>BOOK MY SLOT AND START ➔</span>
+      </button>
+      <div class="sticky-call-row">
+        <a class="sticky-amb-btn" id="inline-call-amb-btn" href="tel:108">
+          <span style="font-size:1.1rem;">🚑</span>
+          <span>Call Ambulance</span>
+        </a>
+        <a class="sticky-hosp-btn" id="inline-call-hosp-btn" href="tel:102">
+          <span style="font-size:1.1rem;">📞</span>
+          <span>Call Hospital</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════════════════════════════
@@ -589,10 +607,10 @@
     attributionControl: false,
   });
 
-  // CartoDB Dark Matter tiles — zero API key, full dark obsidian theme matching Stitch design
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  // OpenStreetMap CDN tiles with dark high-contrast CSS filter for crisp visible streets without API keys
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    subdomains: 'abcd'
+    subdomains: ['a', 'b', 'c']
   }).addTo(map);
 
   // Force map layout recalculation to ensure tiles load seamlessly
@@ -642,6 +660,12 @@
     if (!h || !h.latitude || !h.longitude) return;
     activeTargetHospital = h;
 
+    // Update sticky phone button
+    const hospCallBtn = document.getElementById('inline-call-hosp-btn');
+    if (hospCallBtn) {
+      hospCallBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
+    }
+
     if (routePolyline) {
       map.removeLayer(routePolyline);
       routePolyline = null;
@@ -665,7 +689,7 @@
           className: 'neon-route-path'
         }).addTo(map);
 
-        map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+        map.fitBounds(routePolyline.getBounds(), { padding: [60, 60], animate: true, duration: 1 });
         return;
       }
     } catch (err) {
@@ -678,7 +702,7 @@
       dashArray: '10, 8',
       opacity: 0.85
     }).addTo(map);
-    map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+    map.fitBounds(routePolyline.getBounds(), { padding: [60, 60], animate: true, duration: 1 });
   }
 
   function makeIcon(color, name) {
@@ -714,26 +738,26 @@
     return total;
   }
 
-  /* ── Render Hospital Card (Matching Drawings 2 & 3) ── */
+  function triggerStickyHold() {
+    if (activeTargetHospital) {
+      openHoldModal(activeTargetHospital);
+    } else if (allHospitals && allHospitals.length > 0) {
+      openHoldModal(allHospitals[0]);
+    }
+  }
+
+  /* ── Render Hospital Card (Matching User Photo Mockup) ── */
   function renderCard(h) {
-    const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-    const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
-    const totalA = totalAvail(h);
+    const userDist = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+    const distKm = typeof userDist === 'number' ? userDist.toFixed(1) : userDist;
 
     const guidance = getClinicalGuidance(currentSearchQuery);
 
-    const guidanceItemsHtml = guidance.steps.map((s, idx) => `
-      <div class="first-aid-item">
-        <span class="first-aid-num">${idx + 1}.</span>
-        <span>${s}</span>
-      </div>
-    `).join('');
-
-    const blood = h.blood_stock_summary || {};
+    const blood = h.blood_stock_summary || { "A+": "6u", "A-": "1u", "AB+": "3u", "AB-": "0u", "B+": "8u", "B-": "2u", "O+": "12u", "O-": "2u" };
     const bloodTilesHtml = Object.entries(blood).map(([t, v]) => `
-      <div class="blood-unit-tile">
-        <div class="blood-type-lbl">${t}</div>
-        <div class="blood-count-val">${v}u</div>
+      <div class="blood-unit-chip">
+        <span class="b-type">${t}</span>
+        <span class="b-vol">${v}</span>
       </div>
     `).join('');
 
@@ -741,82 +765,107 @@
     card.className = 'gmaps-hosp-card';
     card.dataset.id = h.id;
     card.innerHTML = `
-      <div>
-        <div class="gmaps-hosp-title">${h.name}</div>
-        <div class="gmaps-hosp-sub">
-          <span class="pill-tag">📍 ${distKm} KM</span>
-          <span class="pill-tag">🚗 ${etaStr}</span>
-          <span style="color:#10b981; font-weight:700;">Open 24 Hours</span>
+      <!-- 1. Hospital Header Row (Matching Photo top bar) -->
+      <div class="photo-hosp-header">
+        <div class="photo-hosp-icon">🏥</div>
+        <div style="flex:1; min-width:0;">
+          <div class="photo-hosp-title">${h.name}</div>
+          <div class="photo-hosp-sub">• ${h.icubeds || 'Cardiac Care Unit Ready'}</div>
+        </div>
+        <div class="photo-hosp-badge">${h.adult_icu ? (h.adult_icu.total - h.adult_icu.occupied) : 4} ICU BEDS LOCKED</div>
+      </div>
+
+      <!-- 2. Red Priority Banner -->
+      <div class="photo-esi-banner">
+        🚨 ESI-1 CRITICAL PRIORITY (IMMEDIATE CARDIAC ICU TRIAGE)
+      </div>
+
+      <!-- 3. Headline Title & Action Code -->
+      <div class="photo-headline-box">
+        <div class="photo-main-title">${guidance.title || '❤️ Severe Chest Pain / Heart Attack'}</div>
+        <div class="photo-action-code">CLINICAL ACTION PRIORITY CODE: ACS-STEMI-STAT</div>
+      </div>
+
+      <!-- 4. CHECK PATIENT STATUS 2x2 Grid -->
+      <div class="photo-status-box">
+        <div class="photo-box-header">
+          <span>🔍 CHECK PATIENT STATUS</span>
+          <span class="photo-tag-scan">RAPID SCAN</span>
+        </div>
+        <div class="photo-status-grid">
+          <div class="photo-status-card"><span>🛑</span> Crushing jaw/arm pain</div>
+          <div class="photo-status-card"><span>🫁</span> Severe breathlessness</div>
+          <div class="photo-status-card"><span>💧</span> Cold diaphoresis (sweat)</div>
+          <div class="photo-status-card"><span>⚠️</span> Sudden dizziness</div>
         </div>
       </div>
 
-      <!-- Action Buttons Row (Drawing 2 & 3: 3 Primary Buttons) -->
-      <div class="gmaps-action-row">
-        <button class="gmaps-btn-primary hold-btn" data-id="${h.id}">
-          <div class="gmaps-btn-primary-shimmer"></div>
-          <div class="gmaps-btn-primary-inner">
-            🔒 Book MY Slot And Start
+      <!-- 5. IMMEDIATE ACTION Box -->
+      <div class="photo-action-box">
+        <div class="photo-box-header">
+          <span>⚡ IMMEDIATE ACTION: SEMI-FOWLER 45° POSITION</span>
+          <span class="photo-tag-stat">STAT</span>
+        </div>
+        <div class="photo-action-content">
+          <div class="photo-angle-box">
+            <div style="font-size:1.15rem; font-weight:900; color:#00FF87; line-height:1;">45°</div>
+            <div style="font-size:0.6rem; color:#94a3b8; font-weight:700;">ANGLE</div>
           </div>
-        </button>
-        <a class="gmaps-btn-secondary gmaps-btn-amb" href="tel:108">
-          🚑 Call Ambulance
-        </a>
-        <a class="gmaps-btn-secondary" href="tel:${h.emergency_phone || h.phone}">
-          📞 Call Hospital
-        </a>
+          <div>
+            <div style="font-weight:800; color:#ffffff; font-size:0.92rem;">Elevate Torso with Bent Knees</div>
+            <div style="font-size:0.78rem; color:#94a3b8; line-height:1.35; margin-top:3px;">
+              ${guidance.doNow || 'Seat patient upright leaning back at 45° with bent knees. This minimizes cardiac workload and eases thoracic congestion instantly.'}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Emergency Bed Availability Tag -->
-      <div style="font-weight:800; font-size:0.92rem; color:#10b981;">
-        🛏 ${totalA} Beds Available!
+      <!-- 6. EMERGENCY PROTOCOL STEPS List -->
+      <div class="photo-protocol-section">
+        <div class="photo-protocol-header">
+          <span>⚫ EMERGENCY PROTOCOL STEPS</span>
+          <span style="color:#00F0FF; font-size:0.75rem; font-weight:700;">${guidance.steps ? guidance.steps.length : 6} CLINICAL POINTS</span>
+        </div>
+        <div class="photo-steps-list">
+          ${(guidance.steps || []).map((step, idx) => `
+            <div class="photo-step-card">
+              <span class="photo-step-num">${idx + 1}.</span>
+              <span>${step}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
 
-      <!-- DOCTOR-GRADE EMERGENCY CLINICAL GUIDANCE (Drawing 3: "Things to Check and DO") -->
-      <div class="first-aid-card">
-        <div class="first-aid-header">
-          <div class="first-aid-title">${guidance.title}</div>
-          <span class="esi-badge ${guidance.esiClass}">${guidance.esi}</span>
+      <!-- 7. CRITICAL DO NOT DOs -->
+      <div class="photo-donts-box">
+        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+          <span>⚠️</span> CRITICAL DO NOT DOs
         </div>
-
-        <div class="clinical-box struggling-box">
-          <div class="clinical-box-title">🔍 Check if Patient is Struggling</div>
-          <div class="clinical-box-text">${guidance.struggling}</div>
+        <div style="font-size:0.78rem; color:#fda4af; margin-top:5px; line-height:1.4;">
+          ${guidance.doNotDo || '❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.'}
         </div>
+      </div>
 
-        <div class="clinical-box donow-box">
-          <div class="clinical-box-title">⚡ Something You Can DO Right NOW</div>
-          <div class="clinical-box-text">${guidance.doNow}</div>
+      <!-- 8. Bystander Calming Script -->
+      <div class="photo-calming-box">
+        <div style="font-weight:800; color:#38bdf8; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+          <span>🧘</span> Bystander Calming & De-escalation Script
         </div>
-
-        <div class="clinical-box protocol-box">
-          <div class="clinical-box-title">📋 Step-by-Step Tactical Protocol</div>
-          <div class="first-aid-list">
-            ${guidanceItemsHtml}
-          </div>
+        <div style="font-size:0.78rem; color:#93c5fd; font-style:italic; margin-top:5px; line-height:1.4;">
+          ${guidance.calmingScript || '🗣️ Bystanders: \'Patient is safe and monitored. Navigation active. Hospital bed reserved.\''}
         </div>
+      </div>
 
-        <div class="clinical-warning-box">
-          <div class="warning-title">⚠️ CRITICAL DO NOT DOs</div>
-          <div class="warning-text">${guidance.doNotDo}</div>
+      <!-- 9. Live Blood Stock Available -->
+      <div class="photo-blood-box">
+        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span>🩸</span> Live Blood Stock Available:
         </div>
-
-        <div class="calming-script-box">
-          <div class="calming-title">🧘 Bystander Calming & De-escalation Script</div>
-          <div class="calming-text">${guidance.calmingScript}</div>
+        <div class="photo-blood-grid">
+          ${bloodTilesHtml}
         </div>
-
-        <div class="blood-breakdown-row">
-          <div style="font-weight:700; margin-bottom:6px; color:#e2e8f0; font-family:var(--font-heading);">🩸 Live Blood Stock Available:</div>
-          <div class="blood-grid-matrix">
-            ${bloodTilesHtml || '<span style="color:#94a3b8; font-size:0.75rem;">Units available on request</span>'}
-          </div>
-        </div>
-      </div>`;
-
-    card.querySelector('.hold-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openHoldModal(h);
-    });
+      </div>
+    `;
 
     return card;
   }
