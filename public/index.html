@@ -103,9 +103,8 @@
        4. SLIDABLE BOTTOM SHEET DRAWER (Drawings 2 & 3)
   ════════════════════════════════════════ -->
   <div class="bottom-sheet hidden" id="bottom-sheet">
-    <div class="bottom-sheet-handle" id="bottom-sheet-handle" title="Drag to expand / collapse details">
-      <div class="handle-bar"></div>
-      <span class="handle-text">Can Be Dragable</span>
+    <div class="sheet-handle-zone" id="bottom-sheet-handle" title="Drag to expand / collapse details">
+      <div class="sheet-handle-bar"></div>
     </div>
 
     <div class="sheet-content" id="sheet-content">
@@ -590,10 +589,10 @@
     attributionControl: false,
   });
 
-  // OpenStreetMap Standard CDN tiles — 100% free, zero "API KEY REQUIRED" text overlay!
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // CartoDB Dark Matter tiles — zero API key, full dark obsidian theme matching Stitch design
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
-    subdomains: 'abc'
+    subdomains: 'abcd'
   }).addTo(map);
 
   // Force map layout recalculation to ensure tiles load seamlessly
@@ -605,12 +604,13 @@
   function initGPS() {
     const bluePulseIcon = L.divIcon({
       className: '',
-      html: `<div style="position:relative; width:22px; height:22px;">
-               <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#1a73e8; border:3px solid #ffffff; box-shadow:0 0 14px rgba(26,115,232,0.9); z-index:2;"></div>
-               <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(26,115,232,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
+      html: `<div style="position:relative; width:24px; height:24px;">
+               <div style="position:absolute; top:0; left:0; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #00f0ff, #0087ff); border:2.5px solid rgba(255,255,255,0.9); box-shadow:0 0 18px rgba(0,240,255,0.9), 0 0 36px rgba(0,240,255,0.5); z-index:2;"></div>
+               <div style="position:absolute; top:-10px; left:-10px; width:44px; height:44px; border-radius:50%; background:rgba(0,240,255,0.18); animation:ping-slow 2s cubic-bezier(0,0,0.2,1) infinite; z-index:1;"></div>
+               <div style="position:absolute; top:-18px; left:-18px; width:60px; height:60px; border-radius:50%; background:rgba(0,240,255,0.07); animation:ping-slow 2.6s cubic-bezier(0,0,0.2,1) 0.4s infinite; z-index:0;"></div>
              </div>`,
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
 
     if ("geolocation" in navigator) {
@@ -657,11 +657,12 @@
         const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
         routePolyline = L.polyline(roadCoords, {
-          color: '#00838f',
-          weight: 6,
+          color: '#00F0FF',
+          weight: 5,
           opacity: 0.95,
           lineCap: 'round',
-          lineJoin: 'round'
+          lineJoin: 'round',
+          className: 'neon-route-path'
         }).addTo(map);
 
         map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
@@ -672,23 +673,34 @@
     }
 
     routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
-      color: '#00838f',
-      weight: 5,
-      dashArray: '8, 8'
+      color: '#00F0FF',
+      weight: 4,
+      dashArray: '10, 8',
+      opacity: 0.85
     }).addTo(map);
     map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
   }
 
-  function makeIcon(color) {
-    const c = color === 'green' ? '#10b981' : color === 'amber' ? '#f59e0b' : '#ef4444';
+  function makeIcon(color, name) {
+    // Stitch-style: glowing neon circle with hospital cross
+    const glow  = color === 'green' ? '#00FF87' : color === 'amber' ? '#f59e0b' : '#f43f5e';
+    const inner = color === 'green' ? 'rgba(0,255,135,0.85)' : color === 'amber' ? 'rgba(245,158,11,0.85)' : 'rgba(244,63,94,0.85)';
+    const ring  = color === 'green' ? 'rgba(0,255,135,0.25)' : color === 'amber' ? 'rgba(245,158,11,0.2)' : 'rgba(244,63,94,0.2)';
+    // Short hospital label (max 10 chars)
+    const label = name ? name.split(' ').slice(0,2).join(' ').substring(0,12).toUpperCase() : '';
     return L.divIcon({
       className: '',
-      html: `<div style="width:28px; height:28px; border-radius:50% 50% 50% 0; background:${c}; transform:rotate(-45deg); border:2px solid #ffffff; box-shadow:0 3px 10px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
-        <div style="transform:rotate(45deg); color:#fff; font-size:11px; font-weight:800;">+</div>
-      </div>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 28],
-      popupAnchor: [0, -30],
+      html: `
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:3px;">
+          <div style="position:relative; width:18px; height:18px;">
+            <div style="position:absolute; top:0; left:0; width:18px; height:18px; border-radius:50%; background:${inner}; border:2px solid ${glow}; box-shadow:0 0 12px ${glow}, 0 0 24px ${ring};"></div>
+            <div style="position:absolute; top:-6px; left:-6px; width:30px; height:30px; border-radius:50%; background:${ring}; animation:ping-slow 2.2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          </div>
+          <div style="background:rgba(5,7,11,0.85); border:1px solid ${glow}; border-radius:6px; padding:2px 5px; font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:800; color:${glow}; white-space:nowrap; letter-spacing:0.3px; backdrop-filter:blur(8px);">${label}</div>
+        </div>`,
+      iconSize: [60, 44],
+      iconAnchor: [30, 18],
+      popupAnchor: [0, -20],
     });
   }
 
@@ -824,7 +836,7 @@
     hospitals.forEach(h => {
       if (!h.latitude || !h.longitude) return;
       const color = totalAvail(h) > 0 ? 'green' : 'red';
-      const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) }).addTo(map);
+      const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color, h.name) }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-family:'Inter',sans-serif; padding:4px;">
@@ -1091,7 +1103,9 @@
   }
 
   /* ── Boot ── */
-  initBottomSheet();
+  // GPS must fire first so map centers on user location immediately
+  initGPS();
+  initTouchDrawer();
   loadHospitals();
   initVoiceTriage();
   // Auto-refresh every 60s

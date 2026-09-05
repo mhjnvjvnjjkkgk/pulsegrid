@@ -95,6 +95,35 @@ html, body {
 /* Leaflet Attribution Override */
 .leaflet-control-attribution { display: none !important; }
 
+/* Status dot pulse keyframe (used by .status-dot-green) */
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #00FF87; }
+  50%       { opacity: 0.6; box-shadow: 0 0 16px #00FF87, 0 0 28px rgba(0,255,135,0.5); }
+}
+
+/* ── Dark Glassmorphism Leaflet Popup Override ── */
+.leaflet-popup-content-wrapper {
+  background: linear-gradient(135deg, rgba(13,17,28,0.97) 0%, rgba(7,9,15,0.99) 100%) !important;
+  backdrop-filter: blur(32px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 20px rgba(0,240,255,0.15) !important;
+  color: #e1e2e9 !important;
+}
+.leaflet-popup-tip { background: rgba(13,17,28,0.97) !important; }
+.leaflet-popup-close-button { color: rgba(255,255,255,0.6) !important; }
+
+/* Neon Route Line for Dark Map */
+.neon-route-path {
+  stroke: #00F0FF;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px #00F0FF) drop-shadow(0 0 20px rgba(0,240,255,0.4));
+}
+
+
 /* ── Top Header Navigation Bar (Drawing 1: Hamburger Menu, Dynamic Island, Logo Badge) ── */
 .top-header-bar {
   position: fixed;
