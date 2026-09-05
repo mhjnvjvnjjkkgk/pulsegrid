@@ -43,7 +43,7 @@
       <span class="live-dot"></span>
       <span id="live-count">30</span> Hospitals Live
     </div>
-    <a href="admin/" id="desk-btn" style="
+    <a href="admin/" id="desk-btn" class="header-desk-btn" style="
       padding: 6px 16px;
       border-radius: 8px;
       background: rgba(255,255,255,0.06);
@@ -161,14 +161,14 @@
           </div>
           <div class="inline-res-timer-badge">
             <span class="inline-res-timer-label">Hold Expiry</span>
-            <span class="inline-res-timer-val" id="inline-timer-val">05:00</span>
+            <span class="inline-res-timer-val" id="inline-timer-val">15:00</span>
           </div>
         </div>
 
         <div class="inline-res-otp-box">
           <div>
             <div style="font-size:0.75rem; color:var(--text-2); font-weight:600;">PRESENT OTP TO HOSPITAL DESK</div>
-            <div style="font-size:0.70rem; color:#10b981; margin-top:2px;" id="gps-status-tag">📍 GPS Active — 5 Min Hold Auto-Extending</div>
+            <div style="font-size:0.70rem; color:#10b981; margin-top:2px;" id="gps-status-tag">📍 GPS Active — 15 Min Hold Auto-Extending</div>
           </div>
           <div class="inline-res-otp-code" id="inline-otp-code">8492</div>
         </div>
@@ -397,10 +397,10 @@ function initGPS() {
           if (holdHospital && activeTargetHospital.id === holdHospital.id && remainingHoldSeconds > 0) {
             const curDist = API.calcDistance ? API.calcDistance(userLat, userLng, holdHospital.latitude, holdHospital.longitude) : 4.2;
             if (lastDistanceToHospital !== null && curDist < lastDistanceToHospital - 0.03) {
-              remainingHoldSeconds = 300; // Reset to 5 mins
+              remainingHoldSeconds = 900; // Reset to 15 mins
               const tag = document.getElementById('gps-status-tag');
               if (tag) {
-                tag.textContent = '📍 GPS Movement Detected — 5 Min Hold Extended';
+                tag.textContent = '📍 GPS Movement Detected — 15 Min Hold Extended';
                 tag.style.color = '#10b981';
               }
             }
@@ -470,7 +470,8 @@ async function updateRouteToHospital(h) {
       const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]); // GeoJSON [lng, lat] -> Leaflet [lat, lng]
 
       const realDistKm = (route.distance / 1000).toFixed(1);
-      const realEtaMins = Math.max(1, Math.round(route.duration / 60));
+      // OSRM duration in seconds + Kolkata urban car traffic congestion multiplier (1.75x)
+      const realEtaMins = Math.max(5, Math.round((route.duration * 1.75) / 60));
       const realEtaStr = `${realEtaMins} mins`;
 
       if (routePolyline) map.removeLayer(routePolyline);
@@ -860,14 +861,28 @@ function setFilter(filterKey) {
   autoRouteNearest(filterKey);
 }
 
-/* ── Inline Bed Hold & 5-Min Dynamic Countdown ── */
+/* ── Inline Bed Hold & 15-Min Dynamic Countdown ── */
 let holdHospital = null;
-let remainingHoldSeconds = 300; // 5 minutes base hold
+let remainingHoldSeconds = 900; // 15 minutes base hold
 let holdCountdownTimer = null;
 let lastDistanceToHospital = null;
 
 function openHoldModal(h) {
   holdHospital = h;
+  const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
+
+  // Automatically open Google Maps turn-by-turn navigation tab
+  try {
+    window.open(gmapsUrl, '_blank');
+  } catch (e) {
+    console.log("Could not auto-open Google Maps tab:", e);
+  }
+
+  // Remove emergency cockpit options bar
+  const cockpit = document.getElementById('emergency-cockpit');
+  if (cockpit) cockpit.style.display = 'none';
+
+  // Display inline reservation panel below the map with OTP code
   const panel = document.getElementById('inline-reservation-panel');
   if (panel) {
     panel.style.display = 'flex';
@@ -875,7 +890,7 @@ function openHoldModal(h) {
     document.getElementById('inline-hosp-name').textContent = h.name;
     document.getElementById('inline-hosp-address').textContent = h.address;
     document.getElementById('inline-otp-code').textContent = '…';
-    document.getElementById('inline-gmaps-link').href = `https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`;
+    document.getElementById('inline-gmaps-link').href = gmapsUrl;
   }
 
   createHold(h);
@@ -895,14 +910,13 @@ async function createHold(h) {
     document.getElementById('inline-otp-code').textContent = otpCode;
     document.getElementById('inline-hosp-name').textContent = h.name;
     document.getElementById('inline-hosp-address').textContent = h.address;
-    document.getElementById('inline-gmaps-link').href = `https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`;
 
-    // Initialize 5-minute dynamic hold countdown (300 seconds)
-    startCountdown(300);
+    // Initialize 15-minute dynamic hold countdown (900 seconds)
+    startCountdown(900);
   } catch (err) {
     console.error('Hold error:', err);
     document.getElementById('inline-otp-code').textContent = '8492';
-    startCountdown(300);
+    startCountdown(900);
   }
 }
 
