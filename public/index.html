@@ -309,28 +309,24 @@ function initGPS() {
   }
 }
 
-/* ── Draw glowing emergency route line to target hospital ── */
-function updateRouteToHospital(h) {
+let osrmRequestToken = 0;
+
+/* ── Draw street-level road network route line to target hospital (OSRM) ── */
+async function updateRouteToHospital(h) {
   if (!h || !h.latitude || !h.longitude) return;
   activeTargetHospital = h;
+  const currentToken = ++osrmRequestToken;
 
   if (routePolyline) {
     map.removeLayer(routePolyline);
+    routePolyline = null;
   }
 
-  const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-  const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
+  // Initial estimate calculation
+  let distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+  let etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
 
-  routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
-    color: '#38bdf8',
-    weight: 5,
-    opacity: 0.85,
-    dashArray: '8, 8'
-  }).addTo(map);
-
-  const bounds = L.latLngBounds([[userLat, userLng], [h.latitude, h.longitude]]);
-  map.fitBounds(bounds, { padding: [60, 60] });
-
+  // Immediate UI update with estimated stats
   const banner = document.getElementById('route-banner');
   if (banner) {
     banner.style.display = 'flex';
@@ -339,7 +335,6 @@ function updateRouteToHospital(h) {
     document.getElementById('route-dist').textContent = `${distKm} km`;
   }
 
-  // Update Emergency Action Cockpit (Mobile & PC)
   const cockpit = document.getElementById('emergency-cockpit');
   if (cockpit) {
     cockpit.style.display = 'flex';
@@ -349,6 +344,61 @@ function updateRouteToHospital(h) {
       callHospBtn.href = `tel:${h.emergency_phone || h.phone}`;
       callHospBtn.innerHTML = `📞 Call ${h.name.split(' ')[0]}`;
     }
+  }
+
+  // Fetch true turn-by-turn street navigation geometry from OSRM
+  try {
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${h.longitude},${h.latitude}?overview=full&geometries=geojson`;
+    const resp = await fetch(osrmUrl);
+    const data = await resp.json();
+
+    if (currentToken !== osrmRequestToken) return; // Stale request guard
+
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]); // GeoJSON [lng, lat] -> Leaflet [lat, lng]
+
+      const realDistKm = (route.distance / 1000).toFixed(1);
+      const realEtaMins = Math.max(1, Math.round(route.duration / 60));
+      const realEtaStr = `${realEtaMins} mins`;
+
+      if (routePolyline) map.removeLayer(routePolyline);
+
+      // Render sleek Google-Maps style cyan street line
+      routePolyline = L.polyline(roadCoords, {
+        color: '#38bdf8',
+        weight: 6,
+        opacity: 0.92,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+
+      map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
+
+      // Update banner & cockpit with true road network distance & driving time
+      if (banner) {
+        document.getElementById('route-eta').textContent = `🚗 ${realEtaStr}`;
+        document.getElementById('route-dist').textContent = `${realDistKm} km`;
+      }
+      if (cockpit) {
+        document.getElementById('cockpit-eta-tag').textContent = `${realEtaStr} • ${h.name.split(' ')[0]}`;
+      }
+      return;
+    }
+  } catch (err) {
+    console.warn('OSRM routing API lookup failed, falling back to direct line:', err);
+  }
+
+  // Fallback if OSRM is unreachable
+  if (currentToken !== osrmRequestToken) return;
+  if (!routePolyline) {
+    routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
+      color: '#38bdf8',
+      weight: 5,
+      opacity: 0.85,
+      dashArray: '8, 8'
+    }).addTo(map);
+    map.fitBounds(routePolyline.getBounds(), { padding: [60, 60] });
   }
 }
 
