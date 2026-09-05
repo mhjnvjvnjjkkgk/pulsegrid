@@ -632,7 +632,7 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
 
         otp_code = str(random.randint(1000, 9999))
         now_utc = datetime.now(timezone.utc)
-        minutes = 15 if hold_type == "paramedic" else 5
+        minutes = 15
         expires_at = now_utc + timedelta(minutes=minutes)
 
         hold_id = f"mock-hold-{random.randint(10000, 99999)}"
@@ -652,11 +652,11 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
         h[f"{resource_type}_held"] = held + 1
         print(f"[DATABASE MOCK] Hold created: OTP={otp_code}, Hospital={hospital_id}, Ward={resource_type}")
         return {
-            "otp": otp_code,
+            "otp_code": otp_code,
             "hold_id": hold_id,
             "expires_at": expires_at.isoformat(),
             "hold_type": hold_type,
-            "minutes": minutes
+            "status": "ACTIVE"
         }
 
     try:
@@ -679,10 +679,7 @@ def create_live_hold(hospital_id, resource_type, hold_type, requester_phone, sev
 
         # Step 3: Calculate expiry time
         now_utc = datetime.now(timezone.utc)
-        if hold_type == "paramedic":
-            minutes = 15
-        else:
-            minutes = 5
+        minutes = 15
         expires_at = now_utc + timedelta(minutes=minutes)
 
         # Step 4: Insert the hold record

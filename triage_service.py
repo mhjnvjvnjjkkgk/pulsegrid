@@ -166,6 +166,51 @@ SYMPTOM_DATABASE = {
     "baccha khinchuni":                 ("YELLOW", "pediatric_icu", "Pediatric seizure (Benglish). Anti-epileptic & fever control."),
     "bacchar khub jor":                 ("YELLOW", "pediatric_icu", "Pediatric high fever (Benglish). Antipyretics & workup."),
 
+    # ---- BANGLA UNICODE SCRIPT PHRASES (For direct bn-IN Speech-to-Text & Bengali input) ----
+    "আমার বুক ফেটে যাচ্ছে":             ("RED", "cardiac_icu", "Severe crushing chest pain (Bangla). High suspicion for MI."),
+    "আমার বুকে প্রচুর ব্যথা":          ("RED", "cardiac_icu", "Severe chest pain (Bangla). Urgent ECG & cardiac workup."),
+    "আমার বুকে খুব ব্যথা":            ("RED", "cardiac_icu", "Acute chest pain (Bangla). Urgent ECG required."),
+    "বুকে ব্যথা":                      ("RED", "cardiac_icu", "Chest pain (Bangla). Immediate cardiac evaluation."),
+    "বুকের ব্যথা":                     ("RED", "cardiac_icu", "Chest pain (Bangla). Cardiac evaluation needed."),
+    "হার্ট অ্যাটাক":                   ("RED", "cardiac_icu", "Suspected heart attack (Bangla). Immediate CPR & ECG."),
+    "বুকে চাপ অনুভব":                  ("RED", "cardiac_icu", "Chest pressure (Bangla). Angina or MI suspected."),
+    "হৃদস্পন্দন বন্ধ":                 ("RED", "cardiac_icu", "Cardiac arrest suspected (Bangla). Immediate CPR."),
+    "হৃদরোগ":                          ("RED", "cardiac_icu", "Acute cardiac condition (Bangla). Urgent ECG."),
+
+    "শ্বাস নিতে পারছি না":             ("RED", "adult_icu", "Severe dyspnea (Bangla). Emergency oxygen & airway support."),
+    "শ্বাসকষ্ট":                       ("RED", "adult_icu", "Respiratory distress (Bangla). Immediate oxygen care."),
+    "দম আটকে আসছে":                    ("RED", "adult_icu", "Airway choking / distress (Bangla). Emergency airway care."),
+    "শ্বাস নিতে কষ্ট":                  ("RED", "adult_icu", "Dyspnea (Bangla). Urgent respiratory evaluation."),
+
+    "মুখ বেঁকে গেছে":                   ("RED", "adult_icu", "Facial droop / stroke (Bangla). Immediate CT scan."),
+    "কথা জড়িয়ে যাচ্ছে":               ("RED", "adult_icu", "Slurred speech / stroke (Bangla). Emergency neuro evaluation."),
+    "হাত পা অবশ":                      ("RED", "adult_icu", "Sudden paralysis/numbness (Bangla). Immediate CT scan for stroke."),
+    "একপাশ অবশ":                       ("RED", "adult_icu", "Hemiparesis / stroke sign (Bangla). Urgent CT scan."),
+    "জ্ঞান হারিয়ে ফেলেছে":            ("RED", "adult_icu", "Unconscious patient (Bangla). Assess airway & vitals."),
+    "অচেতন":                            ("RED", "adult_icu", "Unconscious patient (Bangla). Immediate resuscitation."),
+    "ফিট হচ্ছে":                       ("RED", "adult_icu", "Active convulsions / seizure (Bangla). Anticonvulsant therapy."),
+    "হাত পা খিঁচছে":                   ("RED", "adult_icu", "Active seizure (Bangla). Emergency anticonvulsants."),
+
+    "প্রচণ্ড রক্তপাত":                 ("RED", "adult_icu", "Severe bleeding (Bangla). Immediate pressure & surgical check."),
+    "রক্ত বমি":                        ("RED", "adult_icu", "Hematemesis (Bangla). Emergency GI bleeding workup."),
+    "রক্ত বের হচ্ছে":                  ("RED", "adult_icu", "Active hemorrhage (Bangla). Hemorrhage control needed."),
+    "অ্যাকসিডেন্ট হয়েছে":              ("RED", "adult_icu", "Road trauma accident (Bangla). Emergency trauma care."),
+    "সাপ কেটেছে":                       ("RED", "adult_icu", "Snake bite (Bangla). Emergency ASV antivenom required."),
+    "বিষ খেয়েছে":                     ("RED", "adult_icu", "Poison ingestion (Bangla). Emergency toxicology care."),
+
+    "পেটে প্রচুর ব্যথা":               ("YELLOW", "general_ward", "Severe abdominal pain (Bangla). Clinical assessment."),
+    "পেট ব্যথা":                       ("YELLOW", "general_ward", "Abdominal pain (Bangla). Clinical evaluation."),
+    "পেটে ব্যথা":                      ("YELLOW", "general_ward", "Abdominal pain (Bangla). Clinical evaluation."),
+    "মাথা ঘুরছে":                       ("YELLOW", "general_ward", "Dizziness / Vertigo (Bangla). Vitals & glucose check."),
+    "মাথা ঘোরানো":                     ("YELLOW", "general_ward", "Dizziness (Bangla). Vitals assessment."),
+    "প্রচণ্ড জ্বর":                     ("YELLOW", "general_ward", "High fever (Bangla). Antipyretic & infectious workup."),
+    "বমি হচ্ছে":                       ("YELLOW", "general_ward", "Vomiting (Bangla). Antiemetics & fluids."),
+    "পাতলা পায়খানা":                   ("YELLOW", "general_ward", "Diarrhoea (Bangla). Rehydration therapy."),
+
+    "বাচ্চার শ্বাসকষ্ট":               ("YELLOW", "pediatric_icu", "Pediatric respiratory distress (Bangla). Urgent pediatric care."),
+    "বাচ্চার জ্বর":                    ("YELLOW", "pediatric_icu", "Pediatric fever (Bangla). Pediatric evaluation."),
+    "বাচ্চার খিঁচুনি":                  ("YELLOW", "pediatric_icu", "Pediatric seizure (Bangla). Pediatric emergency care."),
+
     # ---- REGIONAL SHORT WORDS & COLLOQUIAL PHRASES ----
     "haat attack":             ("RED", "cardiac_icu", "Suspected myocardial infarction. Needs immediate cardiac intervention."),
     "chhati me dard":          ("RED", "cardiac_icu", "Acute chest pain indicating possible cardiac event."),

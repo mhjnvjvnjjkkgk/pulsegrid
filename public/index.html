@@ -1043,7 +1043,7 @@ function runJudgeDemo(scenarioId) {
   }
 }
 
-/* ── Web Speech API: Voice Triage (Hinglish & Benglish Auto-Detection) ── */
+/* ── Web Speech API: Voice Triage (Bengali bn-IN, Hinglish & English) ── */
 function initVoiceTriage() {
   const micBtn = document.getElementById('voice-mic-btn');
   const banner = document.getElementById('voice-recording-banner');
@@ -1061,8 +1061,8 @@ function initVoiceTriage() {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = true;
-  // hi-IN natively handles Hinglish, Benglish & English phonetics in Indian browsers
-  recognition.lang = 'hi-IN';
+  // Default to bn-IN (Bengali - India) so spoken Bengali is accurately transcribed into Bangla script
+  recognition.lang = 'bn-IN';
 
   let isListening = false;
 
@@ -1081,8 +1081,11 @@ function initVoiceTriage() {
   recognition.onstart = () => {
     isListening = true;
     micBtn.classList.add('listening');
-    if (banner) banner.style.display = 'flex';
-    input.placeholder = "Listening… speak in Benglish, Hinglish, or English…";
+    if (banner) {
+      banner.style.display = 'flex';
+      banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening in Bengali / Benglish... (বাংলায় বলুন)</span>`;
+    }
+    input.placeholder = "Listening in Bengali… বলুন: 'আমার বুক ফেটে যাচ্ছে' / 'amar buke byatha'";
   };
 
   recognition.onresult = (event) => {
@@ -1109,7 +1112,7 @@ function initVoiceTriage() {
     isListening = false;
     micBtn.classList.remove('listening');
     if (banner) banner.style.display = 'none';
-    input.placeholder = "Describe symptoms… e.g. 'amar chhati fatya jacche' or 'pet me dard'";
+    input.placeholder = "Describe symptoms… e.g. 'amar chhati fatya jacche' or 'আমার বুক ফেটে যাচ্ছে'";
   }
 }
 
