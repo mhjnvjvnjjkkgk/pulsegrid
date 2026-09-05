@@ -187,38 +187,42 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', 
   pointer-events: none;
 }
 
-/* Quick Blood Group Filter Chips (Drawing 1: directly above search bar) */
+/* Quick Blood Group Filter Chips (Drawing 1: Symmetrical 8 Blood Group Matrix) */
 .blood-quick-chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 2px 4px;
-  scrollbar-width: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 8px;
+  width: 100%;
+  padding: 2px 0 6px 0;
 }
 
-.blood-quick-chips::-webkit-scrollbar { display: none; }
-
 .blood-chip-btn {
-  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px;
   border-radius: 999px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1.5px solid rgba(244, 63, 94, 0.4);
   color: #ffffff;
-  font-size: 0.80rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;
+  width: 100%;
+  text-align: center;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   transition: all 0.2s ease;
 }
 
 .blood-chip-btn:hover, .blood-chip-btn.active {
-  background: rgba(244, 63, 94, 0.25);
+  background: rgba(244, 63, 94, 0.35);
   border-color: #f43f5e;
-  box-shadow: 0 0 16px rgba(244, 63, 94, 0.5);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.6);
+  transform: translateY(-1px);
 }
 
 /* Liquid Glass Search Input Wrapper */
