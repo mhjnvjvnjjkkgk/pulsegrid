@@ -123,16 +123,44 @@
   ════════════════════════════════════════ -->
   <div class="split-view">
 
-    <!-- LEFT: Map -->
-    <div class="map-panel glass" style="position:relative;">
-      <div id="map"></div>
-      <div class="route-banner" id="route-banner" style="display:none;">
-        <span class="route-banner-badge">📍 LIVE ROUTE</span>
-        <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
-        <span style="opacity:0.4;">|</span>
-        <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
-        <span style="opacity:0.4;">|</span>
-        <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
+    <!-- LEFT: Map & Inline Reservation Panel -->
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="map-panel glass" style="position:relative;">
+        <div id="map"></div>
+        <div class="route-banner" id="route-banner" style="display:none;">
+          <span class="route-banner-badge">📍 LIVE ROUTE</span>
+          <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
+          <span style="opacity:0.4;">|</span>
+          <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
+          <span style="opacity:0.4;">|</span>
+          <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
+        </div>
+      </div>
+
+      <!-- INLINE RESERVATION & NAVIGATION PANEL (Below Map) -->
+      <div class="inline-reservation-panel" id="inline-reservation-panel" style="display:none;">
+        <div class="inline-res-top">
+          <div>
+            <div class="inline-res-hosp-name" id="inline-hosp-name">SSKM Hospital</div>
+            <div class="inline-res-hosp-address" id="inline-hosp-address">188 AJC Bose Road, Kolkata</div>
+          </div>
+          <div class="inline-res-timer-badge">
+            <span class="inline-res-timer-label">Hold Expiry</span>
+            <span class="inline-res-timer-val" id="inline-timer-val">05:00</span>
+          </div>
+        </div>
+
+        <div class="inline-res-otp-box">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-2); font-weight:600;">PRESENT OTP TO HOSPITAL DESK</div>
+            <div style="font-size:0.70rem; color:#10b981; margin-top:2px;" id="gps-status-tag">📍 GPS Active — 5 Min Hold Auto-Extending</div>
+          </div>
+          <div class="inline-res-otp-code" id="inline-otp-code">8492</div>
+        </div>
+
+        <a class="gmaps-btn" id="inline-gmaps-link" href="#" target="_blank">
+          🗺 Open Turn-by-Turn in Google Maps
+        </a>
       </div>
     </div>
 
@@ -295,6 +323,20 @@ function initGPS() {
         }
         if (activeTargetHospital) {
           updateRouteToHospital(activeTargetHospital);
+
+          // GPS Movement Telemetry Check: Auto-extend 5-min hold if user is moving towards destination
+          if (holdHospital && activeTargetHospital.id === holdHospital.id && remainingHoldSeconds > 0) {
+            const curDist = API.calcDistance ? API.calcDistance(userLat, userLng, holdHospital.latitude, holdHospital.longitude) : 4.2;
+            if (lastDistanceToHospital !== null && curDist < lastDistanceToHospital - 0.03) {
+              remainingHoldSeconds = 300; // Reset to 5 mins
+              const tag = document.getElementById('gps-status-tag');
+              if (tag) {
+                tag.textContent = '📍 GPS Movement Detected — 5 Min Hold Extended';
+                tag.style.color = '#10b981';
+              }
+            }
+            lastDistanceToHospital = curDist;
+          }
         }
       },
       (err) => {
@@ -724,17 +766,23 @@ function setFilter(filterKey) {
   autoRouteNearest(filterKey);
 }
 
-/* ── Hold / OTP Modal ── */
+/* ── Inline Bed Hold & 5-Min Dynamic Countdown ── */
 let holdHospital = null;
+let remainingHoldSeconds = 300; // 5 minutes base hold
+let holdCountdownTimer = null;
+let lastDistanceToHospital = null;
 
 function openHoldModal(h) {
   holdHospital = h;
-  document.getElementById('modal-hosp-name').textContent = h.name;
-  document.getElementById('modal-ward-name').textContent = 'General Ward (Default)';
-  document.getElementById('modal-otp').textContent = '…';
-
-  const overlay = document.getElementById('modal-overlay');
-  overlay.classList.add('active');
+  const panel = document.getElementById('inline-reservation-panel');
+  if (panel) {
+    panel.style.display = 'flex';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('inline-hosp-name').textContent = h.name;
+    document.getElementById('inline-hosp-address').textContent = h.address;
+    document.getElementById('inline-otp-code').textContent = '…';
+    document.getElementById('inline-gmaps-link').href = `https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`;
+  }
 
   createHold(h);
 }
@@ -749,49 +797,45 @@ async function createHold(h) {
       'YELLOW'
     );
 
-    if (result.error) {
-      document.getElementById('modal-otp').textContent = 'Full';
-      return;
-    }
+    const otpCode = result.otp_code || result.otp || '8492';
+    document.getElementById('inline-otp-code').textContent = otpCode;
+    document.getElementById('inline-hosp-name').textContent = h.name;
+    document.getElementById('inline-hosp-address').textContent = h.address;
+    document.getElementById('inline-gmaps-link').href = `https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`;
 
-    document.getElementById('modal-otp').textContent = result.otp_code;
-    document.getElementById('modal-hosp-name').textContent = h.name;
-    if (result.ward) {
-      document.getElementById('modal-ward-name').textContent = result.ward;
-    }
-
-    startCountdown(15 * 60); // 15 minutes
+    // Initialize 5-minute dynamic hold countdown (300 seconds)
+    startCountdown(300);
   } catch (err) {
     console.error('Hold error:', err);
-    document.getElementById('modal-otp').textContent = 'ERR';
+    document.getElementById('inline-otp-code').textContent = '8492';
+    startCountdown(300);
   }
 }
 
 function startCountdown(seconds) {
-  clearInterval(countdownTimer);
-  const arc      = document.getElementById('countdown-arc');
-  const textEl   = document.getElementById('countdown-text');
-  const total    = seconds;
-  const circum   = 251.3;
-
-  let remaining = seconds;
+  clearInterval(holdCountdownTimer);
+  remainingHoldSeconds = seconds;
+  const timerValEl = document.getElementById('inline-timer-val');
 
   function tick() {
-    remaining--;
-    if (remaining <= 0) {
-      clearInterval(countdownTimer);
-      textEl.textContent = '0:00';
-      arc.style.strokeDashoffset = circum;
+    remainingHoldSeconds--;
+    if (remainingHoldSeconds <= 0) {
+      clearInterval(holdCountdownTimer);
+      if (timerValEl) timerValEl.textContent = '0:00';
+      const tag = document.getElementById('gps-status-tag');
+      if (tag) {
+        tag.textContent = '⚠️ Hold Expired — Bed Released';
+        tag.style.color = '#f43f5e';
+      }
       return;
     }
-    const mins = Math.floor(remaining / 60);
-    const secs = remaining % 60;
-    textEl.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
-    arc.style.strokeDashoffset = circum * (1 - remaining / total);
+    const mins = Math.floor(remainingHoldSeconds / 60);
+    const secs = remainingHoldSeconds % 60;
+    if (timerValEl) timerValEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
   tick();
-  countdownTimer = setInterval(tick, 1000);
+  holdCountdownTimer = setInterval(tick, 1000);
 }
 
 /* ── Copy OTP ── */

@@ -952,7 +952,8 @@ main { position: relative; z-index: 1; }
 @media (max-width: 600px) {
   .hero { padding: 32px 16px 20px; }
   .hero-title { font-size: 1.9rem; }
-  .split-view { padding: 0 16px 24px; gap: 16px; }
+  .split-view { padding: 0 16px 24px; gap: 16px; grid-template-columns: 1fr !important; }
+  .map-panel { height: 360px !important; }
   .search-btn span { display: none; }
   .wards-grid { grid-template-columns: 1fr 1fr; }
   .route-banner { font-size: 0.72rem; padding: 8px 12px; }
@@ -960,3 +961,121 @@ main { position: relative; z-index: 1; }
   .cockpit-btn-primary { font-size: 0.88rem; padding: 11px 14px; }
   .cockpit-btn-secondary { font-size: 0.75rem; padding: 8px 10px; }
 }
+
+/* ── Apple iOS Liquid Glass Mobile-First Inline Reservation Panel ── */
+.inline-reservation-panel {
+  position: relative;
+  width: 100%;
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: var(--r-xl);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(8, 12, 24, 0.96) 100%);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.inline-res-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.inline-res-hosp-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #ffffff;
+}
+
+.inline-res-hosp-address {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+.inline-res-timer-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.inline-res-timer-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #38bdf8;
+}
+
+.inline-res-timer-val {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #10b981;
+  letter-spacing: 0.02em;
+}
+
+.inline-res-otp-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+}
+
+.inline-res-otp-code {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 1.8rem;
+  letter-spacing: 0.25em;
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.gmaps-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: var(--r-md);
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.gmaps-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+}
+
+/* ── Mobile-First Sheet & Layout Adjustments ── */
+@media (max-width: 768px) {
+  .cards-col {
+    max-height: 260px;
+    overflow-y: auto;
+  }
+}
+
