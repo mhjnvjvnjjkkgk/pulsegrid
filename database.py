@@ -925,3 +925,94 @@ def get_blood_inventory(hospital_id=None):
     except Exception as e:
         print(f"[DATABASE] Error getting blood inventory: {e}")
         return []
+
+def create_blood_hold(hospital_id, blood_group, component, requested_units, requester_phone):
+    """
+    Creates a temporary reservation for blood units.
+    """
+    if not supabase:
+        return {'error': 'Mock blood holds not implemented yet.'}
+    try:
+        query = supabase.table('blood_inventory').select('*').eq('hospital_id', hospital_id).eq('blood_group', blood_group).eq('component', component)
+        records = query.execute().data
+        if not records:
+            return {'error': 'Blood inventory not found'}
+        b = records[0]
+        available = b.get('units_available', 0) - b.get('units_reserved', 0)
+        if available < requested_units:
+            return {'error': 'Not enough units available'}
+        
+        otp_code = str(random.randint(1000, 9999))
+        now_utc = datetime.now(timezone.utc)
+        minutes = 30
+        expires_at = now_utc + timedelta(minutes=minutes)
+        resource_type = f"blood_{blood_group}_{component}_{requested_units}"
+        hold_data = {
+            'hospital_id': hospital_id, 
+            'resource_type': resource_type, 
+            'hold_type': 'citizen', 
+            'requester_phone': requester_phone, 
+            'otp_code': otp_code, 
+            'status': 'ACTIVE', 
+            'severity': 'RED', 
+            'created_at': now_utc.isoformat(), 
+            'expires_at': expires_at.isoformat()
+        }
+        
+        hold_res = supabase.table('holds').insert(hold_data).execute()
+        supabase.table('blood_inventory').update({
+            'units_reserved': b.get('units_reserved', 0) + requested_units
+        }).eq('id', b['id']).execute()
+        
+        print(f'[DATABASE] Blood Hold created: OTP={otp_code}, Hospital={hospital_id}, Blood={blood_group} {component}')
+        return {'otp': otp_code, 'hold_id': hold_res.data[0]['id'], 'expires_at': expires_at.isoformat(), 'minutes': minutes}
+    except Exception as e:
+        print(f'[DATABASE] Error creating blood hold: {e}')
+        return {'error': str(e)}
+
+def redeem_blood_hold(otp_code):
+    """
+    Redeems a blood hold using the OTP code.
+    Updates the hold status to 'REDEEMED' and deducts units from 'units_available'.
+    """
+    if not supabase:
+        return {'error': 'Mock blood redeem not implemented yet.'}
+    try:
+        query = supabase.table('holds').select('*').eq('otp_code', otp_code).eq('status', 'ACTIVE')
+        records = query.execute().data
+        if not records:
+            return {'error': 'Invalid or expired OTP code'}
+            
+        hold = records[0]
+        if not hold['resource_type'].startswith('blood_'):
+            return {'error': 'This OTP is not for a blood hold'}
+            
+        parts = hold['resource_type'].split('_')
+        if len(parts) >= 4:
+            blood_group = parts[1]
+            component = parts[2]
+            requested_units = int(parts[3])
+            
+            # Find the blood inventory record
+            inv_query = supabase.table('blood_inventory').select('*').eq('hospital_id', hold['hospital_id']).eq('blood_group', blood_group).eq('component', component)
+            inv_records = inv_query.execute().data
+            if inv_records:
+                b = inv_records[0]
+                new_available = max(0, b.get('units_available', 0) - requested_units)
+                new_reserved = max(0, b.get('units_reserved', 0) - requested_units)
+                supabase.table('blood_inventory').update({
+                    'units_available': new_available,
+                    'units_reserved': new_reserved
+                }).eq('id', b['id']).execute()
+                
+        # Mark hold as redeemed
+        now_utc = datetime.now(timezone.utc)
+        supabase.table('holds').update({
+            'status': 'REDEEMED',
+            'redeemed_at': now_utc.isoformat()
+        }).eq('id', hold['id']).execute()
+        
+        return {'success': True, 'hold_id': hold['id']}
+    except Exception as e:
+        print(f'[DATABASE] Error redeeming blood hold: {e}')
+        return {'error': str(e)}
