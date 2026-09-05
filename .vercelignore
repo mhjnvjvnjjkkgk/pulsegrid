@@ -1,12 +1,4 @@
-app.py
-database.py
-triage_service.py
-ttl_worker.py
-requirements.txt
 venv/
 __pycache__/
 claude ka docs/
 docs/
-setup_git_history.sh
-supabase_schema.sql
-render.yaml
