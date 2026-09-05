@@ -703,7 +703,16 @@ function quickAdmit(otp) {
   const digits = ['otp-d1','otp-d2','otp-d3','otp-d4'];
   const chars = String(otp).split('');
   digits.forEach((id, i) => {
-    document.getElementById(id).value = chars[i] || '';
+    const el = document.getElementById(id);
+    if (el) {
+      el.value = chars[i] || '';
+      el.style.borderColor = 'var(--green)';
+      el.style.boxShadow = '0 0 14px var(--green-g)';
+      setTimeout(() => {
+        el.style.borderColor = '';
+        el.style.boxShadow = '';
+      }, 1800);
+    }
   });
   document.getElementById('otp-verify-btn').click();
 }

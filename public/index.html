@@ -216,11 +216,60 @@
       <a class="cockpit-btn-secondary" id="cockpit-call-hosp-btn" href="tel:102">
         📞 Call Hospital
       </a>
-      <a class="cockpit-btn-secondary" id="cockpit-call-amb-btn" href="tel:108">
+      <button class="cockpit-btn-secondary" id="cockpit-call-amb-btn" style="cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
         🚑 Call Ambulance (108)
-      </a>
+      </button>
     </div>
   </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════
+     EMERGENCY AMBULANCE DISPATCH DRAWER
+════════════════════════════════════════ -->
+<div class="amb-modal-overlay" id="amb-modal-overlay">
+  <div class="amb-modal-card">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; color:#ffffff;">🚑 Dispatch Ambulance</div>
+        <div style="font-size:0.78rem; color:var(--text-2);">Select emergency ambulance hotline for Kolkata region:</div>
+      </div>
+      <button id="amb-modal-close" style="background:none; border:none; color:var(--text-2); font-size:1.4rem; cursor:pointer;">✕</button>
+    </div>
+
+    <a class="amb-option-card" href="tel:108">
+      <div>
+        <div style="font-weight:700; font-size:0.95rem; color:#f43f5e;">🚑 108 — National Emergency Response</div>
+        <div style="font-size:0.75rem; color:var(--text-2);">Govt Free Emergency Ambulance • 24/7</div>
+      </div>
+      <span style="font-weight:800; color:#10b981; font-size:0.85rem;">DIAL 108</span>
+    </a>
+
+    <a class="amb-option-card" href="tel:102">
+      <div>
+        <div style="font-weight:700; font-size:0.95rem; color:#38bdf8;">🚑 102 — WB Health Emergency Hotline</div>
+        <div style="font-size:0.75rem; color:var(--text-2);">State Medical Emergency Dispatch</div>
+      </div>
+      <span style="font-weight:800; color:#38bdf8; font-size:0.85rem;">DIAL 102</span>
+    </a>
+
+    <a class="amb-option-card" href="tel:1066">
+      <div>
+        <div style="font-weight:700; font-size:0.95rem; color:var(--amber);">🚑 1066 — Apollo Cardiac ICU Express</div>
+        <div style="font-size:0.75rem; color:var(--text-2);">Advanced Cardiac Mobile ICU</div>
+      </div>
+      <span style="font-weight:800; color:var(--amber); font-size:0.85rem;">DIAL 1066</span>
+    </a>
+
+    <a class="amb-option-card" href="tel:10501">
+      <div>
+        <div style="font-weight:700; font-size:0.95rem; color:var(--purple);">🚑 10501 — Fortis Mobile ICU Response</div>
+        <div style="font-size:0.75rem; color:var(--text-2);">Trauma & Cardiac Mobile ICU</div>
+      </div>
+      <span style="font-weight:800; color:var(--purple); font-size:0.85rem;">DIAL 10501</span>
+    </a>
+  </div>
+</div>
 
 </main>
 
@@ -903,6 +952,21 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
 document.getElementById('cockpit-lock-btn').addEventListener('click', () => {
   if (activeTargetHospital) {
     openHoldModal(activeTargetHospital);
+  }
+});
+
+/* ── Ambulance Dispatch Drawer ── */
+document.getElementById('cockpit-call-amb-btn').addEventListener('click', () => {
+  document.getElementById('amb-modal-overlay').classList.add('active');
+});
+
+document.getElementById('amb-modal-close').addEventListener('click', () => {
+  document.getElementById('amb-modal-overlay').classList.remove('active');
+});
+
+document.getElementById('amb-modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('amb-modal-overlay').classList.remove('active');
   }
 });
 

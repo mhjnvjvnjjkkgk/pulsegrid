@@ -1099,3 +1099,35 @@ main { position: relative; z-index: 1; }
   transform: translateY(-1px);
 }
 
+/* ── Emergency Ambulance Dispatch Sheet ── */
+.amb-modal-overlay {
+  position: fixed; inset: 0; z-index: 20000;
+  background: rgba(4, 6, 14, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.amb-modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.amb-modal-card {
+  width: 100%; max-width: 480px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(8, 12, 24, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--r-xl); padding: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(244, 63, 94, 0.25);
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.amb-option-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none; color: var(--text-1); transition: all 0.2s;
+}
+.amb-option-card:hover {
+  background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.4);
+  transform: translateY(-1px);
+}
+
