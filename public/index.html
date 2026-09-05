@@ -27,9 +27,23 @@
 
   <!-- ═══════════════════════════════════════
        1. FULL-SCREEN MAP CANVAS (BACKGROUND)
+  <!-- ═══════════════════════════════════════
+       1. FULL-SCREEN MAP CANVAS (BACKGROUND)
   ════════════════════════════════════════ -->
   <div id="map-container">
     <div id="map"></div>
+
+    <!-- Floating Google Maps Location Crosshair FAB Button -->
+    <button class="my-location-fab" id="my-location-fab" title="Recenter Map on My Exact GPS Location">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8"/>
+        <line x1="12" y1="2" x2="12" y2="6"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="6" y2="12"/>
+        <line x1="18" y1="12" x2="22" y2="12"/>
+      </svg>
+    </button>
+
     <div class="route-banner" id="route-banner" style="display:none;">
       <span class="route-banner-badge">📍 LIVE ROUTE</span>
       <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
@@ -41,70 +55,36 @@
   </div>
 
   <!-- ═══════════════════════════════════════
-       2. FLOATING TOP NAVIGATION & UNIFIED SEARCH OVERLAY
+       2. FLOATING TOP NAVIGATION (SINGLE SLEEK SEARCH BAR)
   ════════════════════════════════════════ -->
   <div class="floating-top-nav">
-    <div class="nav-header-row">
-      <a href="/" class="logo-wrap">
-        <div class="logo-icon">
-          <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-        </div>
-        <span class="logo-text">PulseGrid</span>
-      </a>
-
-      <div class="live-badge">
-        <span class="live-dot"></span>
-        <span id="live-count">30</span> Hospitals Live
-      </div>
-    </div>
-
-    <!-- Main Unified Triage & Blood Search Bar -->
-    <div class="triage-bar" style="margin-bottom:0;">
+    <div class="triage-bar">
       <div class="search-wrap">
-        <svg width="18" height="18" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
+        <a href="/" class="logo-wrap" style="text-decoration:none; margin-right:4px;">
+          <div class="logo-icon" style="width:32px; height:32px; border-radius:8px;">
+            <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </a>
         <input
           id="symptom-input"
           class="search-input"
           type="text"
-          placeholder="Describe symptoms or blood group… e.g. 'O- negative blood' or 'chhati me dard'"
+          placeholder="Describe symptoms or blood group… e.g. 'O- negative blood'"
           autocomplete="off"
         >
-        <button id="voice-mic-btn" class="voice-mic-btn" title="Tap for Voice Triage (English, Hinglish & Benglish auto-detect)">
-          🎙️
-        </button>
+        <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
         <button id="triage-btn" class="search-btn">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          <span>Search</span>
         </button>
       </div>
       <div id="voice-recording-banner" class="voice-recording-banner" style="display:none;">
         <span class="live-rec-dot"></span>
-        <span>🔴 Listening... Speak emergency symptoms or blood group in Benglish, Hinglish, or English</span>
+        <span>🔴 Listening... Speak symptoms or blood group in Benglish, Hinglish, or English</span>
       </div>
-    <!-- Quick Location Switcher Chips -->
-    <div class="loc-chips-row" id="loc-chips-row">
-      <button class="loc-chip active" data-lat="22.5750" data-lng="88.4680" data-label="Newtown / Amity">📍 Newtown (Amity)</button>
-      <button class="loc-chip" data-lat="22.6220" data-lng="88.4140" data-label="Nagerbazar / Dum Dum">📍 Nagerbazar (Dum Dum)</button>
-      <button class="loc-chip" data-lat="22.5650" data-lng="88.3600" data-label="Central Kolkata">📍 Central Kolkata</button>
-      <button class="loc-chip" id="btn-use-my-gps">📡 Live GPS</button>
-    </div>
-
-    <!-- Quick symptom & blood chips -->
-    <div class="quick-chips" style="margin-bottom:0; justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom:4px;">
-      <button class="chip" data-query="severe chest pain and shortness of breath">🫀 Chest/Heart</button>
-      <button class="chip" data-query="O- negative blood needed">🩸 O- Blood</button>
-      <button class="chip" data-query="severe bleeding from trauma injury">🩸 Trauma</button>
-      <button class="chip" data-query="active labor and water broke">🤰 Maternity</button>
-      <button class="chip" data-query="child convulsion and high fever">👶 Pediatric</button>
-      <button class="chip" data-query="stroke face drooping arm weakness">🧠 Stroke</button>
-      <button class="chip" data-query="stomach pain and vomiting">🤢 Stomach</button>
-      <button class="chip" data-query="snake bite">🐍 Snake Bite</button>
     </div>
 
     <!-- Triage result banner (hidden until search) -->
@@ -129,9 +109,17 @@
     </div>
 
     <div class="sheet-header">
-      <div class="col-header" style="margin-bottom:8px;">
-        <div class="col-title" id="sheet-title">Nearest Hospitals & Bed Availability</div>
-        <span class="col-count" id="card-count">Loading…</span>
+      <div class="col-header" style="margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+        <div class="col-title" id="sheet-title" style="font-size:0.95rem; font-weight:800; color:#fff;">Nearest Hospitals & Emergency Beds</div>
+        <span class="col-count" id="card-count" style="font-size:0.75rem; color:#10b981; font-weight:700;">Loading…</span>
+      </div>
+
+      <!-- Quick Location Switcher Chips -->
+      <div class="loc-chips-row" id="loc-chips-row" style="margin-bottom:6px;">
+        <button class="loc-chip active" data-lat="22.5750" data-lng="88.4680" data-label="Newtown / Amity">📍 Newtown (Amity)</button>
+        <button class="loc-chip" data-lat="22.6220" data-lng="88.4140" data-label="Nagerbazar / Dum Dum">📍 Nagerbazar (Dum Dum)</button>
+        <button class="loc-chip" data-lat="22.5650" data-lng="88.3600" data-label="Central Kolkata">📍 Central Kolkata</button>
+        <button class="loc-chip" id="btn-use-my-gps">📡 Live GPS</button>
       </div>
 
       <!-- Filter bar inside sheet header -->
@@ -411,6 +399,32 @@
     });
 
     if ("geolocation" in navigator) {
+      // 1. Instant high-accuracy single shot to center map on user on boot
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          if (!userMarker) {
+            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+            userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
+          } else {
+            userMarker.setLatLng([userLat, userLng]);
+          }
+          map.setView([userLat, userLng], 14);
+        },
+        (err) => {
+          console.warn("Initial GPS lookup failed or permission denied, using default Newtown location:", err);
+          userLat = 22.5750;
+          userLng = 88.4680;
+          if (!userMarker) {
+            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+            userMarker.bindPopup("<b>📍 Newtown / Amity Location</b>", { autoClose: false });
+          }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+
+      // 2. Continuous watchPosition for live vector updates
       navigator.geolocation.watchPosition(
         (pos) => {
           userLat = pos.coords.latitude;
@@ -1366,6 +1380,24 @@
             setLocation(22.5750, 88.4680, 'Newtown / Amity');
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      }
+    });
+  }
+
+  const locFab = document.getElementById('my-location-fab');
+  if (locFab) {
+    locFab.addEventListener('click', () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setLocation(pos.coords.latitude, pos.coords.longitude, 'Your Live GPS Location');
+          },
+          (err) => {
+            alert('⚠️ Could not fetch precise GPS. Using Newtown location.');
+            setLocation(22.5750, 88.4680, 'Newtown / Amity');
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
       }
     });

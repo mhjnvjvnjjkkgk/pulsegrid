@@ -1237,6 +1237,7 @@ main { position: relative; z-index: 1; }
 }
 
 /* ── Full-Screen Map Canvas Layout ── */
+/* ── Full-Screen Map Canvas Layout ── */
 #map-container {
   position: fixed;
   top: 0;
@@ -1255,51 +1256,65 @@ main { position: relative; z-index: 1; }
   border: none;
 }
 
-/* ── Floating Top Navigation Bar (Google Maps Search Aesthetic) ── */
+/* Floating Google Maps Location Crosshair FAB Button */
+.my-location-fab {
+  position: fixed;
+  bottom: 200px;
+  right: 16px;
+  z-index: 1400;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.my-location-fab:hover {
+  transform: scale(1.08);
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+}
+
+.my-location-fab:active {
+  transform: scale(0.94);
+}
+
+/* ── Floating Top Navigation Bar (Native Google Maps Search Bar) ── */
 .floating-top-nav {
   position: fixed;
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 20px);
-  max-width: 680px;
+  width: calc(100% - 24px);
+  max-width: 640px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   pointer-events: auto;
-}
-
-.nav-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 14px;
-  border-radius: 16px;
-  background: rgba(13, 21, 38, 0.92);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  width: 100%;
-}
-
-.triage-bar {
-  width: 100%;
-  margin: 0;
 }
 
 .search-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(15, 23, 42, 0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  background: rgba(13, 21, 38, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  padding: 6px 10px 6px 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.15);
+  padding: 6px 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15);
   width: 100%;
   box-sizing: border-box;
 }
@@ -1309,7 +1324,7 @@ main { position: relative; z-index: 1; }
   min-width: 0;
   background: transparent;
   border: none;
-  color: #f8fafc;
+  color: #ffffff;
   font-size: 0.88rem;
   font-family: inherit;
   outline: none;
@@ -1342,20 +1357,20 @@ main { position: relative; z-index: 1; }
   gap: 6px;
   overflow-x: auto;
   flex-wrap: nowrap;
-  padding: 2px 0 4px;
+  padding: 2px 0;
   scrollbar-width: none;
 }
 
 .loc-chips-row::-webkit-scrollbar { display: none; }
 
 .loc-chip {
-  padding: 5px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(15, 23, 42, 0.90);
   backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
   color: #e2e8f0;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -1373,15 +1388,15 @@ main { position: relative; z-index: 1; }
 
 /* ── Hospital Card Overhaul (Zero Clipping, High Contrast) ── */
 .hosp-card {
-  padding: 16px;
-  margin-bottom: 14px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(8, 12, 24, 0.97) 100%);
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 12, 24, 0.98) 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hosp-card.highlighted {
@@ -1399,7 +1414,7 @@ main { position: relative; z-index: 1; }
 
 .hosp-name-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #ffffff;
   line-height: 1.25;
@@ -1412,7 +1427,7 @@ main { position: relative; z-index: 1; }
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #94a3b8;
 }
 
@@ -1425,13 +1440,13 @@ main { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  border-radius: 12px;
+  padding: 7px 12px;
+  border-radius: 10px;
   background: rgba(16, 185, 129, 0.14);
   border: 1.5px solid rgba(16, 185, 129, 0.35);
   color: #10b981;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .bed-summary-pill.low {
@@ -1460,7 +1475,7 @@ main { position: relative; z-index: 1; }
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   border: 1.5px solid rgba(255, 255, 255, 0.16);
   border-bottom: none;
-  border-radius: 24px 24px 0 0;
+  border-radius: 20px 20px 0 0;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.15);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -1470,7 +1485,7 @@ main { position: relative; z-index: 1; }
 
 .bottom-sheet-handle {
   width: 100%;
-  padding: 10px 0 6px;
+  padding: 8px 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1479,8 +1494,8 @@ main { position: relative; z-index: 1; }
 }
 
 .bottom-sheet-handle .handle-bar {
-  width: 52px;
-  height: 5px;
+  width: 48px;
+  height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.35);
   transition: background 0.2s;
@@ -1491,15 +1506,15 @@ main { position: relative; z-index: 1; }
 }
 
 .bottom-sheet.state-peek {
-  height: 330px;
+  height: 220px;
 }
 
 .bottom-sheet.state-expanded {
-  height: 80vh;
+  height: 78vh;
 }
 
 .bottom-sheet.state-collapsed {
-  height: 72px;
+  height: 64px;
 }
 
 .sheet-header {
