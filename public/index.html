@@ -88,6 +88,13 @@
         placeholder="Say YOUR SYMPTOM HERE..."
         autocomplete="off"
       >
+      <div class="audio-waveform-bar" id="audio-waveform" style="display:none;">
+        <span class="wave-bar-1"></span>
+        <span class="wave-bar-2"></span>
+        <span class="wave-bar-3"></span>
+        <span class="wave-bar-4"></span>
+        <span class="wave-bar-5"></span>
+      </div>
       <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
     </div>
   </div>
@@ -993,18 +1000,48 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         runTriage(e.target.value);
-      } else {
+      }
+    });
+  }
+
+  function initVoiceTriage() {
+    const micBtn = document.getElementById('voice-mic-btn');
+    const input = document.getElementById('symptom-input');
+    const waveform = document.getElementById('audio-waveform');
+    if (!micBtn || !input) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      micBtn.addEventListener('click', () => {
+        alert('Voice search is not supported in this browser. Please type your symptoms into the search bar.');
+      });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    let isListening = false;
+
+    micBtn.addEventListener('click', () => {
+      if (isListening) {
         recognition.stop();
+      } else {
+        try {
+          recognition.start();
+        } catch (err) {
+          console.log('Mic already active:', err);
+        }
       }
     });
 
     recognition.onstart = () => {
       isListening = true;
       micBtn.classList.add('listening');
-      if (banner) {
-        banner.style.display = 'flex';
-        banner.innerHTML = `<span class="live-rec-dot"></span><span>🔴 Listening... Speak symptoms or blood group</span>`;
-      }
+      if (waveform) waveform.style.display = 'flex';
+      input.placeholder = '🔴 Listening... Speak symptoms or blood group';
     };
 
     recognition.onresult = (event) => {
@@ -1018,13 +1055,20 @@
       }
     };
 
-    recognition.onerror = (event) => {
-      stopListening();
+    recognition.onerror = () => {
+      isListening = false;
+      micBtn.classList.remove('listening');
+      if (waveform) waveform.style.display = 'none';
+      input.placeholder = 'Say YOUR SYMPTOM HERE...';
     };
 
     recognition.onend = () => {
-      stopListening();
+      isListening = false;
+      micBtn.classList.remove('listening');
+      if (waveform) waveform.style.display = 'none';
+      input.placeholder = 'Say YOUR SYMPTOM HERE...';
     };
+  }
 
   function highlightCard(id, autoScroll = false) {
     document.querySelectorAll('.gmaps-hosp-card').forEach(c => c.style.background = 'rgba(255, 255, 255, 0.03)');

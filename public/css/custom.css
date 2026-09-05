@@ -786,3 +786,135 @@ html, body {
   font-weight: 700;
   color: #00FF87;
 }
+
+/* ── 5. OPTIMIZATIONS & ULTRA-PREMIUM GLASS EFFECTS ── */
+
+/* Glass Card Entrance Animation */
+@keyframes glassCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gmaps-hosp-card {
+  animation: glassCardEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.gmaps-hosp-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Shimmer Border Sheen on Search Wrapper */
+.search-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.search-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  padding: 1.5px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.5), rgba(0, 255, 135, 0.4), rgba(168, 85, 247, 0.5), rgba(0, 240, 255, 0.5));
+  background-size: 300% 300%;
+  animation: emerald-cyan-shimmer 6s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* Smooth Touch Inertia Scrolling */
+.sheet-content-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ── Responsive Fit & Mobile Viewport Rules ── */
+@media (max-width: 420px) {
+  .search-top-bar {
+    grid-template-columns: 6.8fr 3.2fr;
+    gap: 6px;
+  }
+
+  .blood-info-text {
+    font-size: 0.72rem;
+    padding: 7px 10px;
+    letter-spacing: -0.2px;
+  }
+
+  .nearest-hosp-btn {
+    font-size: 0.70rem;
+    padding: 7px 8px;
+    letter-spacing: -0.2px;
+  }
+
+  .search-wrap {
+    height: 52px;
+    padding: 0 10px 0 16px;
+  }
+
+  .search-input {
+    font-size: 0.85rem;
+  }
+
+  .gmaps-hosp-title {
+    font-size: 1.15rem;
+  }
+
+  .gmaps-btn-primary-inner {
+    font-size: 0.82rem;
+    padding: 12px 14px;
+    letter-spacing: 0.3px;
+  }
+
+  .gmaps-btn-secondary {
+    font-size: 0.76rem;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-header-bar {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .header-menu-btn, .header-logo-badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .status-text {
+    font-size: 0.58rem;
+    letter-spacing: 0.4px;
+  }
+
+  .dynamic-island-status {
+    padding: 3px 8px;
+    gap: 4px;
+  }
+
+  .blood-grid-matrix {
+    grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+    gap: 4px;
+  }
+
+  .blood-type-lbl {
+    font-size: 0.72rem;
+  }
+
+  .blood-count-val {
+    font-size: 0.68rem;
+  }
+}
+
