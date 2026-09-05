@@ -88,16 +88,17 @@ body::before {
 .orb-purple{ width: 500px; height: 500px; background: #7c3aed; top: 40%;  right: -8%; }
 .orb-cyan  { width: 400px; height: 400px; background: #0891b2; bottom: -10%; left: 30%; opacity: 0.18; }
 
-/* ── Liquid Glass Panel ── */
+/* ── Neobrutalistic Liquid Glass Panel ── */
 .glass {
   position: relative;
-  background: linear-gradient(135deg, var(--glass-2) 0%, var(--glass-1) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--glass-border);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(8, 12, 24, 0.90) 100%);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--r-lg);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.08);
   overflow: hidden;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Top specular highlight strip */
@@ -105,14 +106,15 @@ body::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--glass-shine), transparent);
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
   pointer-events: none;
 }
 
 .glass:hover {
-  border-color: var(--glass-border-hi);
-  box-shadow: 0 20px 60px -10px rgba(0,0,0,0.7), 0 0 0 1px var(--glass-border-hi);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.2);
 }
 
 .glass-sm { border-radius: var(--r-md); }
