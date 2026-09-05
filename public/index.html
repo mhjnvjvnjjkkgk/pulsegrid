@@ -43,17 +43,6 @@
       <span class="live-dot"></span>
       <span id="live-count">30</span> Hospitals Live
     </div>
-    <a href="admin/" id="desk-btn" class="header-desk-btn" style="
-      padding: 6px 16px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #94a3b8;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
-    ">Hospital Desk →</a>
   </div>
 </header>
 
@@ -878,9 +867,14 @@ function openHoldModal(h) {
     console.log("Could not auto-open Google Maps tab:", e);
   }
 
-  // Remove emergency cockpit options bar
+  // Remove emergency cockpit options bar and other UI
   const cockpit = document.getElementById('emergency-cockpit');
   if (cockpit) cockpit.style.display = 'none';
+  const hospList = document.getElementById('hospitals-list');
+  if (hospList) hospList.style.display = 'none';
+  const heroSearch = document.getElementById('hero-search');
+  if (heroSearch) heroSearch.style.display = 'none';
+
 
   // Display inline reservation panel below the map with OTP code
   const panel = document.getElementById('inline-reservation-panel');
