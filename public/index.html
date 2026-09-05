@@ -124,8 +124,16 @@
   <div class="split-view">
 
     <!-- LEFT: Map -->
-    <div class="map-panel glass">
+    <div class="map-panel glass" style="position:relative;">
       <div id="map"></div>
+      <div class="route-banner" id="route-banner" style="display:none;">
+        <span class="route-banner-badge">📍 LIVE ROUTE</span>
+        <span id="route-hosp-name" style="font-weight:700;">SSKM Hospital</span>
+        <span style="opacity:0.4;">|</span>
+        <span id="route-eta" style="color:var(--green); font-weight:700;">🚗 12 mins</span>
+        <span style="opacity:0.4;">|</span>
+        <span id="route-dist" style="color:#38bdf8;">4.2 km</span>
+      </div>
     </div>
 
     <!-- RIGHT: Scrollable hospital cards -->
@@ -220,6 +228,13 @@ let triageWard      = null;        // recommended ward from triage
 let countdownTimer  = null;
 let countdownEnd    = null;
 
+/* ── Live GPS & Route State ── */
+let userLat = 22.5392; // Default Kolkata center
+let userLng = 88.3433;
+let userMarker = null;
+let routePolyline = null;
+let activeTargetHospital = null;
+
 /* ── Leaflet Map init ── */
 const map = L.map('map', {
   center: [22.5726, 88.3639],   // Kolkata city centre
@@ -237,6 +252,76 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.control.attribution({ prefix: false })
   .addAttribution('© <a href="https://openstreetmap.org">OpenStreetMap</a>')
   .addTo(map);
+
+/* ── Initialize GPS Geolocation Tracking ── */
+function initGPS() {
+  const bluePulseIcon = L.divIcon({
+    className: '',
+    html: `<div style="position:relative; width:22px; height:22px;">
+             <div style="position:absolute; width:22px; height:22px; border-radius:50%; background:#3b82f6; border:3px solid #ffffff; box-shadow:0 0 14px rgba(59,130,246,0.9); z-index:2;"></div>
+             <div style="position:absolute; top:-9px; left:-9px; width:40px; height:40px; border-radius:50%; background:rgba(59,130,246,0.35); animation: pulseRing 1.8s infinite ease-out; z-index:1;"></div>
+           </div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
+  });
+
+  if ("geolocation" in navigator) {
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        if (!userMarker) {
+          userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+          userMarker.bindPopup("<b>📍 Your Live Location</b><br>GPS Active", { autoClose: false });
+        } else {
+          userMarker.setLatLng([userLat, userLng]);
+        }
+        if (activeTargetHospital) {
+          updateRouteToHospital(activeTargetHospital);
+        }
+      },
+      (err) => {
+        console.warn("GPS permission denied or unavailable, using central Kolkata position");
+        if (!userMarker) {
+          userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+          userMarker.bindPopup("<b>📍 Default Location (Kolkata)</b>", { autoClose: false });
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  }
+}
+
+/* ── Draw glowing emergency route line to target hospital ── */
+function updateRouteToHospital(h) {
+  if (!h || !h.latitude || !h.longitude) return;
+  activeTargetHospital = h;
+
+  if (routePolyline) {
+    map.removeLayer(routePolyline);
+  }
+
+  const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+  const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
+
+  routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
+    color: '#38bdf8',
+    weight: 5,
+    opacity: 0.85,
+    dashArray: '8, 8'
+  }).addTo(map);
+
+  const bounds = L.latLngBounds([[userLat, userLng], [h.latitude, h.longitude]]);
+  map.fitBounds(bounds, { padding: [60, 60] });
+
+  const banner = document.getElementById('route-banner');
+  if (banner) {
+    banner.style.display = 'flex';
+    document.getElementById('route-hosp-name').textContent = h.name;
+    document.getElementById('route-eta').textContent = `🚗 ${etaStr}`;
+    document.getElementById('route-dist').textContent = `${distKm} km`;
+  }
+}
 
 /* ── Create custom marker icons ── */
 function makeIcon(color) {
@@ -267,8 +352,6 @@ function makeIcon(color) {
 
 /* ── Compute staffed available beds for a ward ── */
 function staffedAvail(ward) {
-  // Uses: total - occupied - held = real staffed available beds
-  // Ignores "ghost beds" that exist on paper but aren't staffed
   return Math.max(0, (ward.total || 0) - (ward.occupied || 0) - (ward.held || 0));
 }
 
@@ -293,6 +376,9 @@ function markerColor(h) {
 function renderCard(h) {
   const wardEntries = h.wards ? Object.entries(h.wards) : [];
   const isGovt = (h.type || '').toLowerCase().includes('gov');
+
+  const distKm = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+  const etaStr = API.calcETA ? API.calcETA(distKm) : '12 mins';
 
   // Staffed beds for all 4 wards
   const wardsHtml = wardEntries.map(([name, w]) => {
@@ -335,6 +421,11 @@ function renderCard(h) {
       <div>
         <div class="hosp-name">${h.name}</div>
         <div class="hosp-address">${h.address}</div>
+        <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:6px;">
+          <span>📍 ${distKm} km</span>
+          <span style="opacity:0.4;">•</span>
+          <span>🚗 ${etaStr}</span>
+        </div>
       </div>
       <span class="hosp-type-badge ${isGovt?'govt':'pvt'}">${isGovt?'Govt':'Private'}</span>
     </div>
@@ -357,10 +448,11 @@ function renderCard(h) {
       </button>
     </div>`;
 
-  // Click card → fly map to hospital
+  // Click card → fly map & draw route line
   card.addEventListener('click', (e) => {
     if (e.target.classList.contains('hold-btn')) return;
     flyToHospital(h.id, h.latitude, h.longitude);
+    updateRouteToHospital(h);
   });
 
   // Hold button
@@ -407,7 +499,6 @@ function placeMarkers(hospitals) {
     const color = markerColor(h);
     const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color) });
 
-    const avail = totalAvail(h);
     const wardLines = h.wards
       ? Object.entries(h.wards).map(([n,w]) => {
           const a = staffedAvail(w);
@@ -431,7 +522,10 @@ function placeMarkers(hospitals) {
     marker.addTo(map);
     markers[h.id] = marker;
 
-    marker.on('click', () => highlightCard(h.id));
+    marker.on('click', () => {
+      highlightCard(h.id);
+      updateRouteToHospital(h);
+    });
   });
 }
 
@@ -458,10 +552,19 @@ function filterHospitals(hospitals) {
   return hospitals.filter(h => {
     if (!h.wards) return false;
     const wardKey = activeFilter;
-    // Find ward by db_key
     const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
     return entry && staffedAvail(entry) > 0;
   });
+}
+
+/* ── Auto-route to nearest recommended hospital ── */
+function autoRouteNearest(wardKey) {
+  if (!allHospitals || !allHospitals.length) return;
+  const match = API.findNearestHospital ? API.findNearestHospital(userLat, userLng, wardKey, allHospitals) : null;
+  if (match && match.hospital) {
+    updateRouteToHospital(match.hospital);
+    highlightCard(match.hospital.id);
+  }
 }
 
 /* ── Load hospitals from API ── */
@@ -470,9 +573,14 @@ async function loadHospitals() {
     allHospitals = await API.getFacilities();
     document.getElementById('live-count').textContent = allHospitals.length;
 
+    initGPS();
+
     const filtered = filterHospitals(allHospitals);
     renderCards(filtered);
     placeMarkers(filtered);
+
+    // Auto-route to nearest available hospital on load
+    autoRouteNearest('all');
   } catch (err) {
     console.error('Failed to load hospitals:', err);
     document.getElementById('cards-col').innerHTML =
@@ -510,10 +618,12 @@ function displayTriageResult(result) {
     .map(k => `<span class="keyword-tag">${k}</span>`)
     .join('');
 
-  // Auto-filter cards to matching ward
+  // Auto-filter cards to matching ward & auto-route on map
   triageWard = result.recommended_ward;
   if (triageWard && triageWard !== 'general_ward') {
     setFilter(triageWard);
+  } else {
+    autoRouteNearest('all');
   }
 
   resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -528,6 +638,7 @@ function setFilter(filterKey) {
   const filtered = filterHospitals(allHospitals);
   renderCards(filtered);
   placeMarkers(filtered);
+  autoRouteNearest(filterKey);
 }
 
 /* ── Hold / OTP Modal ── */

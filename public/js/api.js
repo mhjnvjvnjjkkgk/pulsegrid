@@ -204,6 +204,53 @@ async function fetchBloodInventory(hospitalId) {
     }
 }
 
+// Distance calculation helper (Haversine formula in km)
+function calcDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round((R * c) * 10) / 10; // 1 decimal place
+}
+
+// Estimate driving time in minutes based on urban Kolkata traffic speed (~22 km/h)
+function calcETA(distKm) {
+    if (!distKm || distKm > 900) return '15 mins';
+    const mins = Math.max(3, Math.round((distKm / 22) * 60));
+    return `${mins} mins`;
+}
+
+// Find nearest hospital with available beds in specific ward
+function findNearestHospital(userLat, userLng, wardKey, hospitals) {
+    if (!hospitals || !hospitals.length) return null;
+    let candidates = hospitals.map(h => {
+        const dist = calcDistance(userLat, userLng, h.latitude, h.longitude);
+        const eta = calcETA(dist);
+        let avail = 0;
+        if (h.wards) {
+            if (wardKey && wardKey !== 'all') {
+                const entry = Object.values(h.wards).find(w => w.db_key === wardKey);
+                if (entry) avail = Math.max(0, (entry.total||0) - (entry.occupied||0) - (entry.held||0));
+            } else {
+                Object.values(h.wards).forEach(w => {
+                    avail += Math.max(0, (w.total||0) - (w.occupied||0) - (w.held||0));
+                });
+            }
+        }
+        return { hospital: h, distanceKm: dist, eta: eta, availableBeds: avail };
+    });
+
+    // Filter to hospitals that actually have available beds if possible
+    const withAvail = candidates.filter(c => c.availableBeds > 0);
+    const pool = withAvail.length > 0 ? withAvail : candidates;
+    pool.sort((a, b) => a.distanceKm - b.distanceKm);
+    return pool[0] || null;
+}
+
 // Client-side fallback triage classifier
 function runLocalTriage(text) {
     const t = (text || '').toLowerCase();
@@ -226,5 +273,8 @@ window.API = {
     redeemHold: redeemHold,
     updateCounter: updateCounter,
     fetchActiveHolds: fetchActiveHolds,
-    fetchBloodInventory: fetchBloodInventory
+    fetchBloodInventory: fetchBloodInventory,
+    calcDistance: calcDistance,
+    calcETA: calcETA,
+    findNearestHospital: findNearestHospital
 };
