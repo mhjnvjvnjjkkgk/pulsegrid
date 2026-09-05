@@ -961,6 +961,144 @@ html, body {
   filter: brightness(95%) contrast(120%);
 }
 
+/* ── Image 1 Peek View Top Summary Card ── */
+.hosp-peek-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hosp-peek-tag-red {
+  background: rgba(244, 63, 94, 0.18);
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  color: #f43f5e;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hosp-peek-tag-verified {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.4px;
+}
+
+.hosp-peek-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.hosp-peek-name {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hosp-verified-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #38bdf8;
+  color: #05070b;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.hosp-peek-address {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.hosp-rating-badge {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.hosp-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.metric-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-card-green {
+  background: rgba(6, 44, 30, 0.6);
+  border: 1px solid rgba(0, 255, 135, 0.35);
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: #00F0FF;
+  margin: 3px 0;
+}
+
+.metric-card-green .metric-value {
+  color: #00FF87;
+  font-size: 0.8rem;
+}
+
+.metric-sub {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.3px;
+}
+
+.metric-card-green .metric-sub {
+  color: #34d399;
+}
+
 /* ── Photo Mockup Card Design System (Apple Liquid Glassmorphism) ── */
 .photo-hosp-header {
   display: flex;

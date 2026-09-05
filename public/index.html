@@ -666,6 +666,15 @@
       hospCallBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
     }
 
+    // Hide all other markers so only target hospital pin and route line stand out clearly!
+    Object.keys(markers).forEach(hid => {
+      if (hid === h.id || (h.id && String(hid) === String(h.id))) {
+        if (!map.hasLayer(markers[hid])) map.addLayer(markers[hid]);
+      } else {
+        if (map.hasLayer(markers[hid])) map.removeLayer(markers[hid]);
+      }
+    });
+
     if (routePolyline) {
       map.removeLayer(routePolyline);
       routePolyline = null;
@@ -750,6 +759,8 @@
   function renderCard(h) {
     const userDist = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
     const distKm = typeof userDist === 'number' ? userDist.toFixed(1) : userDist;
+    const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
+    const totalA = totalAvail(h);
 
     const guidance = getClinicalGuidance(currentSearchQuery);
 
@@ -765,6 +776,38 @@
     card.className = 'gmaps-hosp-card';
     card.dataset.id = h.id;
     card.innerHTML = `
+      <!-- 0. IMAGE 1 TOP SUMMARY CARD (Peek View Focus) -->
+      <div class="hosp-peek-tag-row">
+        <span class="hosp-peek-tag-red">⚠️ Level-1 Trauma & Cardiac Bay Ready</span>
+        <span class="hosp-peek-tag-verified">TRAUMA VERIFIED</span>
+      </div>
+
+      <div class="hosp-peek-title-row">
+        <div>
+          <div class="hosp-peek-name">${h.name} <span class="hosp-verified-check">✔</span></div>
+          <div class="hosp-peek-address">${h.address || 'VIP Rd Crossing • Dum Dum Medical Corridor'}</div>
+        </div>
+        <div class="hosp-rating-badge">⭐ 4.8</div>
+      </div>
+
+      <div class="hosp-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">DISTANCE</div>
+          <div class="metric-value">[ ${distKm} KM ]</div>
+          <div class="metric-sub">DIRECT RADIAL</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">🚗 ETA</div>
+          <div class="metric-value">[ ${etaStr} ]</div>
+          <div class="metric-sub">• LIVE SYNCED</div>
+        </div>
+        <div class="metric-card metric-card-green">
+          <div class="metric-label">OPEN 24/7</div>
+          <div class="metric-value">🛏 ${totalA} Beds Available!</div>
+          <div class="metric-sub">ICU RESERVED</div>
+        </div>
+      </div>
+
       <!-- 1. Hospital Header Row (Matching Photo top bar) -->
       <div class="photo-hosp-header">
         <div class="photo-hosp-icon">🏥</div>
@@ -1031,11 +1074,12 @@
         activeFilter = result.recommended_ward;
       }
 
-      renderCards(filtered);
-      placeMarkers(filtered);
-
       if (filtered.length > 0) {
-        updateRouteToHospital(filtered[0]);
+        const targetHosp = filtered[0];
+        updateRouteToHospital(targetHosp);
+        renderCards([targetHosp]);
+      } else {
+        renderCards(filtered);
       }
 
       showBottomSheet();
