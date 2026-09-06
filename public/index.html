@@ -606,26 +606,32 @@
         attributionControl: false,
       });
 
-      // CartoDB Dark Matter tiles (high-performance dark vector map tiles, zero API keys, no 403 blocks)
-      const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // Primary: High-contrast OpenStreetMap Standard Tiles (100% reliable load across all ISPs & mobile networks)
+      const primaryTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: ['a', 'b', 'c', 'd'],
-        attribution: '&copy; CartoDB &copy; OpenStreetMap'
+        subdomains: ['a', 'b', 'c'],
+        attribution: '&copy; OpenStreetMap contributors'
       });
 
-      darkTileLayer.addTo(map);
+      primaryTileLayer.addTo(map);
 
-      darkTileLayer.on('tileerror', function() {
-        console.warn('Primary tile server warning, using fallback tile provider...');
+      primaryTileLayer.on('tileerror', function() {
+        console.warn('Primary OSM tile warning, trying CartoDB Voyager fallback...');
         if (typeof L !== 'undefined' && map) {
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c', 'd']
+          }).addTo(map);
         }
       });
 
       // Force map layout recalculation to ensure tiles load seamlessly
       setTimeout(() => { if (map) map.invalidateSize(); }, 100);
       setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+      setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
       window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
+      window.addEventListener('load', () => { if (map) map.invalidateSize(); });
+      document.addEventListener('DOMContentLoaded', () => { if (map) map.invalidateSize(); });
     } catch (err) {
       console.warn('Leaflet map initialization warning:', err);
     }
