@@ -13,9 +13,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- Leaflet Map Engine -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet Map Engine with Multi-CDN Fallbacks -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    if (typeof L === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof L === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');
+    }
+  </script>
 
   <!-- Our Design System -->
   <link rel="stylesheet" href="css/custom.css">
@@ -96,7 +107,7 @@
         <span class="wave-bar-5"></span>
       </div>
       <button id="lang-toggle-btn" class="lang-toggle-btn" title="Toggle Language (English / বাংলা / हिंदी)">
-        <span id="lang-flag">🌐</span> <span id="lang-code">MULTILINGUAL</span>
+        <span id="lang-flag">🌐</span>
       </button>
       <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
     </div>
@@ -585,34 +596,47 @@
   let holdHospital         = null;
 
   /* ── Leaflet Map init (Clean OpenStreetMap CDN Tiles — ZERO API Key Watermark!) ── */
-  const map = L.map('map', {
-    center: [userLat, userLng],
-    zoom: 13,
-    zoomControl: false,
-    attributionControl: false,
-  });
+  let map = null;
+  if (typeof L !== 'undefined') {
+    try {
+      map = L.map('map', {
+        center: [userLat, userLng],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false,
+      });
 
-  // CartoDB Dark Matter tiles (high-performance dark vector map tiles, zero API keys, no 403 blocks)
-  const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    subdomains: ['a', 'b', 'c', 'd'],
-    attribution: '&copy; CartoDB &copy; OpenStreetMap'
-  });
+      // CartoDB Dark Matter tiles (high-performance dark vector map tiles, zero API keys, no 403 blocks)
+      const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: ['a', 'b', 'c', 'd'],
+        attribution: '&copy; CartoDB &copy; OpenStreetMap'
+      });
 
-  darkTileLayer.addTo(map);
+      darkTileLayer.addTo(map);
 
-  darkTileLayer.on('tileerror', function() {
-    console.warn('Primary tile server warning, using fallback tile provider...');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-  });
+      darkTileLayer.on('tileerror', function() {
+        console.warn('Primary tile server warning, using fallback tile provider...');
+        if (typeof L !== 'undefined' && map) {
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        }
+      });
 
-  // Force map layout recalculation to ensure tiles load seamlessly
-  setTimeout(() => { map.invalidateSize(); }, 100);
-  setTimeout(() => { map.invalidateSize(); }, 500);
-  window.addEventListener('resize', () => { map.invalidateSize(); });
+      // Force map layout recalculation to ensure tiles load seamlessly
+      setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+      setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+      window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
+    } catch (err) {
+      console.warn('Leaflet map initialization warning:', err);
+    }
+  } else {
+    console.warn('Leaflet library (L) is not defined; map tile canvas will be dormant while search and cards operate.');
+  }
 
   /* ── Initialize GPS Geolocation ── */
   function initGPS() {
+    if (!map || typeof L === 'undefined') return;
+
     const bluePulseIcon = L.divIcon({
       className: '',
       html: `<div style="position:relative; width:24px; height:24px;">
@@ -635,10 +659,10 @@
           } else {
             userMarker.setLatLng([userLat, userLng]);
           }
-          map.setView([userLat, userLng], 14);
+          if (map) map.setView([userLat, userLng], 14);
         },
         (err) => {
-          if (!userMarker) {
+          if (!userMarker && map) {
             userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
             userMarker.bindPopup("<b>📍 Kolkata Center</b>", { autoClose: false });
           }
@@ -659,12 +683,14 @@
       hospCallBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
     }
 
+    if (!map || typeof L === 'undefined') return;
+
     // Hide all other markers so only target hospital pin and route line stand out clearly!
     Object.keys(markers).forEach(hid => {
       if (hid === h.id || (h.id && String(hid) === String(h.id))) {
-        if (!map.hasLayer(markers[hid])) map.addLayer(markers[hid]);
+        if (markers[hid] && !map.hasLayer(markers[hid])) map.addLayer(markers[hid]);
       } else {
-        if (map.hasLayer(markers[hid])) map.removeLayer(markers[hid]);
+        if (markers[hid] && map.hasLayer(markers[hid])) map.removeLayer(markers[hid]);
       }
     });
 
@@ -708,6 +734,7 @@
   }
 
   function makeIcon(color, name) {
+    if (typeof L === 'undefined') return null;
     // Stitch-style: glowing neon circle with hospital cross
     const glow  = color === 'green' ? '#00FF87' : color === 'amber' ? '#f59e0b' : '#f43f5e';
     const inner = color === 'green' ? 'rgba(0,255,135,0.85)' : color === 'amber' ? 'rgba(245,158,11,0.85)' : 'rgba(244,63,94,0.85)';
@@ -982,13 +1009,21 @@
   }
 
   function placeMarkers(hospitals) {
-    Object.values(markers).forEach(m => map.removeLayer(m));
+    if (map && typeof L !== 'undefined') {
+      Object.values(markers).forEach(m => {
+        if (m && map.hasLayer(m)) map.removeLayer(m);
+      });
+    }
     markers = {};
+
+    if (!map || typeof L === 'undefined') return;
 
     hospitals.forEach(h => {
       if (!h.latitude || !h.longitude) return;
       const color = totalAvail(h) > 0 ? 'green' : 'red';
-      const marker = L.marker([h.latitude, h.longitude], { icon: makeIcon(color, h.name) }).addTo(map);
+      const icon = makeIcon(color, h.name);
+      if (!icon) return;
+      const marker = L.marker([h.latitude, h.longitude], { icon: icon }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-family:'Inter',sans-serif; padding:4px;">
@@ -1162,7 +1197,7 @@
     if (nearest) {
       updateRouteToHospital(nearest);
       showBottomSheet();
-      map.setView([nearest.latitude, nearest.longitude], 15);
+      if (map) map.setView([nearest.latitude, nearest.longitude], 15);
     }
   }
 
@@ -1179,6 +1214,16 @@
         runTriage(e.target.value);
       }
     });
+    symptomInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (val.trim().length >= 2) {
+        runTriage(val);
+      } else if (val.trim().length === 0) {
+        const sorted = getSortedHospitals(allHospitals);
+        renderCards(sorted);
+        placeMarkers(sorted);
+      }
+    });
   }
 
   /* ── Multilingual Language & Speech Synthesis Engine (TTS & STT) ── */
@@ -1191,21 +1236,19 @@
     const codeEl = document.getElementById('lang-code');
     const inputEl = document.getElementById('symptom-input');
 
+    if (codeEl) codeEl.innerText = '';
+
     if (lang === 'multi') {
       if (flagEl) flagEl.innerText = '🌐';
-      if (codeEl) codeEl.innerText = 'MULTILINGUAL';
       if (inputEl) inputEl.placeholder = 'Say symptoms in English / বাংলা / हिंदी...';
     } else if (lang === 'bn-IN') {
       if (flagEl) flagEl.innerText = '🇧🇩';
-      if (codeEl) codeEl.innerText = 'BN (বাংলা)';
       if (inputEl) inputEl.placeholder = 'আপনার লক্ষণ বলুন (যেমন: বুকে ব্যথা)...';
     } else if (lang === 'hi-IN') {
       if (flagEl) flagEl.innerText = '🇮🇳';
-      if (codeEl) codeEl.innerText = 'HI (हिंदी)';
       if (inputEl) inputEl.placeholder = 'अपने लक्षण कहें (जैसे: सीने में दर्द)...';
     } else if (lang === 'en-IN') {
       if (flagEl) flagEl.innerText = '🇬🇧';
-      if (codeEl) codeEl.innerText = 'EN (English)';
       if (inputEl) inputEl.placeholder = 'Say YOUR SYMPTOM HERE...';
     }
   }
