@@ -96,7 +96,7 @@
         <span class="wave-bar-5"></span>
       </div>
       <button id="lang-toggle-btn" class="lang-toggle-btn" title="Toggle Language (English / বাংলা / हिंदी)">
-        <span id="lang-flag">🇬🇧</span> <span id="lang-code">EN</span>
+        <span id="lang-flag">🌐</span> <span id="lang-code">MULTILINGUAL</span>
       </button>
       <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
     </div>
@@ -592,11 +592,19 @@
     attributionControl: false,
   });
 
-  // OpenStreetMap CDN tiles with dark high-contrast CSS filter for crisp visible streets without API keys
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // CartoDB Dark Matter tiles (high-performance dark vector map tiles, zero API keys, no 403 blocks)
+  const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
-    subdomains: ['a', 'b', 'c']
-  }).addTo(map);
+    subdomains: ['a', 'b', 'c', 'd'],
+    attribution: '&copy; CartoDB &copy; OpenStreetMap'
+  });
+
+  darkTileLayer.addTo(map);
+
+  darkTileLayer.on('tileerror', function() {
+    console.warn('Primary tile server warning, using fallback tile provider...');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  });
 
   // Force map layout recalculation to ensure tiles load seamlessly
   setTimeout(() => { map.invalidateSize(); }, 100);
@@ -1174,7 +1182,7 @@
   }
 
   /* ── Multilingual Language & Speech Synthesis Engine (TTS & STT) ── */
-  let currentLang = 'en-IN'; // 'en-IN', 'bn-IN', 'hi-IN'
+  let currentLang = 'multi'; // 'multi', 'bn-IN', 'hi-IN', 'en-IN'
   let isSpeakingTTS = false;
 
   function setLanguage(lang) {
@@ -1183,18 +1191,22 @@
     const codeEl = document.getElementById('lang-code');
     const inputEl = document.getElementById('symptom-input');
 
-    if (lang === 'en-IN') {
-      if (flagEl) flagEl.innerText = '🇬🇧';
-      if (codeEl) codeEl.innerText = 'EN';
-      if (inputEl) inputEl.placeholder = 'Say YOUR SYMPTOM HERE...';
+    if (lang === 'multi') {
+      if (flagEl) flagEl.innerText = '🌐';
+      if (codeEl) codeEl.innerText = 'MULTILINGUAL';
+      if (inputEl) inputEl.placeholder = 'Say symptoms in English / বাংলা / हिंदी...';
     } else if (lang === 'bn-IN') {
       if (flagEl) flagEl.innerText = '🇧🇩';
-      if (codeEl) codeEl.innerText = 'BN';
+      if (codeEl) codeEl.innerText = 'BN (বাংলা)';
       if (inputEl) inputEl.placeholder = 'আপনার লক্ষণ বলুন (যেমন: বুকে ব্যথা)...';
     } else if (lang === 'hi-IN') {
       if (flagEl) flagEl.innerText = '🇮🇳';
-      if (codeEl) codeEl.innerText = 'HI';
+      if (codeEl) codeEl.innerText = 'HI (हिंदी)';
       if (inputEl) inputEl.placeholder = 'अपने लक्षण कहें (जैसे: सीने में दर्द)...';
+    } else if (lang === 'en-IN') {
+      if (flagEl) flagEl.innerText = '🇬🇧';
+      if (codeEl) codeEl.innerText = 'EN (English)';
+      if (inputEl) inputEl.placeholder = 'Say YOUR SYMPTOM HERE...';
     }
   }
 
@@ -1202,12 +1214,14 @@
     const btn = document.getElementById('lang-toggle-btn');
     if (!btn) return;
     btn.addEventListener('click', () => {
-      if (currentLang === 'en-IN') {
+      if (currentLang === 'multi') {
         setLanguage('bn-IN');
       } else if (currentLang === 'bn-IN') {
         setLanguage('hi-IN');
-      } else {
+      } else if (currentLang === 'hi-IN') {
         setLanguage('en-IN');
+      } else {
+        setLanguage('multi');
       }
     });
   }
@@ -1319,7 +1333,7 @@
           recognition = new SpeechRecognition();
           recognition.continuous = false;
           recognition.interimResults = true;
-          recognition.lang = currentLang;
+          recognition.lang = (currentLang === 'multi') ? 'en-IN' : currentLang;
 
           recognition.onstart = () => {
             isListening = true;
