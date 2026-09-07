@@ -363,6 +363,7 @@ function resetOSRMThrottle() {
 // GLOBAL API NAMESPACE FOR HTML ACCESS
 // ============================================================
 window.API = {
+    FALLBACK_HOSPITALS: FALLBACK_HOSPITALS,
     getFacilities: fetchFacilities,
     triage: submitTriage,
     createHold: createHold,

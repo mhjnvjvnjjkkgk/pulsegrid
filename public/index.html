@@ -817,8 +817,37 @@
   let activeHoldId         = null;
   let holdHospital         = null;
 
-  /* ── Leaflet Map init (Clean OpenStreetMap CDN Tiles — ZERO API Key Watermark!) ── */
+  /* ── Leaflet Map init (Clean Multi-Tier CDN Tiles — ZERO API Key Watermark!) ── */
   let map = null;
+  let currentTileLayer = null;
+  const tileSources = [
+    { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', subdomains: ['a', 'b', 'c', 'd'] },
+    { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', subdomains: [] },
+    { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', subdomains: ['a', 'b', 'c', 'd'] },
+    { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'] }
+  ];
+  let currentTileIndex = 0;
+
+  function loadTileLayerSource(index) {
+    if (!map || typeof L === 'undefined' || index >= tileSources.length) return;
+    if (currentTileLayer) {
+      try { map.removeLayer(currentTileLayer); } catch(e) {}
+    }
+    const src = tileSources[index];
+    const opts = { maxZoom: 19 };
+    if (src.subdomains && src.subdomains.length > 0) opts.subdomains = src.subdomains;
+    
+    currentTileLayer = L.tileLayer(src.url, opts).addTo(map);
+
+    currentTileLayer.on('tileerror', function() {
+      if (currentTileIndex === index && index + 1 < tileSources.length) {
+        currentTileIndex = index + 1;
+        console.warn(`Tile layer ${index} network warning, transitioning to fallback tier ${currentTileIndex}`);
+        loadTileLayerSource(currentTileIndex);
+      }
+    });
+  }
+
   if (typeof L !== 'undefined') {
     try {
       map = L.map('map', {
@@ -828,24 +857,7 @@
         attributionControl: false,
       });
 
-      // Primary: High-performance CartoDB Voyager Daylight Street Tiles (100% reliable load across all ISPs & mobile networks with zero CORS blockages!)
-      const primaryTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: ['a', 'b', 'c', 'd'],
-        attribution: '&copy; OpenStreetMap &copy; CARTO'
-      });
-
-      primaryTileLayer.addTo(map);
-
-      primaryTileLayer.on('tileerror', function() {
-        console.warn('Primary CartoDB Voyager tile warning, trying CartoDB Dark Matter fallback...');
-        if (typeof L !== 'undefined' && map) {
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c', 'd']
-          }).addTo(map);
-        }
-      });
+      loadTileLayerSource(0);
 
       // Force map layout recalculation to ensure tiles load seamlessly
       setTimeout(() => { if (map) map.invalidateSize(); }, 100);
@@ -1629,13 +1641,20 @@
   async function loadHospitals() {
     try {
       const raw = await API.getFacilities();
-      allHospitals = getSortedHospitals(raw);
+      const list = (raw && Array.isArray(raw) && raw.length > 0) ? raw : (window.API && window.API.FALLBACK_HOSPITALS ? window.API.FALLBACK_HOSPITALS : []);
+      allHospitals = getSortedHospitals(list);
       initGPS();
       placeMarkers(allHospitals);
       renderCards(allHospitals);
       showBottomSheet();
     } catch (err) {
-      console.error('Failed to load facilities:', err);
+      console.warn('Network facilities load warning, rendering built-in Kolkata dataset:', err);
+      const list = (window.API && window.API.FALLBACK_HOSPITALS) ? window.API.FALLBACK_HOSPITALS : [];
+      allHospitals = getSortedHospitals(list);
+      initGPS();
+      placeMarkers(allHospitals);
+      renderCards(allHospitals);
+      showBottomSheet();
     }
   }
 
@@ -2070,6 +2089,15 @@
   initTouchDrawer();
   initLangSwitcher();
   setupEventListeners();
+
+  // Instant zero-delay initial render from fallback dataset so UI is NEVER blank or off-screen!
+  if (window.API && window.API.FALLBACK_HOSPITALS && window.API.FALLBACK_HOSPITALS.length > 0) {
+    allHospitals = getSortedHospitals(window.API.FALLBACK_HOSPITALS);
+    placeMarkers(allHospitals);
+    renderCards(allHospitals);
+    showBottomSheet();
+  }
+
   loadHospitals();
   initVoiceTriage();
   if (window.lucide) {
