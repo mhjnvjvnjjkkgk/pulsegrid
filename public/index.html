@@ -6,6 +6,9 @@
   <title>ASHA | Real-Time Emergency Bed & Blood Finder</title>
   <meta name="description" content="Find emergency hospital beds and blood stock in real time across Kolkata. Instant triage, guaranteed 15-minute bed holds, no sign-up required.">
 
+  <!-- Tailwind CSS Engine -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1258,17 +1261,20 @@
     });
   }
 
-  /* ── Transition & Drawer Controls (Drawing 1 -> Drawing 2 -> Drawing 3) ── */
+  /* ── Transition & Drawer Controls (Drawings 1 -> 2 -> 3) ── */
   function showBottomSheet() {
     const sheet = document.getElementById('bottom-sheet');
     const searchContainer = document.getElementById('search-container');
+    if (!sheet) return;
 
     // Move search bar to top with animation (Drawing 2)
-    searchContainer.classList.remove('mode-bottom', 'mode-hidden');
-    searchContainer.classList.add('mode-top');
+    if (searchContainer) {
+      searchContainer.classList.remove('mode-bottom', 'mode-hidden');
+      searchContainer.classList.add('mode-top');
+    }
 
-    // Reveal bottom sheet
-    sheet.classList.remove('hidden', 'state-expanded');
+    // Reveal bottom sheet (remove hidden and state-hidden!)
+    sheet.classList.remove('hidden', 'state-hidden', 'state-expanded');
     sheet.classList.add('state-peek');
     currentSheetState = 'peek';
   }
@@ -1278,17 +1284,22 @@
     const searchContainer = document.getElementById('search-container');
     if (!sheet) return;
 
-    sheet.classList.remove('state-peek', 'state-expanded');
+    sheet.classList.remove('hidden', 'state-hidden', 'state-peek', 'state-expanded');
     sheet.classList.add(`state-${state}`);
     currentSheetState = state;
 
-    if (state === 'expanded') {
-      // Search Bar Hides Away when sliding high up (Drawing 3)
-      searchContainer.classList.remove('mode-top', 'mode-bottom');
-      searchContainer.classList.add('mode-hidden');
-    } else {
-      searchContainer.classList.remove('mode-hidden', 'mode-bottom');
-      searchContainer.classList.add('mode-top');
+    if (searchContainer) {
+      if (state === 'expanded') {
+        // Search Bar Hides Away when sliding high up (Drawing 3)
+        searchContainer.classList.remove('mode-top', 'mode-bottom');
+        searchContainer.classList.add('mode-hidden');
+      } else if (state === 'peek') {
+        searchContainer.classList.remove('mode-hidden', 'mode-bottom');
+        searchContainer.classList.add('mode-top');
+      } else {
+        searchContainer.classList.remove('mode-top', 'mode-hidden');
+        searchContainer.classList.add('mode-bottom');
+      }
     }
   }
 
@@ -1609,6 +1620,7 @@
       initGPS();
       placeMarkers(allHospitals);
       renderCards(allHospitals);
+      showBottomSheet();
     } catch (err) {
       console.error('Failed to load facilities:', err);
     }
