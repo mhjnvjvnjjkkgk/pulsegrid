@@ -146,20 +146,7 @@
 
     <!-- Stacked Action Cards (Visible when initial view) -->
     <div id="initial-stacked-controls" class="space-y-2 mb-2 select-none">
-      <!-- 1) Clinical Symptom Directory Banner -->
-      <div id="symptom-directory-btn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#E2FF4D] flex-shrink-0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span class="text-[11px] font-black text-white group-hover:text-[#E2FF4D] tracking-wider uppercase truncate">
-            165+ CLINICAL SYMPTOM DIRECTORY
-          </span>
-        </div>
-        <span class="px-2.5 py-1 rounded-full bg-[#E2FF4D] text-black font-black text-[9px] tracking-wider uppercase flex-shrink-0 group-hover:scale-105 transition-transform">
-          BROWSE GUIDE
-        </span>
-      </div>
-
-      <!-- 2) 70/30 Ratio Cards: Blood Group (70%) + Nearest Hospital (30%) -->
+      <!-- 70/30 Ratio Cards: Blood Group (70%) + Nearest Hospital (30%) -->
       <div class="flex items-stretch gap-2 w-full select-none">
         <button id="blood-card-btn" type="button" class="w-[70%] flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group active:scale-[0.98]">
           <span class="w-7 h-7 rounded-xl bg-[#ff334b]/20 border border-[#ff334b]/40 flex items-center justify-center flex-shrink-0 text-[#ff334b] group-hover:scale-110 transition-transform">
@@ -963,27 +950,33 @@
     map.fitBounds(routePolyline.getBounds(), { padding: [60, 60], animate: true, duration: 1 });
   }
 
-  function makeIcon(color, name) {
+  function makeIcon(color, name, distKm = '2.4', etaMin = '12', availBeds = 5, isSelected = false) {
     if (typeof L === 'undefined') return null;
-    // Stitch-style: glowing neon circle with hospital cross
-    const glow  = color === 'green' ? '#00FF87' : color === 'amber' ? '#f59e0b' : '#f43f5e';
-    const inner = color === 'green' ? 'rgba(0,255,135,0.85)' : color === 'amber' ? 'rgba(245,158,11,0.85)' : 'rgba(244,63,94,0.85)';
-    const ring  = color === 'green' ? 'rgba(0,255,135,0.25)' : color === 'amber' ? 'rgba(245,158,11,0.2)' : 'rgba(244,63,94,0.2)';
-    // Short hospital label (max 10 chars)
-    const label = name ? name.split(' ').slice(0,2).join(' ').substring(0,12).toUpperCase() : '';
+    const shortName = name ? (name.split(' ').slice(0, 2).join(' ').substring(0, 14)) : 'HOSPITAL';
+    const borderStyle = isSelected ? 'background:#141414; border:2px solid #E2FF4D; color:#ffffff; box-shadow:0 0 20px rgba(226,255,77,0.6);' : 'background:rgba(24,24,24,0.95); border:1px solid #333333; color:#e2e8f0;';
+    const dotColor = availBeds > 0 ? '#00e676' : '#ff334b';
+    const stemColor = isSelected ? '#E2FF4D' : '#666666';
+
     return L.divIcon({
-      className: '',
+      className: 'custom-hospital-marker',
       html: `
-        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:3px;">
-          <div style="position:relative; width:18px; height:18px;">
-            <div style="position:absolute; top:0; left:0; width:18px; height:18px; border-radius:50%; background:${inner}; border:2px solid ${glow}; box-shadow:0 0 12px ${glow}, 0 0 24px ${ring};"></div>
-            <div style="position:absolute; top:-6px; left:-6px; width:30px; height:30px; border-radius:50%; background:${ring}; animation:ping-slow 2.2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+        <div style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:120px; transition:transform 0.3s ease; ${isSelected ? 'transform:scale(1.1); z-index:30;' : 'opacity:0.95; z-index:10;'}">
+          <div style="position:relative; display:flex; align-items:center; justify-content:center; padding:3px 8px; border-radius:10px; font-family:var(--font-body); font-size:10px; font-weight:800; box-shadow:0 12px 36px rgba(0,0,0,0.9); ${borderStyle}">
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span style="width:6px; height:6px; border-radius:50%; background:${dotColor}; box-shadow:0 0 8px ${dotColor};"></span>
+              <span style="max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:-0.2px; font-weight:900;">${shortName}</span>
+            </div>
           </div>
-          <div style="background:rgba(5,7,11,0.85); border:1px solid ${glow}; border-radius:6px; padding:2px 5px; font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:800; color:${glow}; white-space:nowrap; letter-spacing:0.3px; backdrop-filter:blur(8px);">${label}</div>
-        </div>`,
-      iconSize: [60, 44],
-      iconAnchor: [30, 18],
-      popupAnchor: [0, -20],
+          <div style="margin-top:2px; padding:1.5px 6px; border-radius:6px; background:#101010; border:1px solid #2a2a2a; font-size:9px; font-weight:800; color:${isSelected ? '#E2FF4D' : '#94a3b8'}; white-space:nowrap;">
+            ${distKm} km • ${etaMin}
+          </div>
+          <div style="width:2px; height:8px; background:${stemColor};"></div>
+          <div style="width:5px; height:5px; border-radius:50%; background:${stemColor};"></div>
+        </div>
+      `,
+      iconSize: [120, 50],
+      iconAnchor: [60, 50],
+      popupAnchor: [0, -45],
     });
   }
 
@@ -1256,15 +1249,20 @@
 
     hospitals.forEach(h => {
       if (!h.latitude || !h.longitude) return;
-      const color = totalAvail(h) > 0 ? 'green' : 'red';
-      const icon = makeIcon(color, h.name);
+      const userDist = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
+      const distKm = typeof userDist === 'number' ? userDist.toFixed(1) : userDist;
+      const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
+      const avail = totalAvail(h);
+      const isSelected = activeTargetHospital ? (String(activeTargetHospital.id) === String(h.id)) : false;
+
+      const icon = makeIcon(avail > 0 ? 'green' : 'red', h.name, distKm, etaStr, avail, isSelected);
       if (!icon) return;
       const marker = L.marker([h.latitude, h.longitude], { icon: icon }).addTo(map);
 
       marker.bindPopup(`
         <div style="font-family:'Inter',sans-serif; padding:4px;">
-          <div style="font-weight:800; font-size:0.95rem; color:#111827;">${h.name}</div>
-          <div style="font-size:0.80rem; color:#10b981; font-weight:700; margin-top:2px;">🛏 ${totalAvail(h)} Beds Available</div>
+          <div style="font-weight:800; font-size:0.95rem; color:#ffffff;">${h.name}</div>
+          <div style="font-size:0.80rem; color:#00e676; font-weight:700; margin-top:2px;">🛏 ${avail} Beds Available • ${distKm} km</div>
         </div>
       `);
 
