@@ -1,0 +1,392 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>PulseGrid — Emergency Telemetry Map</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-lowest": "#0c0e13",
+            "surface-tint": "#00dbe9",
+            "outline-variant": "#3b494b",
+            "background": "#111318",
+            "surface-bright": "#37393e",
+            "on-primary-container": "#006970",
+            "secondary-fixed-dim": "#00e478",
+            "on-primary-fixed-variant": "#004f54",
+            "inverse-surface": "#e1e2e9",
+            "primary": "#dbfcff",
+            "tertiary": "#fff3f3",
+            "on-background": "#e1e2e9",
+            "on-primary": "#00363a",
+            "secondary": "#f5fff3",
+            "surface-container-highest": "#32353a",
+            "surface": "#111318",
+            "outline": "#849495",
+            "primary-fixed": "#7df4ff",
+            "surface-container-high": "#272a2f",
+            "on-secondary": "#003919",
+            "secondary-container": "#34ff8c",
+            "primary-fixed-dim": "#00dbe9",
+            "on-secondary-fixed": "#00210c",
+            "on-surface": "#e1e2e9",
+            "on-tertiary-fixed-variant": "#910030",
+            "inverse-primary": "#006970",
+            "tertiary-container": "#ffcdd1",
+            "surface-dim": "#111318",
+            "on-secondary-container": "#007239",
+            "on-secondary-fixed-variant": "#005227",
+            "inverse-on-surface": "#2e3035",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-container": "#be0042",
+            "on-tertiary-fixed": "#400011",
+            "on-surface-variant": "#b9cacb",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "on-primary-fixed": "#002022",
+            "surface-container": "#1d2024",
+            "surface-container-low": "#191c20",
+            "surface-variant": "#32353a",
+            "on-tertiary": "#670020",
+            "primary-container": "#00f0ff",
+            "secondary-fixed": "#60ff98",
+            "tertiary-fixed": "#ffd9dc",
+            "tertiary-fixed-dim": "#ffb2ba",
+            "on-error": "#690005"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xs": "0.25rem",
+            "margin-tablet": "2rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.5rem",
+            "space-3xl": "4rem",
+            "space-2xl": "3rem",
+            "space-md": "1rem",
+            "space-sm": "0.75rem",
+            "gutter-mobile": "1rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Space Grotesk"],
+            "body-lg": ["Geist"],
+            "label-telemetry": ["JetBrains Mono"],
+            "headline-sm": ["Space Grotesk"],
+            "label-code-sm": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "body-sm": ["Geist"],
+            "headline-md": ["Space Grotesk"],
+            "display-hero-mobile": ["Space Grotesk"],
+            "display-hero": ["Space Grotesk"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Radar & beacon animation keyframes */
+    @keyframes ping-slow {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      80%, 100% { transform: scale(2.4); opacity: 0; }
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.75; box-shadow: 0 0 16px rgba(0, 240, 255, 0.4); }
+      50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 28px rgba(0, 240, 255, 0.85); }
+    }
+    @keyframes pulse-emerald {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .animate-ping-slow {
+      animation: ping-slow 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .animate-breathe {
+      animation: breathe 3s ease-in-out infinite;
+    }
+    .animate-emerald {
+      animation: pulse-emerald 2s ease-in-out infinite;
+    }
+    .glow-river {
+      filter: drop-shadow(0 0 12px rgba(0, 219, 233, 0.4));
+    }
+    .glow-artery {
+      filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.65));
+    }
+    /* Liquid Glassmorphism */
+    .liquid-glass {
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(10, 16, 28, 0.94) 100%);
+    }
+    .liquid-pill {
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+    }
+    body {
+      min-height: max(844px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#030508] text-on-surface antialiased select-none overflow-hidden flex justify-center items-center min-h-screen p-0 sm:p-4">
+<!-- =========================================================
+       1. CANVAS & MOBILE VIEWPORT (iPhone 15 Pro / 390x844 Frame)
+       Variant 3: Minimalist Fluid Glass
+       ========================================================= -->
+<div class="relative w-full max-w-[390px] h-[844px] bg-[#05070b] overflow-hidden sm:rounded-[52px] sm:border-[9px] sm:border-surface-variant/40 sm:shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col justify-between">
+<!-- Ambient Glowing Glass Orbs: Royal Blue (Top-Left), Purple (Bottom-Right), Cyan (Bottom-Center) -->
+<div class="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-blue-700/30 blur-[95px] pointer-events-none z-0"></div>
+<div class="absolute -bottom-24 -right-24 w-88 h-88 rounded-full bg-purple-700/30 blur-[105px] pointer-events-none z-0"></div>
+<div class="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-primary-container/25 blur-[100px] pointer-events-none z-0"></div>
+<!-- Apple Dynamic Island Notch (Top Center 390x844 Frame) -->
+<div class="absolute top-2.5 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-between px-3 h-7 w-[124px] bg-black/95 backdrop-blur-3xl rounded-full border border-white/10 shadow-[0_0_12px_rgba(0,0,0,0.9)]">
+<div class="w-2.5 h-2.5 rounded-full bg-cyan-400/50 border border-cyan-400 animate-pulse"></div>
+<div class="w-3 h-3 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<div class="w-1.5 h-1.5 rounded-full bg-[#05070b]"></div>
+</div>
+</div>
+<!-- =========================================================
+         VECTOR MAP OF KOLKATA (Full Viewport, Dark Arteries & Beacons)
+         ========================================================= -->
+<div class="absolute inset-0 w-full h-full z-0 overflow-hidden bg-[#05070b]">
+<svg class="w-full h-full object-cover scale-105" fill="none" viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient cx="50%" cy="50%" id="beaconGlowCyan" r="50%">
+<stop offset="0%" stop-color="#00F0FF" stop-opacity="0.95"></stop>
+<stop offset="60%" stop-color="#00F0FF" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#00F0FF" stop-opacity="0"></stop>
+</radialGradient>
+<radialGradient cx="50%" cy="50%" id="beaconGlowEmerald" r="50%">
+<stop offset="0%" stop-color="#00FF87" stop-opacity="0.95"></stop>
+<stop offset="70%" stop-color="#00FF87" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#00FF87" stop-opacity="0"></stop>
+</radialGradient>
+<linearGradient id="riverGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#032030" stop-opacity="0.9"></stop>
+<stop offset="50%" stop-color="#053b54" stop-opacity="0.95"></stop>
+<stop offset="100%" stop-color="#021824" stop-opacity="0.9"></stop>
+</linearGradient>
+</defs>
+<!-- Subtle Urban Grid Mesh / City Sectors -->
+<g stroke="rgba(255,255,255,0.025)" stroke-width="1">
+<line x1="0" x2="390" y1="120" y2="120"></line>
+<line x1="0" x2="390" y1="220" y2="220"></line>
+<line x1="0" x2="390" y1="320" y2="320"></line>
+<line x1="0" x2="390" y1="420" y2="420"></line>
+<line x1="0" x2="390" y1="520" y2="520"></line>
+<line x1="0" x2="390" y1="620" y2="620"></line>
+<line x1="0" x2="390" y1="720" y2="720"></line>
+<line x1="80" x2="80" y1="0" y2="844"></line>
+<line x1="160" x2="160" y1="0" y2="844"></line>
+<line x1="240" x2="240" y1="0" y2="844"></line>
+<line x1="320" x2="320" y1="0" y2="844"></line>
+</g>
+<!-- The Hooghly River Geometry (Kolkata Vector) -->
+<path class="glow-river" d="M115,0 C100,85 80,160 95,245 C110,330 65,415 55,500 C45,585 88,690 68,775 C58,820 62,844 62,844 L0,844 L0,0 Z" fill="url(#riverGrad)" stroke="#00dbe9" stroke-opacity="0.38" stroke-width="0.8"></path>
+<!-- Secondary Road Arteries (Delicate Midnight Filaments) -->
+<g stroke="rgba(185,202,203,0.12)" stroke-linecap="round" stroke-width="1.2">
+<path d="M10,170 Q130,190 280,150 T390,180"></path>
+<path d="M0,265 Q180,285 265,225 T390,275"></path>
+<path d="M65,390 C140,400 205,350 360,390"></path>
+<path d="M55,550 C170,560 245,505 390,550"></path>
+<path d="M25,675 C130,645 265,685 390,655"></path>
+<path d="M195,0 C205,285 168,570 215,844" stroke-dasharray="3,3" stroke-opacity="0.25"></path>
+</g>
+<!-- Primary Luminous Emergency Arteries (AJC Bose Rd, EM Bypass, Central Ave) -->
+<g class="glow-artery" stroke="#00dbe9" stroke-linecap="round">
+<!-- E.M. Bypass Corridor -->
+<path d="M305,75 C345,235 325,455 355,680 T335,844" stroke-opacity="0.85" stroke-width="2.8"></path>
+<path d="M305,75 C345,235 325,455 355,680 T335,844" stroke="#dbfcff" stroke-width="1.1"></path>
+<!-- AJC Bose Flyover Arterial Link -->
+<path d="M78,435 C160,445 215,485 330,465" stroke-opacity="0.9" stroke-width="3.2"></path>
+<path d="M78,435 C160,445 215,485 330,465" stroke="#ffffff" stroke-width="1.3"></path>
+<!-- VIP Road Connector to Salt Lake -->
+<path d="M160,115 C208,190 285,225 380,205" stroke-opacity="0.75" stroke-width="2.2"></path>
+<!-- Park Circus Connector -->
+<path d="M208,390 C228,435 238,510 265,595" stroke-opacity="0.6" stroke-width="1.8"></path>
+</g>
+<!-- Active Live Hospital Vector Pins & Tactical Ripples -->
+<!-- 1. SSKM TRAUMA (Trauma Level 1) -->
+<g transform="translate(155, 450)">
+<circle class="animate-ping-slow" cx="0" cy="0" fill="url(#beaconGlowEmerald)" r="30"></circle>
+<circle cx="0" cy="0" fill="#00FF87" fill-opacity="0.15" r="13" stroke="#00FF87" stroke-width="1.5"></circle>
+<circle class="shadow-[0_0_12px_#00FF87]" cx="0" cy="0" fill="#00FF87" r="5"></circle>
+<rect fill="#0c0e13" fill-opacity="0.9" height="22" rx="11" stroke="#00FF87" stroke-width="0.8" width="94" x="12" y="-18"></rect>
+<text fill="#00FF87" font-family="Space Grotesk" font-size="9" font-weight="600" letter-spacing="0.05em" x="22" y="-4">SSKM TRAUMA</text>
+</g>
+<!-- 2. APOLLO ER (Salt Lake/EM Bypass) -->
+<g transform="translate(315, 230)">
+<circle class="animate-ping-slow" cx="0" cy="0" fill="url(#beaconGlowCyan)" r="26" style="animation-delay: 0.8s;"></circle>
+<circle cx="0" cy="0" fill="#00F0FF" fill-opacity="0.15" r="11" stroke="#00F0FF" stroke-width="1.2"></circle>
+<circle cx="0" cy="0" fill="#00F0FF" r="4.5"></circle>
+<rect fill="#0c0e13" fill-opacity="0.9" height="20" rx="10" stroke="#00F0FF" stroke-width="0.6" width="86" x="-96" y="-14"></rect>
+<text fill="#dbfcff" font-family="Space Grotesk" font-size="8.5" font-weight="600" x="-88" y="0">APOLLO ER</text>
+</g>
+<!-- 3. FORTIS ICU (Anandapur EM Bypass) -->
+<g transform="translate(335, 570)">
+<circle class="animate-ping-slow" cx="0" cy="0" fill="url(#beaconGlowCyan)" r="25" style="animation-delay: 1.4s;"></circle>
+<circle cx="0" cy="0" fill="#00F0FF" fill-opacity="0.12" r="10" stroke="#00F0FF" stroke-width="1"></circle>
+<circle cx="0" cy="0" fill="#00F0FF" r="4"></circle>
+<rect fill="#0c0e13" fill-opacity="0.9" height="20" rx="10" stroke="#00F0FF" stroke-width="0.6" width="82" x="-92" y="-14"></rect>
+<text fill="#dbfcff" font-family="Space Grotesk" font-size="8.5" font-weight="600" x="-84" y="0">FORTIS ICU</text>
+</g>
+<!-- GPS User Realtime Position Core -->
+<g transform="translate(185, 492)">
+<circle class="animate-spin" cx="0" cy="0" fill="none" r="15" stroke="#00f0ff" stroke-dasharray="2 2" stroke-width="1" style="animation-duration: 9s;"></circle>
+<circle class="shadow-[0_0_15px_#ffffff]" cx="0" cy="0" fill="#ffffff" r="6.5" stroke="#00f0ff" stroke-width="2.5"></circle>
+</g>
+</svg>
+<!-- Ambient Floating Mini Quick-Filter Pills on Map: Trauma ICU, Pediatric ER, Cath Lab -->
+<div class="absolute top-28 left-4 z-20 flex flex-wrap gap-2 pointer-events-auto">
+<button class="px-2.5 py-1 rounded-full liquid-pill bg-white/[0.06] border border-white/15 text-white/80 hover:text-white hover:border-white/30 text-[11px] font-medium tracking-tight shadow-lg transition-all active:scale-95 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#00FF87]"></span>
+<span class="">Trauma ICU</span>
+</button>
+<button class="px-2.5 py-1 rounded-full liquid-pill bg-white/[0.06] border border-white/15 text-white/80 hover:text-white hover:border-white/30 text-[11px] font-medium tracking-tight shadow-lg transition-all active:scale-95 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#00F0FF]"></span>
+<span class="">Pediatric ER</span>
+</button>
+<button class="px-2.5 py-1 rounded-full liquid-pill bg-white/[0.06] border border-white/15 text-white/80 hover:text-white hover:border-white/30 text-[11px] font-medium tracking-tight shadow-lg transition-all active:scale-95 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+<span class="">Cath Lab</span>
+</button>
+</div>
+</div>
+<!-- =========================================================
+         2. TOP FLOATING NAVIGATION BAR (FLOATING GLASS HEADER)
+         Fixed top (16px inset: top-4 left-4 right-4), z-index 50.
+         - Left: Round translucent frosted glass button (44x44px) with 3 horizontal white hamburger lines.
+         - Center: Dynamic Island status chip '● PULSEGRID EMERGENCY SYSTEM ACTIVE'.
+         - Right: Round logo badge (44x44px) containing ONLY the letter 'P' in glowing neon cyan with breathing pulse ring. NO text label beside it!
+         ========================================================= -->
+<header class="absolute top-4 left-4 right-4 z-50 pt-8 flex items-center justify-between pointer-events-none">
+<!-- Left: Round Frosted Glass Button (44x44px) with 3 horizontal white hamburger lines -->
+<button aria-label="Navigation Menu" class="pointer-events-auto w-[44px] h-[44px] rounded-full liquid-pill bg-white/[0.08] border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-[4.5px] active:scale-95 transition-all duration-200 hover:bg-white/[0.14] hover:border-white/30 cursor-pointer shrink-0" type="button" style="backdrop-filter: blur(32px) saturate(210%); background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.25) 100%); border-width: 1.5px 1px 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.55) rgba(255, 255, 255, 0.32) rgba(255, 255, 255, 0.32); border-image: none; box-shadow: rgba(255, 255, 255, 0.45) 0px 1px 1px inset, rgba(0, 0, 0, 0.4) 0px -1px 2px inset, rgba(0, 0, 0, 0.5) 0px 10px 25px;">
+<span class="w-4 h-[1.75px] bg-white rounded-full transition-transform"></span>
+<span class="w-4 h-[1.75px] bg-white rounded-full transition-transform"></span>
+<span class="w-4 h-[1.75px] bg-white rounded-full transition-transform"></span>
+</button>
+<!-- Center: Dynamic Island Status Chip -->
+<div class="pointer-events-auto px-2.5 py-1 rounded-full liquid-pill bg-black/60 border border-white/15 shadow-md flex items-center gap-1.5" style="backdrop-filter: blur(36px) saturate(200%); background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(10, 14, 22, 0.78) 40%, rgba(5, 8, 14, 0.88) 100%); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.45) rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25); border-image: none; box-shadow: rgba(255, 255, 255, 0.35) 0px 1px 1px inset, rgba(0, 0, 0, 0.45) 0px 6px 20px;">
+<span class="w-1.5 h-1.5 rounded-full bg-[#00FF87] animate-ping"></span>
+<span class="text-[9.5px] font-label-telemetry uppercase tracking-wider text-white/90 font-semibold truncate max-w-[155px]">PULSEGRID EMERGENCY ACTIVE</span>
+</div>
+<!-- Right: Single Round Logo Badge (44x44px) with ONLY 'P' in Neon Cyan circle with breathing pulse ring -->
+<div class="pointer-events-auto relative w-[44px] h-[44px] rounded-full liquid-pill bg-white/[0.08] border border-[#00F0FF]/40 shadow-[0_0_20px_rgba(0,240,255,0.25)] flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-200 shrink-0" style="backdrop-filter: blur(32px) saturate(220%); background: radial-gradient(circle at 35% 25%, rgba(0, 240, 255, 0.28) 0%, rgba(255, 255, 255, 0.1) 45%, rgba(4, 10, 20, 0.7) 100%); border-width: 1.5px 1px 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.65) rgba(0, 240, 255, 0.55) rgba(0, 240, 255, 0.55); border-image: none; box-shadow: rgba(255, 255, 255, 0.5) 0px 1.5px 1.5px inset, rgba(0, 0, 0, 0.4) 0px -1.5px 2px inset, rgba(0, 240, 255, 0.35) 0px 0px 24px;">
+<div class="absolute inset-0 rounded-full border border-[#00F0FF]/60 animate-breathe pointer-events-none"></div>
+<span class="font-headline-lg text-[22px] font-bold text-[#00F0FF] leading-none select-none tracking-tight drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]">P</span>
+</div>
+</header>
+<!-- Map Floating Compass & Recenter Tactile Buttons -->
+<div class="absolute top-[230px] right-4 z-40 flex flex-col items-end gap-2.5 pointer-events-none">
+<button class="pointer-events-auto w-9 h-9 rounded-full liquid-pill bg-surface-container-lowest/70 border border-white/15 text-primary flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="explore">explore</span>
+</button>
+<button class="pointer-events-auto w-9 h-9 rounded-full liquid-pill bg-surface-container-lowest/70 border border-white/15 text-primary-container flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="my_location">my_location</span>
+</button>
+</div>
+<!-- =========================================================
+         3. BOTTOM FLOATING SEARCH CONTAINER (LIQUID GLASS)
+         Floating at bottom of screen, 16px inset from left, right, and bottom edges.
+         Backdrop filter: Ultra-dense Apple Liquid Glassmorphism
+         - TOP BAR (7:3 RATIO MATRIX):
+           * Left (70% width): Translucent pill banner with blood group icon + 'Type blood group if required' in crisp white SF Pro font.
+           * Right (30% width): Glowing emerald green glass button + 'Nearest Hospital' in bold green font.
+         - MAIN SEARCH INPUT BOX:
+           * Full-width pill input bar (56px height, rounded-full)
+           * Placeholder: 'Say YOUR SYMPTOM HERE...' in 50% opacity silver typography
+           * Left: Search magnifying glass icon
+           * Right: Circular glass microphone button 🎙️ glowing with subtle pulsing cyan voice ring
+         - BOTTOM STATUS SUMMARY:
+           * '● 4 Verified Trauma Centers Online' • '⏱ Avg. ETA: 7 MIN'
+         4. ZERO DRAWER STATE: Zero drawer visible initially.
+         ========================================================= -->
+<footer class="absolute bottom-4 left-4 right-4 z-50 pointer-events-none flex flex-col">
+<!-- Liquid Obsidian Glassmorphism Container Card -->
+<div class="pointer-events-auto w-full liquid-glass border-[1.5px] border-white/20 rounded-3xl p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/5" style="backdrop-filter: blur(40px) saturate(210%) brightness(108%); background: linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(12, 18, 28, 0.82) 28%, rgba(8, 12, 20, 0.92) 100%); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.45) rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.35); border-image: none; box-shadow: rgba(255, 255, 255, 0.42) 0px 1px 1.5px 0px inset, rgba(0, 0, 0, 0.5) 0px -1.5px 3px 0px inset, rgba(0, 0, 0, 0.75) 0px 24px 50px -10px, rgba(0, 240, 255, 0.15) 0px 0px 24px 2px;">
+<!-- TOP BAR ABOVE SEARCH INPUT (Strict 7:3 RATIO MATRIX) -->
+<div class="w-full flex items-center gap-2">
+<!-- Left Item (70% width): Translucent Pill Blood Group Banner -->
+<div class="w-[70%] h-10 px-3 rounded-full liquid-pill bg-white/[0.07] border border-white/15 flex items-center gap-1.5 shadow-inner hover:bg-white/[0.1] transition-colors cursor-pointer group" style="backdrop-filter: blur(28px) saturate(190%); background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.38) rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.22); border-image: none; box-shadow: rgba(255, 255, 255, 0.3) 0px 1px 1px 0px inset, rgba(0, 0, 0, 0.35) 0px -1px 2px inset, rgba(0, 0, 0, 0.25) 0px 4px 12px;">
+<span class="material-symbols-outlined text-rose-400 text-[17px] group-hover:scale-110 transition-transform shrink-0" data-icon="bloodtype">bloodtype</span>
+<span class="text-[12.5px] font-sans text-white font-medium truncate tracking-tight">Type blood group if required</span>
+</div>
+<!-- Right Item (30% width): Glowing Emerald Green Glass Button with 'Nearest Hospital' -->
+<button class="w-[30%] h-10 px-2 rounded-full liquid-pill bg-[#00FF87]/[0.16] border border-[#00FF87]/70 shadow-[0_0_18px_rgba(0,255,135,0.3)] flex items-center justify-center gap-1 active:scale-95 transition-all duration-150 group hover:bg-[#00FF87]/[0.24] cursor-pointer shrink-0" type="button" style="backdrop-filter: blur(24px) saturate(220%); background: linear-gradient(140deg, rgba(0, 255, 135, 0.3) 0%, rgba(0, 255, 135, 0.12) 55%, rgba(0, 219, 233, 0.18) 100%); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.6) rgba(0, 255, 135, 0.75) rgba(0, 255, 135, 0.75); border-image: none; box-shadow: rgba(255, 255, 255, 0.55) 0px 1px 1px 0px inset, rgba(0, 40, 20, 0.4) 0px -1px 2px inset, rgba(0, 255, 135, 0.35) 0px 0px 20px;">
+<span class="material-symbols-outlined text-[#00FF87] text-[15px] animate-emerald shrink-0" data-icon="near_me">near_me</span>
+<span class="text-[11px] font-sans text-[#00FF87] font-bold truncate tracking-tight">Nearest Hospital</span>
+</button>
+</div>
+<!-- MAIN SEARCH INPUT BOX (56px height, rounded-full) -->
+<div class="w-full h-14 rounded-full bg-white/[0.06] border border-white/15 backdrop-blur-md px-4 flex items-center justify-between mt-2.5 focus-within:border-[#00F0FF] focus-within:shadow-[0_0_24px_rgba(0,240,255,0.35)] transition-all duration-300" style="backdrop-filter: blur(30px) saturate(200%); background: linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%); border-width: 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.35) rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.2); border-image: none; box-shadow: rgba(255, 255, 255, 0.25) 0px 1px 1px inset, rgba(0, 0, 0, 0.3) 0px 2px 8px inset, rgba(0, 0, 0, 0.35) 0px 8px 20px;">
+<!-- Search Icon & Silver Placeholder Input -->
+<div class="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+<span class="material-symbols-outlined text-white/50 text-[20px] shrink-0" data-icon="search">search</span>
+<input class="w-full bg-transparent border-0 outline-none ring-0 p-0 text-white placeholder:text-white/50 text-[14px] font-body-md font-medium tracking-wide focus:ring-0 focus:outline-none" placeholder="Say YOUR SYMPTOM HERE..." type="text">
+</div>
+<!-- Right Side Icon: Circular Glass Voice Microphone Button (40x40px) with Pulsing Cyan Ring -->
+<button aria-label="Voice Symptom Triage" class="relative w-10 h-10 rounded-full liquid-pill bg-white/[0.08] border border-[#00F0FF]/50 shadow-[0_0_16px_rgba(0,240,255,0.35)] flex items-center justify-center text-[#00F0FF] active:scale-90 hover:bg-[#00F0FF]/20 transition-all duration-150 shrink-0 cursor-pointer" type="button" style="backdrop-filter: blur(20px) saturate(220%); background: radial-gradient(circle at 35% 25%, rgba(0, 240, 255, 0.35) 0%, rgba(0, 240, 255, 0.12) 60%, rgba(3, 10, 20, 0.4) 100%); border-width: 1.5px 1px 1px; border-style: solid; border-color: rgba(255, 255, 255, 0.65) rgba(0, 240, 255, 0.6) rgba(0, 240, 255, 0.6); border-image: none; box-shadow: rgba(255, 255, 255, 0.6) 0px 1px 1.5px inset, rgba(0, 240, 255, 0.45) 0px 0px 18px;">
+<span class="absolute inset-0 rounded-full border border-[#00F0FF] animate-ping opacity-30 pointer-events-none"></span>
+<span class="material-symbols-outlined text-[19px]" data-icon="mic">mic</span>
+</button>
+</div>
+<!-- BOTTOM STATUS SUMMARY -->
+<div class="flex items-center justify-between pt-2.5 px-1">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#00FF87]"></span>
+<span class="text-[10px] font-label-code-sm text-white/70">4 Verified Trauma Centers Online</span>
+</div>
+<div class="flex items-center gap-1 text-primary-container">
+<span class="material-symbols-outlined text-[13px]" data-icon="timer">timer</span>
+<span class="text-[10px] font-label-code-sm font-bold text-primary-fixed">Avg. ETA: 7 MIN</span>
+</div>
+</div>
+</div>
+<!-- iOS Home Indicator Bar -->
+<div class="w-32 h-1 bg-white/25 rounded-full mx-auto mt-2"></div>
+</footer>
+</div>
+<!-- Interactive State Simulation (Micro-interactions) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const micBtn = document.querySelector('button[aria-label="Voice Symptom Triage"]');
+      const searchInput = document.querySelector('input[type="text"]');
+      
+      if (micBtn && searchInput) {
+        micBtn.addEventListener('click', () => {
+          micBtn.classList.toggle('bg-[#00F0FF]');
+          micBtn.classList.toggle('text-[#05070B]');
+          
+          if (searchInput.placeholder === "Say YOUR SYMPTOM HERE...") {
+            searchInput.placeholder = "Listening for emergency symptoms...";
+            setTimeout(() => {
+              searchInput.value = "Severe chest pain radiating to left arm";
+            }, 1200);
+          } else {
+            searchInput.placeholder = "Say YOUR SYMPTOM HERE...";
+            searchInput.value = "";
+          }
+        });
+      }
+    });
+  </script>
+
+
+</body></html>

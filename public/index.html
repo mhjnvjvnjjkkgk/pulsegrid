@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PulseGrid | Real-Time Emergency Bed & Blood Finder</title>
+  <title>ASHA | Real-Time Emergency Bed & Blood Finder</title>
   <meta name="description" content="Find emergency hospital beds and blood stock in real time across Kolkata. Instant triage, guaranteed 15-minute bed holds, no sign-up required.">
 
   <!-- Fonts & Icons -->
@@ -39,7 +39,7 @@
   <div class="orb orb-cyan"></div>
 
   <!-- ═══════════════════════════════════════
-       1. FULL-SCREEN MAP CANVAS (BACKGROUND)
+       1. FULL-SCREEN MAP CANVAS & FLOATING FAB
   ════════════════════════════════════════ -->
   <div id="map-container">
     <div id="map"></div>
@@ -57,73 +57,285 @@
   </div>
 
   <!-- ═══════════════════════════════════════
-       2. TOP HEADER BAR (Drawing 1: Three dots, Dynamic Island, App Logo)
+       2. TOP FLOATING LOCATION BAR (React Style)
   ════════════════════════════════════════ -->
-  <div class="top-header-bar">
+  <div id="my-location-pill" class="fixed top-3.5 left-0 right-0 z-30 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-300">
+    <div id="my-location-btn" class="flex items-center justify-between bg-[#111111]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] ring-1 ring-[#E2FF4D]/30 rounded-full px-3.5 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.85)] cursor-pointer group transition-all">
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <span class="p-1 rounded-full bg-[#E2FF4D]/15 text-[#E2FF4D] group-hover:scale-110 flex-shrink-0 transition-transform">
+          📍
+        </span>
+        <span class="text-[10px] font-black uppercase text-[#E2FF4D] tracking-wider flex-shrink-0">
+          MY LOCATION:
+        </span>
+        <span id="current-location-text" class="text-[11px] font-medium text-white truncate group-hover:text-[#E2FF4D] transition-colors">
+          Bangur, South Dum Dum, Kolkata
+        </span>
+      </div>
+
+      <div class="flex items-center gap-1.5 ml-2 flex-shrink-0">
+        <span id="change-loc-tag" class="text-[9px] text-[#E2FF4D] bg-[#222222] border border-[#333333] px-2 py-0.5 rounded-full font-bold group-hover:bg-[#E2FF4D] group-hover:text-black transition-colors">
+          Change
+        </span>
+        <button id="loc-crosshair-btn" title="Place & Drag Road Pin with Live GPS" class="text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black p-1 rounded-full transition-all cursor-pointer">
+          🎯
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       3. TOP TOAST BANNER (When 15-Min Hold is Active)
+  ════════════════════════════════════════ -->
+  <div id="active-hold-toast" class="fixed top-14 left-0 right-0 z-40 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-300 hidden">
+    <div class="bg-[#0e1726]/98 backdrop-blur-2xl border-2 border-[#E2FF4D] ring-1 ring-[#E2FF4D]/50 rounded-2xl p-3 shadow-[0_12px_40px_rgba(0,0,0,0.95)] text-white">
+      <div class="flex items-center justify-between border-b border-[#1e3a5f] pb-2 mb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-[#E2FF4D] animate-ping"></span>
+          <div>
+            <span class="text-[11px] font-black text-[#E2FF4D] tracking-wider uppercase block">
+              🟢 BED RESERVED • 15-MIN HOLD ACTIVE
+            </span>
+            <span id="toast-hosp-name" class="text-[10px] text-[#8ab4f8] font-bold">
+              Cardiac ICU at North City Baguiati
+            </span>
+          </div>
+        </div>
+        <button id="toast-close-btn" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">✕</button>
+      </div>
+
+      <div class="flex items-center justify-between bg-black/60 border border-[#1e3a5f] rounded-xl p-2.5">
+        <div>
+          <span class="text-[9px] font-bold text-[#8ab4f8] block uppercase tracking-wider">
+            GATE CHECK-IN OTP
+          </span>
+          <span class="text-[10px] font-mono font-black text-white">
+            Code: <strong id="toast-otp-code" class="text-[#E2FF4D] text-sm">9420</strong>
+          </span>
+        </div>
+        <button id="toast-copy-otp-btn" class="px-2.5 py-1 rounded-lg bg-[#1e3455] text-xs font-bold text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black transition-colors cursor-pointer">
+          📋 Copy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       4. TOP HEADER BAR
+  ════════════════════════════════════════ -->
+  <div class="top-header-bar" style="display:none;">
     <button class="header-menu-btn" id="header-menu-btn" title="Emergency Menu">
       <div class="hamburger-line"></div>
       <div class="hamburger-line"></div>
       <div class="hamburger-line"></div>
     </button>
 
-    <!-- Center Dynamic Island Status Pill -->
     <div class="dynamic-island-status">
       <span class="status-dot-green"></span>
-      <span class="status-text">PULSEGRID EMERGENCY ACTIVE</span>
+      <span class="status-text">ASHA EMERGENCY ACTIVE</span>
     </div>
 
-    <!-- Right Single Round Logo Badge (NO text label) -->
-    <div class="header-logo-badge" title="PulseGrid">
+    <div class="header-logo-badge" title="ASHA">
       <div class="logo-breathe-ring"></div>
-      <div class="logo-circle">P</div>
+      <div class="logo-circle">A</div>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       3. SEARCH CONTAINER (Drawing 1: Initial Bottom Bar & 7:3 Top Bar)
+       5. FLOATING SEARCH CONTAINER & STACKED CARDS (1:1 React Layout)
   ════════════════════════════════════════ -->
-  <div class="search-container mode-bottom" id="search-container">
-    <!-- 7:3 Top Bar above Search Input (Drawing 1 Alignment) -->
-    <div class="search-top-bar" id="search-top-bar">
-      <div class="blood-info-text">Type blood group if required</div>
-      <button class="nearest-hosp-btn" id="nearest-hosp-btn">Nearest Hospital</button>
+  <div class="fixed left-0 right-0 z-40 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-500 bottom-6" id="search-container">
+
+    <!-- Stacked Action Cards (Visible when initial view) -->
+    <div id="initial-stacked-controls" class="space-y-2 mb-2 select-none">
+      <!-- 1) Clinical Symptom Directory Banner -->
+      <div id="symptom-directory-btn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="text-base">📖</span>
+          <span class="text-[11px] font-black text-white group-hover:text-[#E2FF4D] tracking-wider uppercase truncate">
+            165+ CLINICAL SYMPTOM DIRECTORY
+          </span>
+        </div>
+        <span class="px-2.5 py-1 rounded-full bg-[#E2FF4D] text-black font-black text-[9px] tracking-wider uppercase flex-shrink-0 group-hover:scale-105 transition-transform">
+          BROWSE GUIDE
+        </span>
+      </div>
+
+      <!-- 2) 70/30 Ratio Cards: Blood Group (70%) + Nearest Hospital (30%) -->
+      <div class="flex items-stretch gap-2 w-full select-none">
+        <button id="blood-card-btn" type="button" class="w-[70%] flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group active:scale-[0.98]">
+          <span class="w-6 h-6 rounded-lg bg-[#ff334b]/20 border border-[#ff334b]/40 flex items-center justify-center flex-shrink-0 text-[#ff334b] group-hover:scale-110 transition-transform">
+            🩸
+          </span>
+          <div class="text-left min-w-0 flex-1">
+            <span class="block text-[10px] font-black text-white group-hover:text-[#E2FF4D] tracking-wider uppercase truncate">
+              TYPE REQUIRED BLOOD GROUP
+            </span>
+            <span class="block text-[8px] text-[#888888] font-medium truncate">
+              Tap to select O+, B+, A+, AB-...
+            </span>
+          </div>
+        </button>
+
+        <button id="nearest-hosp-btn" type="button" class="w-[30%] flex flex-col items-center justify-center px-2 py-2 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group active:scale-[0.98]">
+          <span class="text-[#E2FF4D] text-sm group-hover:scale-110 transition-transform mb-0.5">🏥</span>
+          <span class="text-[9px] font-black text-white group-hover:text-[#E2FF4D] tracking-tight uppercase text-center leading-tight">
+            NEAREST HOSPITAL
+          </span>
+        </button>
+      </div>
+
+      <!-- Quick Blood Group Selector Bar (Toggled by Blood Card) -->
+      <div id="blood-picker-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 px-2.5 rounded-xl bg-[#161616]/95 border border-[#333333] shadow-2xl hidden">
+        <span class="text-[9px] font-bold text-[#E2FF4D] uppercase px-1 flex-shrink-0">SELECT:</span>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="O+">O+</button>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="B+">B+</button>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="A+">A+</button>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="AB+">AB+</button>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="O-">O-</button>
+        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="A-">A-</button>
+      </div>
     </div>
 
-    <!-- Search Input Wrap -->
-    <div class="search-wrap">
+    <!-- Live Symptom Autocomplete Suggestions Dropdown -->
+    <div id="symptom-autocomplete-dropdown" class="mb-2 max-h-56 overflow-y-auto rounded-2xl border border-[#1e3a5f] bg-[#0e1726]/98 backdrop-blur-xl shadow-2xl divide-y divide-[#1e3a5f] hidden">
+      <div class="px-3.5 py-2 bg-[#0a121f] text-[10px] font-black text-[#E2FF4D] tracking-wider uppercase flex items-center justify-between">
+        <span>MATCHING CLINICAL SYMPTOMS (5)</span>
+        <span class="text-[#8ab4f8]">TAP TO TRIAGE</span>
+      </div>
+      <div id="symptom-autocomplete-list" class="divide-y divide-[#1e3a5f]">
+        <!-- Inserted via JS -->
+      </div>
+    </div>
+
+    <!-- Main Search Input Bar (Green Volt Border) -->
+    <div id="search-wrap" class="flex items-center backdrop-blur-xl rounded-full px-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.85)] border h-12 bg-[#111111]/95 border-[#2a2a2a] ring-1 ring-[#E2FF4D]/30 gap-2.5 transition-all">
+      <span class="text-[#E2FF4D] flex-shrink-0">📍</span>
       <input
         id="symptom-input"
-        class="search-input"
+        class="flex-1 min-w-0 bg-transparent text-xs sm:text-sm text-white font-sans font-medium placeholder-[#777777] focus:outline-none"
         type="search"
         enterkeyhint="search"
-        placeholder="Say YOUR SYMPTOM HERE..."
+        placeholder="Type symptoms (e.g. chest pain) & press Enter..."
         autocomplete="off"
       >
-      <div class="audio-waveform-bar" id="audio-waveform" style="display:none;">
-        <span class="wave-bar-1"></span>
-        <span class="wave-bar-2"></span>
-        <span class="wave-bar-3"></span>
-        <span class="wave-bar-4"></span>
-        <span class="wave-bar-5"></span>
-      </div>
-      <button id="lang-toggle-btn" class="lang-toggle-btn" title="Toggle Language (English / বাংলা / हिंदी)">
-        <span id="lang-flag">🌐</span>
+      <!-- Submit Arrow Button -->
+      <button id="symptom-submit-btn" title="Submit Triage Search" class="w-7 h-7 rounded-full bg-[#E2FF4D] text-black hover:bg-white flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer active:scale-95 shadow-md hidden">
+        ➔
       </button>
-      <button id="voice-mic-btn" class="voice-mic-btn" title="Voice Triage">🎙️</button>
+      <!-- Clear button -->
+      <button id="symptom-clear-btn" title="Clear Search" class="text-[#888888] hover:text-white p-1 rounded-full transition-colors flex-shrink-0 cursor-pointer hidden">
+        ✕
+      </button>
+      <!-- Voice Mic button -->
+      <button id="voice-mic-btn" class="flex-shrink-0 w-8 h-8 rounded-full bg-[#1e1e1e] text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black border border-[#2a2a2a] flex items-center justify-center transition-all cursor-pointer" title="Voice Dictation">
+        🎙️
+      </button>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════
-       4. SLIDABLE BOTTOM SHEET DRAWER (Drawings 2 & 3)
+       6. SLIDABLE BOTTOM SHEET DRAWER (30% to 72% Height Flow)
   ════════════════════════════════════════ -->
   <div class="bottom-sheet hidden state-hidden" id="bottom-sheet">
-    <div class="sheet-handle-zone" id="bottom-sheet-handle" title="Drag to expand / collapse details">
+    <div class="sheet-handle-zone" id="bottom-sheet-handle" title="Drag or click to expand / collapse details">
       <div class="sheet-handle-bar"></div>
     </div>
 
+    <!-- Triage Filter Bar Header -->
+    <div class="px-4 pb-2 flex items-center justify-between border-b border-[#1e3a5f]">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#00FF87] animate-ping"></span>
+        <span id="drawer-triage-tag" class="text-xs font-black text-white uppercase tracking-wider">
+          🟢 TRIAGE ACTIVE
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="drawer-govt-filter-btn" class="px-2.5 py-1 rounded-full bg-[#1e3455] border border-[#38bdf8]/50 text-[#38bdf8] text-[10px] font-black tracking-wide uppercase hover:bg-[#38bdf8] hover:text-black transition-colors cursor-pointer">
+          🏢 GOVT VS NEAREST
+        </button>
+        <button id="drawer-what-to-do-btn" class="px-2.5 py-1 rounded-full bg-[#E2FF4D]/15 border border-[#E2FF4D]/40 text-[#E2FF4D] text-[10px] font-black tracking-wide uppercase hover:bg-[#E2FF4D] hover:text-black transition-colors cursor-pointer">
+          📖 WHAT TO DO
+        </button>
+        <button id="drawer-close-btn" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer">✕</button>
+      </div>
+    </div>
+
     <div class="sheet-content-scroll tactical-scroll" id="sheet-content">
-      <!-- Hospital Cards Container -->
+      <!-- Hospital Cards & Detailed Telemetry Container -->
       <div class="cards-col" id="cards-col"></div>
+    </div>
+
+    <!-- Sticky Post-Booking & Action Bar (Pinned 1:1 at Bottom) -->
+    <div id="sticky-drawer-action-bar" class="flex-shrink-0 px-4 pt-2.5 pb-4 bg-[#0a121f] border-t border-[#1e3a5f] shadow-[0_-8px_20px_rgba(0,0,0,0.6)]">
+      <!-- Normal Booking View -->
+      <div id="normal-booking-actions" class="space-y-2">
+        <button id="inline-book-slot-btn" class="w-full py-2.5 px-4 rounded-full bg-[#E2FF4D] text-black font-black text-xs sm:text-sm tracking-tight hover:bg-white transition-colors flex items-center justify-center gap-2 uppercase shadow-xl cursor-pointer active:scale-[0.98]">
+          🔒 BOOK MY SLOT AND START ➔
+        </button>
+
+        <div class="grid grid-cols-2 gap-2">
+          <a id="inline-call-amb-btn" href="tel:108" class="py-2 px-3 rounded-xl bg-[#141f33] border border-[#ff334b]/40 hover:bg-[#ff334b] hover:text-white text-[#ff334b] font-black text-[11px] uppercase tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            🚑 Ambulance (108)
+          </a>
+          <a id="inline-call-hosp-btn" href="tel:102" class="py-2 px-3 rounded-xl bg-[#141f33] border border-[#1e3a5f] hover:bg-white hover:text-black text-white font-black text-[11px] uppercase tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            📞 Call Hospital
+          </a>
+        </div>
+      </div>
+
+      <!-- Active Hold Booking View -->
+      <div id="active-hold-actions" class="flex gap-2 hidden">
+        <button id="release-hold-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-[#1e293b] border border-[#ff334b]/40 text-[#ff334b] text-xs font-black tracking-wider hover:bg-[#ff334b] hover:text-white transition-colors uppercase cursor-pointer text-center">
+          RELEASE 15-MIN HOLD
+        </button>
+        <a id="call-er-btn" href="tel:102" class="py-2.5 px-5 rounded-xl bg-[#E2FF4D] text-black text-xs font-black tracking-tight hover:bg-white transition-colors uppercase flex items-center justify-center gap-1.5 cursor-pointer">
+          📞 CALL ER
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       7. LOCATION ADJUSTMENT MODAL WITH GEOCODING AUTOCOMPLETE
+  ════════════════════════════════════════ -->
+  <div id="location-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+    <div class="relative w-full max-w-md bg-[#121212] border border-[#2a2a2a] ring-1 ring-[#E2FF4D]/30 rounded-2xl shadow-2xl p-4 text-white">
+      <div class="flex items-center justify-between pb-3 border-b border-[#222222]">
+        <div class="flex items-center gap-2">
+          <span class="text-[#E2FF4D]">📍</span>
+          <h3 class="font-bold text-sm text-white">Adjust My Location</h3>
+        </div>
+        <button id="location-modal-close" class="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer">✕</button>
+      </div>
+
+      <form id="location-search-form" class="mt-3">
+        <label class="block text-xs font-bold text-[#E2FF4D] uppercase tracking-wider mb-1.5">
+          Search Your Address / Locality:
+        </label>
+        <div class="relative flex items-center gap-2 bg-[#181818] border border-[#2e2e2e] focus-within:border-[#E2FF4D] focus-within:ring-1 focus-within:ring-[#E2FF4D]/30 rounded-xl px-3 py-2.5 transition-all">
+          <span class="text-[#E2FF4D]">🔍</span>
+          <input
+            id="location-search-input"
+            type="text"
+            placeholder="Type street, building, area (e.g. Bangur, Salt Lake...)"
+            class="w-full bg-transparent text-sm text-white focus:outline-none placeholder:text-gray-500"
+          />
+        </div>
+
+        <div id="location-suggestions-dropdown" class="mt-2 max-h-56 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[#161616] shadow-2xl divide-y divide-[#222222] hidden">
+          <!-- Inserted via JS -->
+        </div>
+
+        <div class="mt-3 flex items-center justify-between gap-2">
+          <button id="modal-use-gps-btn" type="button" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#E2FF4D]/15 border border-[#E2FF4D]/40 text-xs font-bold text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black transition-all cursor-pointer shadow-sm active:scale-95">
+            🎯 Use Live GPS
+          </button>
+          <button type="submit" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E2FF4D] text-black text-xs font-black hover:bg-[#f5ff80] transition-all cursor-pointer shadow-md active:scale-95">
+            Set Location
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1133,6 +1345,12 @@
 
   /* ── Open Hold Modal & Launch Google Maps Turn-by-Turn Navigation ── */
   function openHoldModal(h) {
+    if (!h) {
+      const sorted = getSortedHospitals(allHospitals);
+      h = sorted[0];
+    }
+    if (!h) return;
+
     holdHospital = h;
     const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
 
@@ -1143,14 +1361,85 @@
     }
 
     API.createHold(h.id, 'general_ward', 'CITIZEN', '9999999999', 'YELLOW').then(res => {
-      alert(`🔒 Bed soft-locked at ${h.name}!\nYour OTP: ${res.otp_code || '8492'}\n15-minute countdown active.`);
+      activeHoldId = res.hold_id || 'HOLD-101';
+      const otp = res.otp_code || '9420';
+
+      // Update Top Active Hold Toast Banner
+      const toast = document.getElementById('active-hold-toast');
+      const toastHosp = document.getElementById('toast-hosp-name');
+      const toastOtp = document.getElementById('toast-otp-code');
+      const normalActions = document.getElementById('normal-booking-actions');
+      const activeActions = document.getElementById('active-hold-actions');
+
+      if (toastHosp) toastHosp.innerText = `${h.name}`;
+      if (toastOtp) toastOtp.innerText = otp;
+      if (toast) toast.classList.remove('hidden');
+
+      if (normalActions) normalActions.classList.add('hidden');
+      if (activeActions) activeActions.classList.remove('hidden');
+
+      // Update call ER button
+      const callErBtn = document.getElementById('call-er-btn');
+      if (callErBtn) callErBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
+    }).catch(err => {
+      console.warn('Hold creation fallback:', err);
     });
+  }
+
+  /* ── Release Hold ── */
+  function releaseActiveHold() {
+    if (activeHoldId && API.releaseHold) {
+      API.releaseHold(activeHoldId).catch(console.warn);
+    }
+    activeHoldId = null;
+
+    const toast = document.getElementById('active-hold-toast');
+    const normalActions = document.getElementById('normal-booking-actions');
+    const activeActions = document.getElementById('active-hold-actions');
+
+    if (toast) toast.classList.add('hidden');
+    if (normalActions) normalActions.classList.remove('hidden');
+    if (activeActions) activeActions.classList.add('hidden');
+
+    loadHospitals();
+  }
+
+  /* ── Government vs All Hospitals Filter Toggle ── */
+  let isGovtOnlyFilter = false;
+
+  function toggleGovtFilter() {
+    isGovtOnlyFilter = !isGovtOnlyFilter;
+    const btn = document.getElementById('drawer-govt-filter-btn');
+
+    let filtered = getSortedHospitals(allHospitals);
+    if (isGovtOnlyFilter) {
+      if (btn) {
+        btn.classList.add('bg-[#38bdf8]', 'text-black');
+        btn.classList.remove('bg-[#1e3455]', 'text-[#38bdf8]');
+        btn.innerText = '🏢 GOVT ONLY (ACTIVE)';
+      }
+      filtered = filtered.filter(h => h.is_government || (h.type && h.type.toLowerCase().includes('govt')) || (h.name && (h.name.toLowerCase().includes('govt') || h.name.toLowerCase().includes('medical college') || h.name.toLowerCase().includes('municipal'))));
+    } else {
+      if (btn) {
+        btn.classList.remove('bg-[#38bdf8]', 'text-black');
+        btn.classList.add('bg-[#1e3455]', 'text-[#38bdf8]');
+        btn.innerText = '🏢 GOVT VS NEAREST';
+      }
+    }
+
+    renderCards(filtered);
+    placeMarkers(filtered);
   }
 
   /* ── Triage Search ── */
   async function runTriage(text) {
     if (!text.trim()) return;
     currentSearchQuery = text;
+
+    // Hide autocomplete dropdown
+    const drop = document.getElementById('symptom-autocomplete-dropdown');
+    if (drop) drop.classList.add('hidden');
+
     try {
       const result = await API.triage(text);
       let filtered = getSortedHospitals(allHospitals);
@@ -1173,6 +1462,145 @@
     }
   }
 
+  /* ── Symptom Autocomplete Matcher ── */
+  function handleSymptomAutocomplete(query) {
+    const dropdown = document.getElementById('symptom-autocomplete-dropdown');
+    const list = document.getElementById('symptom-autocomplete-list');
+    const submitBtn = document.getElementById('symptom-submit-btn');
+    const clearBtn = document.getElementById('symptom-clear-btn');
+
+    if (!query || query.trim().length < 2) {
+      if (dropdown) dropdown.classList.add('hidden');
+      if (submitBtn) submitBtn.classList.add('hidden');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      return;
+    }
+
+    if (submitBtn) submitBtn.classList.remove('hidden');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const q = query.toLowerCase();
+    const matches = [];
+
+    Object.keys(CLINICAL_DATABASE).forEach(key => {
+      const db = CLINICAL_DATABASE[key];
+      if (db.category.toLowerCase().includes(q) || db.title.toLowerCase().includes(q) || db.struggling.toLowerCase().includes(q)) {
+        matches.push(db);
+      }
+    });
+
+    if (matches.length === 0) {
+      if (dropdown) dropdown.classList.add('hidden');
+      return;
+    }
+
+    if (list) {
+      list.innerHTML = matches.slice(0, 5).map(m => `
+        <div class="symptom-item px-3.5 py-2.5 hover:bg-[#1e3455]/60 cursor-pointer flex items-center justify-between transition-colors" data-title="${m.category}">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-sm flex-shrink-0">🩺</span>
+            <span class="text-xs font-bold text-white truncate">${m.category}</span>
+          </div>
+          <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${m.esiClass === 'esi-red' ? 'bg-[#ff334b]/20 text-[#ff334b] border border-[#ff334b]/40' : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/40'} flex-shrink-0">
+            ${m.esi.split(' ')[0]}
+          </span>
+        </div>
+      `).join('');
+
+      // Add click listeners to items
+      list.querySelectorAll('.symptom-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const title = item.dataset.title;
+          const input = document.getElementById('symptom-input');
+          if (input) input.value = title;
+          runTriage(title);
+        });
+      });
+
+      if (dropdown) dropdown.classList.remove('hidden');
+    }
+  }
+
+  /* ── Location Geocoding Search (Nominatim API) ── */
+  let geocodeTimeout = null;
+
+  function searchGeocodingAddress(query) {
+    const dropdown = document.getElementById('location-suggestions-dropdown');
+    if (!dropdown) return;
+
+    if (!query || query.trim().length < 3) {
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    clearTimeout(geocodeTimeout);
+    geocodeTimeout = setTimeout(async () => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Kolkata')}&viewbox=88.2,22.4,88.6,22.7&bounded=1&limit=5`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        if (data && data.length > 0) {
+          dropdown.innerHTML = data.map(place => `
+            <div class="geo-item px-3.5 py-2.5 hover:bg-[#222222] cursor-pointer flex items-center gap-2 text-xs text-gray-200 transition-colors" data-lat="${place.lat}" data-lon="${place.lon}" data-name="${place.display_name.split(',')[0]}">
+              <span class="text-[#E2FF4D]">📍</span>
+              <span class="truncate font-medium">${place.display_name}</span>
+            </div>
+          `).join('');
+
+          dropdown.querySelectorAll('.geo-item').forEach(item => {
+            item.addEventListener('click', () => {
+              const lat = parseFloat(item.dataset.lat);
+              const lon = parseFloat(item.dataset.lon);
+              const name = item.dataset.name;
+
+              setUserPosition(lat, lon, name);
+              const modal = document.getElementById('location-modal');
+              if (modal) modal.classList.add('hidden');
+              dropdown.classList.add('hidden');
+            });
+          });
+
+          dropdown.classList.remove('hidden');
+        } else {
+          dropdown.classList.add('hidden');
+        }
+      } catch (e) {
+        console.warn('Geocoding search failed:', e);
+      }
+    }, 300);
+  }
+
+  function setUserPosition(lat, lng, labelText = 'Selected Location') {
+    userLat = lat;
+    userLng = lng;
+
+    const textEl = document.getElementById('current-location-text');
+    if (textEl) textEl.innerText = labelText;
+
+    if (map && typeof L !== 'undefined') {
+      if (!userMarker) {
+        const bluePulseIcon = L.divIcon({
+          className: '',
+          html: `<div style="position:relative; width:24px; height:24px;">
+                   <div style="position:absolute; top:0; left:0; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #00f0ff, #0087ff); border:2.5px solid rgba(255,255,255,0.9); box-shadow:0 0 18px rgba(0,240,255,0.9), 0 0 36px rgba(0,240,255,0.5); z-index:2;"></div>
+                   <div style="position:absolute; top:-10px; left:-10px; width:44px; height:44px; border-radius:50%; background:rgba(0,240,255,0.18); animation:ping-slow 2s cubic-bezier(0,0,0.2,1) infinite; z-index:1;"></div>
+                 </div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
+      } else {
+        userMarker.setLatLng([userLat, userLng]);
+      }
+      map.setView([userLat, userLng], 14);
+    }
+
+    const sorted = getSortedHospitals(allHospitals);
+    renderCards(sorted);
+    placeMarkers(sorted);
+  }
+
   /* ── Load Facilities ── */
   async function loadHospitals() {
     try {
@@ -1186,50 +1614,212 @@
     }
   }
 
-  /* ── Listeners ── */
-  function findAndShowNearestHospital() {
-    if (!allHospitals || allHospitals.length === 0) return;
-    let nearest = allHospitals[0];
-    let minDistance = Infinity;
+  /* ── Event Listeners Registration ── */
+  function setupEventListeners() {
+    // 1) Location Pill & Modal
+    const locBtn = document.getElementById('my-location-btn');
+    const locModal = document.getElementById('location-modal');
+    const locModalClose = document.getElementById('location-modal-close');
+    const locSearchInput = document.getElementById('location-search-input');
+    const modalGpsBtn = document.getElementById('modal-use-gps-btn');
+    const locForm = document.getElementById('location-search-form');
 
-    allHospitals.forEach(h => {
-      const d = API.calcDistance ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 999;
-      if (d < minDistance) {
-        minDistance = d;
-        nearest = h;
-      }
-    });
-
-    if (nearest) {
-      updateRouteToHospital(nearest);
-      showBottomSheet();
-      if (map) map.setView([nearest.latitude, nearest.longitude], 15);
+    if (locBtn && locModal) {
+      locBtn.addEventListener('click', (e) => {
+        if (e.target.closest('#loc-crosshair-btn')) return;
+        locModal.classList.remove('hidden');
+      });
     }
-  }
 
-  const nearestBtn = document.getElementById('nearest-hosp-btn');
-  if (nearestBtn) {
-    nearestBtn.addEventListener('click', findAndShowNearestHospital);
-  }
+    if (locModalClose && locModal) {
+      locModalClose.addEventListener('click', () => {
+        locModal.classList.add('hidden');
+      });
+    }
 
-  const symptomInput = document.getElementById('symptom-input');
-  if (symptomInput) {
-    symptomInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+    if (locSearchInput) {
+      locSearchInput.addEventListener('input', (e) => {
+        searchGeocodingAddress(e.target.value);
+      });
+    }
+
+    if (locForm) {
+      locForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        runTriage(e.target.value);
-      }
+        const val = locSearchInput ? locSearchInput.value : '';
+        if (val.trim()) {
+          searchGeocodingAddress(val);
+        }
+      });
+    }
+
+    if (modalGpsBtn && locModal) {
+      modalGpsBtn.addEventListener('click', () => {
+        initGPS();
+        const textEl = document.getElementById('current-location-text');
+        if (textEl) textEl.innerText = 'Live GPS Location';
+        locModal.classList.add('hidden');
+      });
+    }
+
+    // Map Crosshair Mode Button
+    const crosshairBtn = document.getElementById('loc-crosshair-btn');
+    if (crosshairBtn && map) {
+      crosshairBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        alert('🎯 Click anywhere on the map to set your current location pin!');
+        map.once('click', (ev) => {
+          setUserPosition(ev.latlng.lat, ev.latlng.lng, 'Pinned Map Location');
+        });
+      });
+    }
+
+    // 2) Top Active Hold Toast Banner Buttons
+    const toastCloseBtn = document.getElementById('toast-close-btn');
+    const toastCopyBtn = document.getElementById('toast-copy-otp-btn');
+    const releaseHoldBtn = document.getElementById('release-hold-btn');
+
+    if (toastCloseBtn) {
+      toastCloseBtn.addEventListener('click', () => {
+        const toast = document.getElementById('active-hold-toast');
+        if (toast) toast.classList.add('hidden');
+      });
+    }
+
+    if (toastCopyBtn) {
+      toastCopyBtn.addEventListener('click', () => {
+        const otpEl = document.getElementById('toast-otp-code');
+        if (otpEl && navigator.clipboard) {
+          navigator.clipboard.writeText(otpEl.innerText).then(() => {
+            toastCopyBtn.innerText = '✓ Copied!';
+            setTimeout(() => { toastCopyBtn.innerText = '📋 Copy'; }, 2000);
+          });
+        }
+      });
+    }
+
+    if (releaseHoldBtn) {
+      releaseHoldBtn.addEventListener('click', releaseActiveHold);
+    }
+
+    // 3) Blood Group Card & Quick Picker Bar
+    const bloodCardBtn = document.getElementById('blood-card-btn');
+    const bloodPickerBar = document.getElementById('blood-picker-bar');
+
+    if (bloodCardBtn && bloodPickerBar) {
+      bloodCardBtn.addEventListener('click', () => {
+        bloodPickerBar.classList.toggle('hidden');
+      });
+    }
+
+    document.querySelectorAll('.blood-chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const grp = btn.dataset.group;
+        const input = document.getElementById('symptom-input');
+        const query = `${grp} blood group required`;
+        if (input) input.value = query;
+        runTriage(query);
+      });
     });
-    symptomInput.addEventListener('input', (e) => {
-      const val = e.target.value;
-      if (val.trim().length >= 2) {
-        runTriage(val);
-      } else if (val.trim().length === 0) {
+
+    // 4) Nearest Hospital & Directory Buttons
+    const nearestBtn = document.getElementById('nearest-hosp-btn');
+    if (nearestBtn) {
+      nearestBtn.addEventListener('click', () => {
+        const sorted = getSortedHospitals(allHospitals);
+        if (sorted.length > 0) {
+          updateRouteToHospital(sorted[0]);
+          showBottomSheet();
+        }
+      });
+    }
+
+    const directoryBtn = document.getElementById('symptom-directory-btn');
+    if (directoryBtn) {
+      directoryBtn.addEventListener('click', () => {
+        showBottomSheet();
+        setSheetState('expanded');
+      });
+    }
+
+    // 5) Drawer Buttons
+    const drawerGovtBtn = document.getElementById('drawer-govt-filter-btn');
+    if (drawerGovtBtn) {
+      drawerGovtBtn.addEventListener('click', toggleGovtFilter);
+    }
+
+    const drawerCloseBtn = document.getElementById('drawer-close-btn');
+    if (drawerCloseBtn) {
+      drawerCloseBtn.addEventListener('click', () => {
+        const sheet = document.getElementById('bottom-sheet');
+        if (sheet) sheet.classList.add('state-hidden');
+      });
+    }
+
+    const drawerWhatToDoBtn = document.getElementById('drawer-what-to-do-btn');
+    if (drawerWhatToDoBtn) {
+      drawerWhatToDoBtn.addEventListener('click', () => {
+        setSheetState('expanded');
+        const firstCardProtocol = document.querySelector('.photo-protocol-section');
+        if (firstCardProtocol) {
+          firstCardProtocol.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+
+    // 6) Sticky Action Bar Book Slot Button
+    const inlineBookSlotBtn = document.getElementById('inline-book-slot-btn');
+    if (inlineBookSlotBtn) {
+      inlineBookSlotBtn.addEventListener('click', () => {
+        openHoldModal(activeTargetHospital);
+      });
+    }
+
+    // 7) Symptom Search Input Handlers
+    const symptomInput = document.getElementById('symptom-input');
+    const submitBtn = document.getElementById('symptom-submit-btn');
+    const clearBtn = document.getElementById('symptom-clear-btn');
+
+    if (symptomInput) {
+      symptomInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          runTriage(e.target.value);
+        }
+      });
+
+      symptomInput.addEventListener('input', (e) => {
+        handleSymptomAutocomplete(e.target.value);
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        if (symptomInput) runTriage(symptomInput.value);
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (symptomInput) symptomInput.value = '';
+        const dropdown = document.getElementById('symptom-autocomplete-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (submitBtn) submitBtn.classList.add('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
         const sorted = getSortedHospitals(allHospitals);
         renderCards(sorted);
         placeMarkers(sorted);
-      }
-    });
+      });
+    }
+
+    // 8) Recenter Map FAB Button
+    const myLocFab = document.getElementById('my-location-fab');
+    if (myLocFab && map) {
+      myLocFab.addEventListener('click', () => {
+        initGPS();
+        map.setView([userLat, userLng], 14);
+      });
+    }
   }
 
   /* ── Multilingual Language & Speech Synthesis Engine (TTS & STT) ── */
@@ -1451,10 +2041,10 @@
   }
 
   /* ── Boot ── */
-  // GPS must fire first so map centers on user location immediately
   initGPS();
   initTouchDrawer();
   initLangSwitcher();
+  setupEventListeners();
   loadHospitals();
   initVoiceTriage();
   // Auto-refresh every 60s

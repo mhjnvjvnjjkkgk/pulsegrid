@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --ink-900: #0A0A0A;
+    --ink-850: #111111;
+    --ink-800: #1A1A1A;
+    --ink-700: #222222;
+    --ink-600: #333333;
+    --ink-500: #444444;
+
+    --theme-volt: #E2FF4D;
+    --theme-bg: #0A0A0A;
+    --theme-card: #111111;
+    --theme-border: #222222;
+    --theme-muted: #888888;
+    --theme-dim: #555555;
+
+    --vital-cyan: #E2FF4D;
+    --vital-emerald: #E2FF4D;
+    --vital-crimson: #ff334b;
+    --vital-amber: #f59e0b;
+    --vital-purple: #a855f7;
+
+    --font-display: 'Inter', 'Bricolage Grotesque', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #0A0A0A;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Bold Typography Theme Panels (Stark Graphite, Clean 1px Borders) */
+.glass-panel {
+  background: rgba(17, 17, 17, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #222222;
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.85);
+}
+
+.glass-panel-heavy {
+  background: rgba(10, 10, 10, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid #1A1A1A;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.95);
+}
+
+.glass-glow-cyan {
+  border-color: #E2FF4D;
+  box-shadow: 0 0 24px -4px rgba(226, 255, 77, 0.3);
+}
+
+.glass-glow-emerald {
+  border-color: #E2FF4D;
+  box-shadow: 0 0 24px -4px rgba(226, 255, 77, 0.35);
+}
+
+.glass-glow-crimson {
+  border-color: rgba(255, 51, 75, 0.55);
+  box-shadow: 0 0 24px -4px rgba(255, 51, 75, 0.35);
+}
+
+/* Button Keyframe Animations from Master System Prompt */
+@keyframes neon-shimmer-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-cyan-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(0, 240, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 240, 255, 0);
+  }
+}
+
+@keyframes pulse-crimson-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(244, 63, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+  }
+}
+
+@keyframes radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ecg-dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, rgba(0, 255, 135, 0.35) 50%, rgba(0, 240, 255, 0.1) 100%);
+  background-size: 200% 100%;
+  animation: neon-shimmer-sweep 2.8s infinite linear;
+}
+
+.animate-pulse-cyan {
+  animation: pulse-cyan-ring 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.animate-pulse-crimson {
+  animation: pulse-crimson-ring 1.8s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* Custom High-Contrast Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E2FF4D;
+}
+
+/* Custom Leaflet Map styling for High-Contrast Crisp Map Canvas */
+.leaflet-container {
+  background: #0b1424 !important;
+  font-family: var(--font-body);
+}
+
+.osm-dark-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(92%) !important;
+}
+
+.osm-street-tiles {
+  filter: none !important;
+}
+
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #111111 !important;
+  color: #ffffff !important;
+  border: 1px solid #222222;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9) !important;
+}
+
+.leaflet-popup-tip {
+  background: #111111 !important;
+}
+
+/* Bold Typography Utility Helpers */
+.headline-display {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+}
+
+.metric-number {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}

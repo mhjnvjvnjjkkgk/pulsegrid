@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>PulseGrid - Tactical Emergency Dispatch HUD</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700;800&amp;family=JetBrains+Mono:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            background: '#090b10',
+            cyan: {
+              350: '#4cf4ff',
+              450: '#00e1f0',
+              500: '#00f0ff'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Ultra Liquid Glass Core Styling */
+    .liquid-capsule-glass {
+      background: linear-gradient(135deg, rgba(22, 28, 45, 0.72) 0%, rgba(10, 14, 24, 0.88) 100%);
+      backdrop-filter: blur(40px) saturate(220%);
+      -webkit-backdrop-filter: blur(40px) saturate(220%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8),
+                  0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                  0 1px 20px 0 rgba(0, 240, 255, 0.14);
+    }
+
+    .liquid-drawer-expanded {
+      background: linear-gradient(180deg, rgba(12, 16, 26, 0.96) 0%, rgba(8, 11, 18, 0.99) 100%);
+      backdrop-filter: blur(52px) saturate(240%);
+      -webkit-backdrop-filter: blur(52px) saturate(240%);
+      border-top: 1.5px solid transparent;
+      border-image: linear-gradient(90deg, rgba(0,240,255,0.85) 0%, rgba(244,63,94,0.7) 45%, rgba(52,255,140,0.85) 100%) 1;
+      box-shadow: 0 -25px 60px rgba(0, 0, 0, 0.92),
+                  0 -2px 30px rgba(0, 240, 255, 0.18),
+                  inset 0 1px 18px rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-tile {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Pulse Beacons & Rings */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.5); opacity: 0.9; }
+      50% { transform: scale(1.7); opacity: 0.35; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    .animate-acoustic-ring-1 {
+      animation: pulse-ring 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .animate-acoustic-ring-2 {
+      animation: pulse-ring 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.75s infinite;
+    }
+
+    /* Primary Shimmer Button Animation */
+    @keyframes emerald-cyan-shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animate-button-shimmer {
+      background-size: 250% 250%;
+      animation: emerald-cyan-shimmer 3.5s ease infinite;
+    }
+
+    /* Custom tactical scrollbar */
+    .tactical-scroll::-webkit-scrollbar {
+      width: 3px;
+    }
+    .tactical-scroll::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .tactical-scroll::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.35);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-background text-slate-100 font-sans h-screen w-full relative overflow-hidden flex flex-col justify-between select-none antialiased">
+<!-- Ambient Glow Orbs -->
+<div class="absolute -top-10 -left-10 w-72 h-72 rounded-full bg-cyan-500/18 blur-[100px] pointer-events-none z-0"></div>
+<div class="absolute top-1/4 -right-16 w-80 h-80 rounded-full bg-rose-600/15 blur-[120px] pointer-events-none z-0"></div>
+<div class="absolute bottom-20 -left-16 w-80 h-80 rounded-full bg-emerald-500/12 blur-[110px] pointer-events-none z-0"></div>
+<!-- 1. TOP STATUS BAR + DYNAMIC ISLAND (Always pinned) -->
+<div class="absolute top-0 left-0 right-0 z-50 pt-2.5 px-6 flex justify-between items-center pointer-events-none">
+<span class="text-[14px] font-semibold tracking-tight text-white/95 pl-1 font-mono">9:41</span>
+<!-- Dynamic Island Pill Capsule -->
+<div class="w-[128px] h-[32px] bg-black/95 rounded-full flex items-center justify-between px-3 border border-white/10 shadow-2xl">
+<div class="w-2.5 h-2.5 rounded-full bg-[#051829] border border-cyan-400/50 flex items-center justify-center">
+<span class="w-1 h-1 rounded-full bg-cyan-400"></span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+<span class="text-[9px] font-mono font-extrabold tracking-wider text-rose-400 uppercase">TACTICAL SOS</span>
+</div>
+</div>
+<!-- Right status icons -->
+<div class="flex items-center space-x-1.5 text-[12px] text-white/90 pr-1">
+<i class="fa-solid fa-signal text-[11px]"></i>
+<i class="fa-solid fa-wifi text-[11px]"></i>
+<div class="relative w-5 h-2.5 border border-white/80 rounded-sm p-0.5 flex items-center">
+<div class="h-full w-3.5 bg-emerald-400 rounded-2xs"></div>
+</div>
+</div>
+</div>
+<!-- 2. TOP 15% SCREEN MAP VIEWPORT (Radar Strip with Blinking Beacons, Search bar slid out) -->
+<div class="h-[15%] w-full relative z-0 overflow-hidden bg-[#090b10] border-b border-cyan-500/20">
+<svg class="w-full h-full object-cover opacity-80" fill="none" preserveaspectratio="xMidYMid slice" viewbox="0 0 390 130" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialgradient cx="50%" cy="50%" id="mapStripGrad" r="60%">
+<stop offset="0%" stop-color="#121a2d" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#07090f" stop-opacity="1"></stop>
+</radialgradient>
+<filter height="140%" id="glowPath" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<rect fill="url(#mapStripGrad)" height="130" width="390"></rect>
+<!-- Tactical Map Roads Grid -->
+<g stroke="#1e2c42" stroke-opacity="0.7" stroke-width="1.2">
+<path d="M-10,35 L400,45 M-10,85 L400,75"></path>
+<path d="M60,-10 L80,140 M180,-10 L170,140 M290,-10 L310,140"></path>
+<path d="M-10,110 L400,10 M-10,15 L400,120"></path>
+</g>
+<!-- Cyan Arterial Route Trajectory -->
+<path d="M 60,115 C 130,105 180,75 250,55 L 320,40" fill="none" filter="url(#glowPath)" stroke="#00f0ff" stroke-width="3.5"></path>
+<path d="M 60,115 C 130,105 180,75 250,55 L 320,40" fill="none" stroke="#ffffff" stroke-dasharray="5,4" stroke-width="1.2"></path>
+</svg>
+<!-- Pulsing Patient GPS Beacon (Top Left) -->
+<div class="absolute left-14 top-24 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+<div class="absolute w-12 h-12 rounded-full bg-cyan-400/25 animate-acoustic-ring-1"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-cyan-400 border-2 border-white shadow-[0_0_12px_#00f0ff]"></div>
+<span class="absolute -bottom-4 text-[8px] font-mono text-cyan-300 font-bold tracking-wider bg-black/80 px-1.5 py-0.2 rounded border border-cyan-400/30">PATIENT PIN</span>
+</div>
+<!-- Pulsing Hospital Waypoint Beacon (Top Right) -->
+<div class="absolute right-16 top-16 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+<div class="absolute w-12 h-12 rounded-full bg-emerald-400/30 animate-acoustic-ring-2"></div>
+<div class="w-4 h-4 rounded-full bg-emerald-400 border-2 border-white shadow-[0_0_15px_#34ff8c] flex items-center justify-center">
+<i class="fa-solid fa-plus text-[8px] text-black font-black"></i>
+</div>
+<span class="absolute -bottom-4 text-[8px] font-mono text-emerald-300 font-bold tracking-wider bg-black/85 px-1.5 py-0.2 rounded border border-emerald-400/30 whitespace-nowrap">ILS HOSPITAL (4 KM)</span>
+</div>
+<!-- Quick Recenter Widget Pill (Floated right) -->
+<div class="absolute right-3.5 top-12 z-10 flex items-center space-x-1 bg-black/75 px-2.5 py-1 rounded-full border border-cyan-400/30 text-[9px] font-mono text-cyan-300 shadow-lg backdrop-blur-md">
+<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping mr-0.5"></span>
+<span>LIVE RADAR</span>
+</div>
+</div>
+<!-- 3. EXPANDED BOTTOM SHEET DRAWER (85% Height Tactical Command & Clinical HUD) -->
+<div class="h-[85%] w-full relative z-30 liquid-drawer-expanded rounded-t-[34px] flex flex-col justify-between overflow-hidden">
+<!-- Silver Drag Handle + Header Strip -->
+<div class="px-5 pt-2 pb-2 flex-shrink-0">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center py-1 cursor-grab">
+<div class="w-12 h-1.5 bg-gradient-to-r from-slate-400 via-slate-200 to-slate-400 rounded-full shadow-[0_1px_3px_rgba(255,255,255,0.3)]"></div>
+</div>
+<!-- Hospital Quick Anchor Strip -->
+<div class="mt-1 flex items-center justify-between px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-400/40 backdrop-blur-md">
+<div class="flex items-center space-x-2 min-w-0">
+<i class="fa-solid fa-hospital text-cyan-300 text-xs"></i>
+<span class="text-[11.5px] font-bold text-cyan-100 truncate">ILS Hospital, Nagerbazar</span>
+<span class="text-cyan-400 text-xs font-mono">•</span>
+<span class="text-[10px] font-mono font-semibold text-emerald-400 whitespace-nowrap">Cardiac Bay Confirmed</span>
+</div>
+<span class="flex-shrink-0 text-[9px] font-mono font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 px-2 py-0.5 rounded-md uppercase">4 BEDS</span>
+</div>
+</div>
+<!-- SCROLLABLE TACTICAL HUD CLINICAL CONTENT -->
+<div class="flex-1 overflow-y-auto px-5 pb-3 space-y-4 tactical-scroll">
+<!-- MAIN PROTOCOL HEADER & CRITICAL ESI-1 BADGE -->
+<div class="pt-1">
+<div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.3)] mb-2">
+<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+<span class="text-[10.5px] font-mono font-extrabold text-rose-300 uppercase tracking-wide">🚨 ESI-1 CRITICAL (Immediate Cardiac ICU Triage)</span>
+</div>
+<h1 class="text-[21px] font-display font-black text-white leading-tight tracking-tight flex items-center gap-1.5">
+<span>❤️</span>
+<span>Severe Chest Pain / Heart Attack</span>
+</h1>
+<p class="text-[11px] font-mono text-cyan-300/80 tracking-wide mt-0.5 uppercase">Clinical Action Priority Code: ACS-STEMI-STAT</p>
+</div>
+<!-- TWO HIGHLIGHT TACTICAL CARDS (Struggling Check + Do Right Now) -->
+<div class="grid grid-cols-1 gap-2.5">
+<!-- Card A: Cyan Glass "Check if Patient is Struggling" -->
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-950/40 via-[#0d1c2a]/80 to-slate-900/90 border border-cyan-400/45 p-3.5 shadow-[0_4px_20px_rgba(0,240,255,0.12)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-xl bg-cyan-400/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 text-xs">
+<i class="fa-solid fa-magnifying-glass-pulse"></i>
+</span>
+<span class="text-xs font-display font-extrabold text-white tracking-wide uppercase">🔍 Check if Patient is Struggling</span>
+</div>
+<span class="text-[9px] font-mono bg-cyan-400/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-400/30 font-bold uppercase">RAPID SCAN</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[11px] text-slate-200">
+<div class="flex items-center space-x-1.5 bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+<i class="fa-solid fa-circle-radiation text-rose-400 text-[10px]"></i>
+<span>Crushing jaw/arm pain</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+<i class="fa-solid fa-lungs text-cyan-400 text-[10px]"></i>
+<span>Severe breathlessness</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+<i class="fa-solid fa-droplet text-blue-400 text-[10px]"></i>
+<span>Cold diaphoresis (sweat)</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+<i class="fa-solid fa-triangle-exclamation text-amber-400 text-[10px]"></i>
+<span>Sudden dizziness / gray out</span>
+</div>
+</div>
+</div>
+<!-- Card B: Emerald Glass "Something You Can DO Right NOW" -->
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950/40 via-[#0a231b]/80 to-slate-900/90 border border-emerald-400/50 p-3.5 shadow-[0_4px_20px_rgba(52,255,140,0.14)]">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center space-x-2">
+<span class="w-7 h-7 rounded-xl bg-emerald-400/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-xs">
+<i class="fa-solid fa-bolt text-amber-300"></i>
+</span>
+<span class="text-xs font-display font-extrabold text-emerald-200 tracking-wide uppercase">⚡ Something You Can DO Right NOW</span>
+</div>
+<span class="text-[9px] font-mono bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-400/40 font-bold uppercase">IMMEDIATE</span>
+</div>
+<div class="bg-[#051510]/80 rounded-xl p-2.5 border border-emerald-500/30 flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-emerald-500/15 border border-emerald-400/40 flex flex-col items-center justify-center text-emerald-300 flex-shrink-0">
+<span class="text-sm font-black font-mono">45°</span>
+<span class="text-[7.5px] font-mono text-emerald-400 uppercase">ANGLE</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-xs font-bold text-white leading-tight">Position Patient in Semi-Fowler Posture</h4>
+<p class="text-[10.5px] text-emerald-200/80 leading-snug mt-0.5">Seat patient upright leaning back at 45° with bent knees. This minimizes cardiac workload and eases thoracic congestion instantly.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- TACTICAL ACTION STEP CHECKLIST [01] THROUGH [06] -->
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-mono uppercase tracking-widest text-cyan-300 font-bold flex items-center">
+<span class="w-2 h-2 rounded-full bg-cyan-400 inline-block mr-1.5 animate-pulse"></span>
+          Emergency Protocol Steps
+        </span>
+<span class="text-[9.5px] font-mono text-slate-400">TACTICAL SEQUENCE</span>
+</div>
+<div class="space-y-2">
+<!-- Step 01 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              01
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Chew 300mg Soluble Aspirin (Disprin)</div>
+<div class="text-[10px] text-slate-400 font-mono">Antiplatelet action • Chew, do not swallow whole</div>
+</div>
+</div>
+<input checked="" class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+<!-- Step 02 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              02
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Sublingual Nitroglycerin spray/tablet</div>
+<div class="text-[10px] text-slate-400 font-mono">Under tongue • Hold if systolic BP &lt; 90 mmHg</div>
+</div>
+</div>
+<input class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+<!-- Step 03 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              03
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Complete physical immobilization</div>
+<div class="text-[10px] text-slate-400 font-mono">Zero walking/standing • Maintain total physical rest</div>
+</div>
+</div>
+<input checked="" class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+<!-- Step 04 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              04
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Room ventilation &amp; high airflow</div>
+<div class="text-[10px] text-slate-400 font-mono">Loosen tight collars • Open windows &amp; clear crowd</div>
+</div>
+</div>
+<input class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+<!-- Step 05 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              05
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Real-time radial pulse &amp; vitals tracking</div>
+<div class="text-[10px] text-slate-400 font-mono">Tactile pulse at wrist • Log beats/min every 60s</div>
+</div>
+</div>
+<input class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+<!-- Step 06 -->
+<div class="glass-tile rounded-xl p-2.5 flex items-center justify-between border-cyan-400/30 hover:border-cyan-400/60 transition group cursor-pointer">
+<div class="flex items-center space-x-3 min-w-0">
+<span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center font-mono font-black text-cyan-300 text-xs flex-shrink-0 group-hover:scale-105 transition">
+              06
+            </span>
+<div class="min-w-0">
+<div class="text-[12.5px] font-bold text-white leading-tight">Cath Lab direct auto-sync &amp; telemetry lock</div>
+<div class="text-[10px] text-slate-400 font-mono">Pre-arrival coronary angioplasty team alerted</div>
+</div>
+</div>
+<input checked="" class="w-4 h-4 rounded bg-slate-900 border-cyan-400/60 text-cyan-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+</div>
+</div>
+</div>
+<!-- CRIMSON HAZARD GLASS: "CRITICAL DO NOT DOs" -->
+<div class="rounded-2xl bg-rose-950/30 border border-rose-500/50 p-3.5 shadow-[0_0_25px_rgba(244,63,94,0.18)]">
+<div class="flex items-center space-x-2 text-rose-300 mb-2">
+<i class="fa-solid fa-triangle-exclamation text-rose-400 animate-pulse text-sm"></i>
+<h3 class="text-xs font-display font-extrabold tracking-wider uppercase">⚠️ CRITICAL DO NOT DOs</h3>
+</div>
+<div class="space-y-1.5 text-[11px] text-rose-100">
+<div class="flex items-start space-x-2">
+<i class="fa-solid fa-ban text-rose-400 mt-0.5 text-[10px]"></i>
+<span><strong class="text-rose-200">DO NOT let the patient walk or drive themselves:</strong> Any physical exertion rapidly expands myocardial necrosis.</span>
+</div>
+<div class="flex items-start space-x-2">
+<i class="fa-solid fa-ban text-rose-400 mt-0.5 text-[10px]"></i>
+<span><strong class="text-rose-200">DO NOT give food, heavy water, or tea:</strong> Aspiration risk if cardiac arrest or emergency intubation occurs.</span>
+</div>
+<div class="flex items-start space-x-2">
+<i class="fa-solid fa-ban text-rose-400 mt-0.5 text-[10px]"></i>
+<span><strong class="text-rose-200">DO NOT ignore symptom fluctuation:</strong> Sudden pain relief can precede cardiogenic shock—keep dispatch active!</span>
+</div>
+</div>
+</div>
+<!-- FROSTED AMETHYST/PURPLE GLASS: BYSTANDER DE-ESCALATION & CALMING VOICE SCRIPT -->
+<div class="rounded-2xl bg-purple-950/25 border border-purple-400/40 p-3.5 backdrop-blur-xl shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center space-x-2">
+<i class="fa-solid fa-comment-dots text-purple-300 text-xs"></i>
+<span class="text-xs font-display font-extrabold text-purple-200 uppercase tracking-wide">Bystander Calming Script</span>
+</div>
+<span class="text-[9px] font-mono text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded uppercase border border-purple-400/30">READ SLOWLY</span>
+</div>
+<blockquote class="relative pl-3 border-l-2 border-purple-400/60 italic text-purple-100/90 text-xs leading-relaxed">
+        “Help is already on the way and the trauma ICU has your bed locked. Keep taking slow, deep breaths through your nose. I am right beside you, you are safe, and we have emergency doctors on the line.”
+      </blockquote>
+</div>
+<!-- LIVE BLOOD BANK INVENTORY CHIPS -->
+<div class="rounded-2xl bg-black/40 border border-white/10 p-3">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<i class="fa-solid fa-droplet text-rose-500 text-xs"></i>
+<span class="text-xs font-display font-extrabold text-slate-200 tracking-wide uppercase">ILS Hospital Blood Bank Live Reserves</span>
+</div>
+<span class="text-[9px] font-mono text-emerald-400 flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1"></span> LIVE
+        </span>
+</div>
+<div class="grid grid-cols-5 gap-1.5 text-center">
+<!-- O- Unit -->
+<div class="rounded-xl bg-rose-950/40 border border-rose-500/40 p-1.5">
+<div class="text-[12px] font-mono font-black text-white">O-</div>
+<div class="text-[9.5px] font-mono font-bold text-rose-300">6 Units</div>
+<span class="text-[7.5px] font-mono text-rose-400 uppercase">Universal</span>
+</div>
+<!-- O+ Unit -->
+<div class="rounded-xl bg-slate-900/60 border border-white/10 p-1.5">
+<div class="text-[12px] font-mono font-black text-white">O+</div>
+<div class="text-[9.5px] font-mono font-bold text-emerald-400">14 Units</div>
+<span class="text-[7.5px] font-mono text-slate-400 uppercase">Ready</span>
+</div>
+<!-- A+ Unit -->
+<div class="rounded-xl bg-slate-900/60 border border-white/10 p-1.5">
+<div class="text-[12px] font-mono font-black text-white">A+</div>
+<div class="text-[9.5px] font-mono font-bold text-emerald-400">18 Units</div>
+<span class="text-[7.5px] font-mono text-slate-400 uppercase">Ready</span>
+</div>
+<!-- B+ Unit -->
+<div class="rounded-xl bg-slate-900/60 border border-white/10 p-1.5">
+<div class="text-[12px] font-mono font-black text-white">B+</div>
+<div class="text-[9.5px] font-mono font-bold text-emerald-400">11 Units</div>
+<span class="text-[7.5px] font-mono text-slate-400 uppercase">Ready</span>
+</div>
+<!-- AB+ Unit -->
+<div class="rounded-xl bg-slate-900/60 border border-white/10 p-1.5">
+<div class="text-[12px] font-mono font-black text-white">AB+</div>
+<div class="text-[9.5px] font-mono font-bold text-amber-300">5 Units</div>
+<span class="text-[7.5px] font-mono text-slate-400 uppercase">Low Res</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. STICKY BOTTOM ACTION FOOTER -->
+<div class="flex-shrink-0 px-5 pt-2.5 pb-6 bg-[#080b12]/95 border-t border-cyan-500/20 backdrop-blur-2xl">
+<div class="space-y-2">
+<!-- Primary Full-Width Accent Button -->
+<button class="w-full relative group overflow-hidden rounded-2xl p-[1.5px] shadow-[0_12px_28px_-6px_rgba(0,240,255,0.45),0_0_25px_rgba(52,255,140,0.35)] active:scale-[0.98] transition">
+<!-- Shimmering Emerald to Cyan Animation Underlayer -->
+<div class="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 to-teal-300 animate-button-shimmer"></div>
+<!-- Inner Button Face -->
+<div class="relative w-full py-3.5 px-4 rounded-[14.5px] bg-gradient-to-r from-[#07241f]/95 via-[#092a34]/95 to-[#061e1b]/95 flex items-center justify-center space-x-2.5 backdrop-blur-xl">
+<div class="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-emerald-300 text-xs">
+<i class="fa-solid fa-lock text-[11px]"></i>
+</div>
+<span class="text-[14px] font-display font-extrabold text-white tracking-wider uppercase drop-shadow-md">
+            🔒 Book MY Slot And Start
+          </span>
+<i class="fa-solid fa-arrow-right text-cyan-300 text-sm group-hover:translate-x-1.5 transition-transform"></i>
+</div>
+</button>
+<!-- Secondary Split Row: 2 Glass Action Pills -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Call Ambulance (Crimson Glass Pill) -->
+<a class="flex items-center justify-center space-x-2 py-3 px-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 font-bold text-xs backdrop-blur-2xl shadow-[0_6px_20px_rgba(244,63,94,0.2)] transition active:scale-95" href="tel:108">
+<div class="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-xs">
+<i class="fa-solid fa-truck-medical animate-bounce"></i>
+</div>
+<span class="tracking-tight">🚑 Call Ambulance</span>
+</a>
+<!-- Call Hospital (Cyan Glass Pill) -->
+<a class="flex items-center justify-center space-x-2 py-3 px-3 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 font-bold text-xs backdrop-blur-2xl shadow-[0_6px_20px_rgba(0,240,255,0.2)] transition active:scale-95" href="tel:102">
+<div class="w-6 h-6 rounded-full bg-cyan-400/20 flex items-center justify-center text-cyan-300 text-xs">
+<i class="fa-solid fa-phone"></i>
+</div>
+<span class="tracking-tight">📞 Call Hospital</span>
+</a>
+</div>
+</div>
+<!-- Home Indicator Bar -->
+<div class="w-32 h-1 bg-white/30 rounded-full mx-auto mt-3"></div>
+</div>
+</div>
+</body></html>
