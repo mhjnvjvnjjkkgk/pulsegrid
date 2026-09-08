@@ -1,2099 +1,1335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ASHA | Real-Time Emergency Bed & Blood Finder</title>
-  <meta name="description" content="Find emergency hospital beds and blood stock in real time across Kolkata. Instant triage, guaranteed 15-minute bed holds, no sign-up required.">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>PulseGrid — Emergency Bed & Blood Triage | Kolkata</title>
+<meta name="description" content="Real-time emergency hospital bed finder with AI triage, 15-minute GPS soft-lock, and instant routing for Kolkata."/>
 
-  <!-- Tailwind CSS Engine -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 
-  <!-- Lucide Icon Engine -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+<!-- Leaflet CSS — CDN ONLY. Do NOT use local leaflet.css. Do NOT override .leaflet-tile rules. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 
-  <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   PULSEGRID — INDIAN TRICOLOR DESIGN SYSTEM
+   Saffron: #FF6B35 | White: #FFFFFF | Green: #138808
+═══════════════════════════════════════════════════════ */
+:root {
+  --saffron: #FF6B35;
+  --saffron-light: #FF8C5A;
+  --saffron-dark: #E5541A;
+  --green: #138808;
+  --green-light: #1AAD0A;
+  --green-dark: #0D6B06;
+  --white: #FFFFFF;
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface2: #F0F2F5;
+  --border: #E4E7EC;
+  --text-primary: #0A0A0A;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --red-alert: #DC2626;
+  --yellow-alert: #D97706;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+}
+[data-theme="dark"] {
+  --bg: #0A0A0A;
+  --surface: #141414;
+  --surface2: #1E1E1E;
+  --border: #2A2A2A;
+  --text-primary: #F5F5F5;
+  --text-secondary: #9CA3AF;
+  --text-muted: #4B5563;
+  --shadow: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.8);
+}
 
-  <!-- Leaflet Map Engine (Bundled Local + CDN Backup) -->
-  <link rel="stylesheet" href="css/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="js/leaflet.js"></script>
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { width:100%; height:100%; overflow:hidden; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text-primary); -webkit-font-smoothing:antialiased; }
 
-  <!-- Our Design System -->
-  <link rel="stylesheet" href="css/custom.css">
+/* ── Map (CRITICAL: let Leaflet own this completely) ── */
+#app { position:fixed; inset:0; width:100%; height:100%; overflow:hidden; max-width:430px; margin:0 auto; }
+#map-wrap { position:absolute; inset:0; width:100%; height:100%; }
+#map { width:100%; height:100%; position:relative; background:#e8e8e8; }
+
+/* ── Location Bar ── */
+#location-bar {
+  position:absolute; top:12px; left:12px; right:12px; z-index:600;
+  display:flex; align-items:center; gap:8px;
+}
+#loc-pill {
+  flex:1; min-width:0; display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1.5px solid var(--border);
+  border-radius:var(--radius-pill); padding:8px 14px;
+  box-shadow:var(--shadow); cursor:pointer;
+  transition:border-color .2s, box-shadow .2s;
+}
+#loc-pill:hover { border-color:var(--saffron); box-shadow:0 0 0 3px rgba(255,107,53,.15); }
+.loc-pin-icon { color:var(--saffron); flex-shrink:0; }
+.loc-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--saffron); flex-shrink:0; }
+.loc-address { font-size:11px; font-weight:500; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+.loc-change-btn { font-size:9px; font-weight:700; color:var(--saffron); background:rgba(255,107,53,.08); border:1px solid rgba(255,107,53,.3); border-radius:var(--radius-pill); padding:3px 10px; white-space:nowrap; flex-shrink:0; }
+#gps-btn, #theme-btn {
+  width:38px; height:38px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border);
+  box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:var(--saffron); transition:all .2s; flex-shrink:0;
+}
+#gps-btn:hover, #theme-btn:hover { background:var(--saffron); color:#fff; border-color:var(--saffron); }
+
+/* ── Active Hold Banner ── */
+#hold-banner {
+  position:absolute; top:64px; left:12px; right:12px; z-index:590;
+  background:linear-gradient(135deg, var(--green) 0%, #0D9E05 100%);
+  border-radius:var(--radius); padding:10px 14px;
+  display:flex; align-items:flex-start; gap:10px;
+  box-shadow:0 4px 20px rgba(19,136,8,.35);
+  animation:slideDown .3s cubic-bezier(.16,1,.3,1);
+}
+#hold-banner.hidden { display:none; }
+.hold-check { width:28px; height:28px; background:rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.hold-banner-text { flex:1; min-width:0; }
+.hold-banner-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#fff; margin-bottom:1px; }
+.hold-banner-sub { font-size:12px; font-weight:600; color:rgba(255,255,255,.9); }
+.hold-banner-otp { font-size:10px; color:rgba(255,255,255,.75); margin-top:2px; }
+#hold-banner-close { color:rgba(255,255,255,.7); cursor:pointer; padding:2px; flex-shrink:0; }
+
+/* ── Search Bar ── */
+#search-bar {
+  position:absolute; bottom:16px; left:12px; right:12px; z-index:600;
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1.5px solid var(--border);
+  border-radius:var(--radius-pill); padding:10px 14px;
+  box-shadow:var(--shadow-lg); transition:all .3s;
+}
+#search-bar.active { border-color:var(--saffron); box-shadow:0 0 0 3px rgba(255,107,53,.15); }
+#search-bar.hidden { transform:translateY(100px); opacity:0; pointer-events:none; }
+.search-icon-wrap { color:var(--saffron); flex-shrink:0; }
+#symptom-input {
+  flex:1; border:none; outline:none; background:transparent;
+  font-size:13px; font-weight:500; color:var(--text-primary);
+  font-family:'Inter',sans-serif;
+}
+#symptom-input::placeholder { color:var(--text-muted); }
+#search-submit-btn {
+  width:32px; height:32px; border-radius:50%; background:var(--saffron); border:none;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  color:#fff; transition:all .2s; flex-shrink:0;
+}
+#search-submit-btn:hover { background:var(--saffron-dark); transform:scale(1.05); }
+#search-clear-btn, #lang-btn, #mic-btn {
+  background:none; border:none; cursor:pointer; padding:4px;
+  color:var(--text-muted); flex-shrink:0; transition:color .2s;
+}
+#search-clear-btn:hover, #lang-btn:hover { color:var(--text-secondary); }
+#mic-btn { color:var(--saffron); }
+#mic-btn.listening { animation:pulse-mic 1s infinite; }
+@keyframes pulse-mic { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── Map Recenter FAB ── */
+#recenter-fab {
+  position:absolute; right:14px; bottom:80px; z-index:590;
+  width:40px; height:40px; border-radius:50%;
+  background:var(--surface); border:1.5px solid var(--border);
+  box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:var(--saffron); transition:all .2s;
+}
+#recenter-fab:hover { background:var(--saffron); color:#fff; }
+
+/* ── Hospital Quick Cards (no active search) ── */
+#quick-cards {
+  position:absolute; bottom:72px; left:0; right:0; z-index:580;
+  display:flex; gap:10px; padding:0 12px;
+  overflow-x:auto; scrollbar-width:none;
+  transition:all .3s;
+}
+#quick-cards.hidden { display:none; }
+#quick-cards::-webkit-scrollbar { display:none; }
+.quick-card {
+  flex-shrink:0; background:var(--surface); border:1.5px solid var(--border);
+  border-radius:var(--radius); padding:12px 14px; cursor:pointer;
+  box-shadow:var(--shadow); min-width:160px; transition:all .2s;
+  display:flex; flex-direction:column; gap:4px;
+}
+.quick-card:hover { border-color:var(--saffron); box-shadow:0 4px 20px rgba(255,107,53,.2); }
+.qc-tag { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.qc-tag.govt { color:var(--green); }
+.qc-tag.private { color:var(--saffron); }
+.qc-name { font-size:12px; font-weight:700; color:var(--text-primary); line-height:1.2; }
+.qc-meta { display:flex; gap:8px; align-items:center; }
+.qc-beds { font-size:11px; font-weight:600; color:var(--green); }
+.qc-eta { font-size:10px; color:var(--text-muted); }
+
+/* ── Bottom Drawer ── */
+#drawer {
+  position:absolute; bottom:0; left:0; right:0; z-index:700;
+  background:var(--surface); border-radius:28px 28px 0 0;
+  border-top:1.5px solid var(--border); border-left:1.5px solid var(--border); border-right:1.5px solid var(--border);
+  box-shadow:0 -12px 40px rgba(0,0,0,.15);
+  display:flex; flex-direction:column;
+  height:32vh; max-height:78vh;
+  transition:height .35s cubic-bezier(.16,1,.3,1);
+  overflow:hidden;
+}
+#drawer.hidden { transform:translateY(100%); opacity:0; pointer-events:none; transition:transform .3s, opacity .2s; }
+#drawer.expanded { height:76vh; }
+#drawer-handle-area {
+  padding:10px 0 6px; flex-shrink:0; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.drawer-handle { width:40px; height:4px; border-radius:4px; background:var(--border); }
+#drawer-scroll { flex:1; overflow-y:auto; padding:0 14px 16px; overscroll-behavior:contain; }
+#drawer-scroll::-webkit-scrollbar { display:none; }
+
+/* Drawer Header */
+.dr-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.dr-name { font-size:17px; font-weight:900; text-transform:uppercase; font-style:italic; color:var(--text-primary); line-height:1.15; flex:1; min-width:0; }
+.dr-corridor { font-size:11px; color:var(--saffron); font-weight:500; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dr-pills { display:flex; gap:6px; align-items:center; flex-shrink:0; }
+.dr-pill { font-size:10px; font-weight:700; padding:4px 8px; border-radius:8px; white-space:nowrap; }
+.dr-pill-eta { background:rgba(255,107,53,.1); color:var(--saffron); border:1px solid rgba(255,107,53,.25); }
+.dr-pill-dist { background:var(--surface2); color:var(--text-secondary); border:1px solid var(--border); }
+.dr-close-btn { width:28px; height:28px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); flex-shrink:0; }
+
+/* Drawer Tabs */
+.dr-tabs { display:flex; gap:6px; margin-bottom:10px; }
+.dr-tab {
+  flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--border);
+  background:var(--surface2); cursor:pointer; font-size:11px; font-weight:700;
+  color:var(--text-secondary); text-align:center; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+}
+.dr-tab.active-govt { background:rgba(19,136,8,.08); border-color:var(--green); color:var(--green); }
+.dr-tab.active-private { background:rgba(255,107,53,.08); border-color:var(--saffron); color:var(--saffron); }
+.dr-tag { font-size:9px; font-weight:600; padding:2px 6px; border-radius:4px; background:var(--surface2); }
+
+/* Tags Row */
+.dr-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:6px; }
+.badge-red { background:rgba(220,38,38,.1); color:#DC2626; border:1px solid rgba(220,38,38,.25); }
+.badge-green { background:rgba(19,136,8,.1); color:var(--green); border:1px solid rgba(19,136,8,.25); }
+.badge-orange { background:rgba(255,107,53,.1); color:var(--saffron); border:1px solid rgba(255,107,53,.25); }
+.badge-blue { background:rgba(59,130,246,.1); color:#2563EB; border:1px solid rgba(59,130,246,.25); }
+.badge-gray { background:var(--surface2); color:var(--text-secondary); border:1px solid var(--border); }
+.badge-yellow { background:rgba(217,119,6,.1); color:#D97706; border:1px solid rgba(217,119,6,.25); }
+
+/* Hold Active Card */
+.hold-active-card {
+  background:rgba(19,136,8,.06); border:2px solid var(--green);
+  border-radius:var(--radius); padding:12px; margin-bottom:12px;
+}
+.hold-card-top { display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid rgba(19,136,8,.15); margin-bottom:8px; }
+.hold-pulse-dot { position:relative; width:10px; height:10px; margin-right:6px; }
+.hold-pulse-dot::before { content:''; position:absolute; inset:0; border-radius:50%; background:var(--green); animation:ping 1.2s cubic-bezier(0,.2,.8,1) infinite; opacity:.6; }
+.hold-pulse-dot::after { content:''; position:absolute; inset:1px; border-radius:50%; background:var(--green); }
+@keyframes ping { 0%{transform:scale(1);opacity:.75} 75%,100%{transform:scale(2);opacity:0} }
+.hold-timer { font-family:'Inter',monospace; font-size:18px; font-weight:900; color:var(--text-primary); }
+.hold-gps-tag { font-size:8px; font-weight:700; color:var(--green); text-transform:uppercase; }
+.otp-display { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:10px; padding:10px 12px; }
+.otp-label-block { display:flex; flex-direction:column; gap:1px; }
+.otp-label { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); }
+.otp-hint { font-size:9px; color:var(--green); font-weight:600; }
+.otp-digits { display:flex; gap:4px; align-items:center; }
+.otp-digit { width:26px; height:34px; background:var(--surface); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Inter',monospace; font-size:15px; font-weight:900; color:var(--text-primary); }
+.otp-copy-btn { margin-left:6px; padding:6px; border-radius:8px; background:var(--surface); border:1px solid var(--border); cursor:pointer; color:var(--saffron); transition:all .2s; }
+.otp-copy-btn:hover { background:var(--saffron); color:#fff; }
+
+/* Book Button */
+.book-btn {
+  width:100%; padding:14px; border-radius:var(--radius); border:none;
+  background:linear-gradient(135deg, var(--saffron) 0%, var(--saffron-dark) 100%);
+  color:#fff; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:all .2s; box-shadow:0 4px 16px rgba(255,107,53,.35);
+  margin-bottom:8px;
+}
+.book-btn:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(255,107,53,.45); }
+.book-btn:active { transform:scale(.98); }
+
+/* Action Row */
+.action-row { display:flex; gap:8px; margin-bottom:12px; }
+.action-btn {
+  flex:1; padding:11px; border-radius:var(--radius-sm); border:1.5px solid var(--border);
+  background:var(--surface2); cursor:pointer; font-size:11px; font-weight:700;
+  color:var(--text-secondary); display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:all .2s;
+}
+.action-btn.ambulance:hover { background:rgba(220,38,38,.08); border-color:#DC2626; color:#DC2626; }
+.action-btn.call:hover { background:rgba(19,136,8,.08); border-color:var(--green); color:var(--green); }
+.action-btn.release:hover { background:rgba(220,38,38,.08); border-color:#DC2626; color:#DC2626; }
+
+/* Clinical Assessment Section */
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.section-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
+.triage-live-tag { font-size:9px; font-weight:700; color:var(--saffron); background:rgba(255,107,53,.08); border:1px solid rgba(255,107,53,.2); padding:2px 8px; border-radius:6px; }
+.triage-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:8px; }
+.triage-title { font-size:12px; font-weight:800; color:var(--saffron); margin-bottom:4px; }
+.triage-body { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+.protocol-btn { width:100%; padding:10px; border-radius:var(--radius-sm); border:1.5px solid var(--saffron); background:rgba(255,107,53,.06); color:var(--saffron); font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; margin-bottom:10px; }
+.protocol-btn:hover { background:var(--saffron); color:#fff; }
+
+/* Ward Breakdown */
+.ward-breakdown { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:10px; }
+.ward-breakdown-header { background:var(--surface2); padding:8px 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-secondary); display:flex; justify-content:space-between; }
+.ward-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-top:1px solid var(--border); }
+.ward-row-name { font-size:11px; font-weight:600; color:var(--text-primary); }
+.ward-row-meta { font-size:10px; color:var(--text-muted); }
+.ward-row-free { font-size:12px; font-weight:800; }
+.ward-row-free.has-beds { color:var(--green); }
+.ward-row-free.no-beds { color:#DC2626; }
+
+/* Stats Row */
+.stats-row { display:flex; gap:6px; margin-bottom:10px; }
+.stat-card { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 8px; text-align:center; }
+.stat-val { font-size:16px; font-weight:900; color:var(--text-primary); }
+.stat-val.green { color:var(--green); }
+.stat-val.orange { color:var(--saffron); }
+.stat-label { font-size:9px; text-transform:uppercase; font-weight:600; color:var(--text-muted); margin-top:2px; }
+
+/* Protocol Full Sheet */
+#protocol-sheet {
+  position:absolute; inset:0; z-index:800;
+  background:var(--bg); overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(.16,1,.3,1);
+}
+#protocol-sheet.hidden { display:none; }
+.proto-header { position:sticky; top:0; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px; display:flex; align-items:center; gap:10px; z-index:1; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.proto-close { width:32px; height:32px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+.proto-title { font-size:14px; font-weight:800; color:var(--text-primary); flex:1; }
+.proto-severity { font-size:10px; font-weight:800; padding:4px 12px; border-radius:var(--radius-pill); }
+.proto-severity.red { background:rgba(220,38,38,.1); color:#DC2626; border:1px solid rgba(220,38,38,.3); }
+.proto-severity.yellow { background:rgba(217,119,6,.1); color:#D97706; border:1px solid rgba(217,119,6,.3); }
+.proto-severity.green { background:rgba(19,136,8,.1); color:var(--green); border:1px solid rgba(19,136,8,.3); }
+.proto-body { padding:16px; }
+.proto-section { margin-bottom:20px; }
+.proto-section-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.proto-section-title::before { content:''; display:block; width:3px; height:12px; background:var(--saffron); border-radius:2px; }
+.proto-section-box { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; }
+.proto-section-box p { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+.proto-hospitals { display:flex; gap:8px; }
+.proto-hosp-card { flex:1; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:all .2s; }
+.proto-hosp-card:hover { border-color:var(--saffron); }
+.proto-hosp-card.govt-card:hover { border-color:var(--green); }
+.proto-hosp-tag { font-size:9px; font-weight:700; text-transform:uppercase; display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+.proto-hosp-name { font-size:12px; font-weight:800; color:var(--text-primary); line-height:1.2; margin-bottom:4px; }
+.proto-hosp-meta { font-size:10px; color:var(--text-muted); }
+.proto-select-btn { width:100%; margin-top:8px; padding:7px; border-radius:8px; border:none; font-size:10px; font-weight:700; cursor:pointer; transition:all .2s; }
+.proto-select-btn.govt { background:rgba(19,136,8,.1); color:var(--green); }
+.proto-select-btn.private { background:rgba(255,107,53,.1); color:var(--saffron); }
+.proto-do-now { background:rgba(255,107,53,.06); border:1px solid rgba(255,107,53,.2); border-radius:var(--radius-sm); padding:12px; margin-bottom:8px; }
+.proto-do-now-label { font-size:9px; font-weight:800; text-transform:uppercase; color:var(--saffron); letter-spacing:.05em; margin-bottom:4px; }
+.proto-do-now-text { font-size:12px; font-weight:700; color:var(--text-primary); }
+.proto-steps-list { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.proto-step { display:flex; gap:8px; }
+.proto-step-num { width:20px; height:20px; border-radius:50%; background:var(--saffron); color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.proto-step-text { font-size:11px; color:var(--text-secondary); line-height:1.5; padding-top:2px; }
+.proto-book-btn { width:100%; padding:14px; border-radius:var(--radius); border:none; background:linear-gradient(135deg,var(--saffron),var(--saffron-dark)); color:#fff; font-size:14px; font-weight:800; cursor:pointer; margin-top:16px; }
+
+/* Location Modal */
+#loc-modal {
+  position:absolute; inset:0; z-index:900;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; padding:16px;
+  animation:fadeIn .2s;
+}
+#loc-modal.hidden { display:none; }
+.modal-box { width:100%; max-width:380px; background:var(--surface); border-radius:var(--radius); padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.modal-title { font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+.modal-close { width:28px; height:28px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+.modal-input-wrap { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; transition:all .2s; }
+.modal-input-wrap:focus-within { border-color:var(--saffron); box-shadow:0 0 0 3px rgba(255,107,53,.1); }
+.modal-input { flex:1; border:none; outline:none; background:transparent; font-size:13px; color:var(--text-primary); font-family:'Inter',sans-serif; }
+.modal-input::placeholder { color:var(--text-muted); }
+#suggestions { margin-top:8px; border-radius:var(--radius-sm); border:1px solid var(--border); overflow:hidden; display:none; }
+.suggestion-item { padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .15s; display:flex; align-items:flex-start; gap:8px; }
+.suggestion-item:last-child { border-bottom:none; }
+.suggestion-item:hover { background:var(--surface2); }
+.suggestion-title { font-size:12px; font-weight:700; color:var(--text-primary); }
+.suggestion-sub { font-size:10px; color:var(--text-muted); margin-top:1px; }
+.modal-actions { display:flex; gap:8px; margin-top:12px; }
+.modal-gps-btn { flex:1; padding:10px; border-radius:var(--radius-sm); border:1.5px solid var(--saffron); background:rgba(255,107,53,.08); color:var(--saffron); font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+.modal-set-btn { flex:1; padding:10px; border-radius:var(--radius-sm); border:none; background:var(--saffron); color:#fff; font-size:12px; font-weight:700; cursor:pointer; }
+.modal-set-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Hospital Marker Tooltips */
+.hosp-marker-popup { background:var(--surface); border:2px solid var(--saffron); border-radius:10px; padding:8px 12px; box-shadow:0 4px 20px rgba(0,0,0,.2); font-family:'Inter',sans-serif; }
+.hosp-marker-popup .name { font-size:12px; font-weight:800; color:var(--text-primary); margin-bottom:2px; }
+.hosp-marker-popup .meta { font-size:10px; color:var(--text-secondary); }
+
+/* Animations */
+@keyframes slideDown { from{transform:translateY(-20px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper { border-radius:12px !important; border:2px solid var(--saffron) !important; box-shadow:0 4px 20px rgba(0,0,0,.2) !important; }
+.leaflet-popup-tip { background:var(--saffron) !important; }
+
+/* Misc */
+svg { display:block; }
+.divider { height:1px; background:var(--border); margin:10px 0; }
+.honesty { position:absolute; bottom:0; left:0; right:0; z-index:1; text-align:center; pointer-events:none; }
+.honesty span { font-size:7px; font-family:monospace; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); background:var(--surface2); padding:2px 10px; border-radius:4px 4px 0 0; }
+</style>
 </head>
 <body>
+<div id="app" data-theme="light">
 
-  <!-- Ambient background glass orbs -->
-  <div class="orb orb-blue"></div>
-  <div class="orb orb-purple"></div>
-  <div class="orb orb-cyan"></div>
+  <!-- Map -->
+  <div id="map-wrap"><div id="map"></div></div>
 
-  <!-- ═══════════════════════════════════════
-       1. FULL-SCREEN MAP CANVAS & FLOATING FAB
-  ════════════════════════════════════════ -->
-  <div id="map-container">
-    <div id="map"></div>
-
-    <!-- Floating Location Recenter FAB Button -->
-    <button class="my-location-fab" id="my-location-fab" title="Recenter Map on My Current Location">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="8"/>
-        <line x1="12" y1="2" x2="12" y2="6"/>
-        <line x1="12" y1="18" x2="12" y2="22"/>
-        <line x1="2" y1="12" x2="6" y2="12"/>
-        <line x1="18" y1="12" x2="22" y2="12"/>
-      </svg>
+  <!-- Location Bar -->
+  <div id="location-bar">
+    <div id="loc-pill" onclick="openLocModal()">
+      <svg class="loc-pin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <span class="loc-label">My Location:</span>
+      <span class="loc-address" id="loc-address">Detecting GPS...</span>
+      <span class="loc-change-btn">Change</span>
+    </div>
+    <button id="gps-btn" onclick="requestGPS()" title="Use Live GPS">
+      <svg id="gps-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/></svg>
+    </button>
+    <button id="theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+      <svg id="theme-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       2. TOP FLOATING LOCATION BAR (React Style)
-  ════════════════════════════════════════ -->
-  <div id="my-location-pill" class="fixed top-3.5 left-0 right-0 z-30 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-300">
-    <div id="my-location-btn" class="flex items-center justify-between bg-[#111111]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] ring-1 ring-[#E2FF4D]/30 rounded-full px-3.5 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.85)] cursor-pointer group transition-all">
-      <div class="flex items-center gap-2 min-w-0 flex-1">
-        <span class="p-1 rounded-full bg-[#E2FF4D]/15 text-[#E2FF4D] group-hover:scale-110 flex-shrink-0 transition-transform flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        </span>
-        <span class="text-[10px] font-black uppercase text-[#E2FF4D] tracking-wider flex-shrink-0">
-          MY LOCATION:
-        </span>
-        <span id="current-location-text" class="text-[11px] font-medium text-white truncate group-hover:text-[#E2FF4D] transition-colors">
-          Bangur, South Dum Dum, Kolkata
-        </span>
-      </div>
+  <!-- Active Hold Banner -->
+  <div id="hold-banner" class="hidden">
+    <div class="hold-check">✓</div>
+    <div class="hold-banner-text">
+      <div class="hold-banner-title">BED RESERVED • 15-MIN HOLD ACTIVE</div>
+      <div class="hold-banner-sub" id="hb-hosp-name">—</div>
+      <div class="hold-banner-otp">Gate Check-In OTP: <strong id="hb-otp">—</strong></div>
+    </div>
+    <button id="hold-banner-close" onclick="cancelHold()">✕</button>
+  </div>
 
-      <div class="flex items-center gap-1.5 ml-2 flex-shrink-0">
-        <span id="change-loc-tag" class="text-[9px] text-[#E2FF4D] bg-[#222222] border border-[#333333] px-2 py-0.5 rounded-full font-bold group-hover:bg-[#E2FF4D] group-hover:text-black transition-colors">
-          Change
-        </span>
-        <button id="loc-crosshair-btn" title="Place & Drag Road Pin with Live GPS" class="text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black p-1 rounded-full transition-all cursor-pointer flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
-        </button>
-      </div>
+  <!-- Quick Cards (home state) -->
+  <div id="quick-cards">
+    <div class="quick-card" id="blood-card" onclick="openLocModal()">
+      <span class="qc-tag private">🩸 Blood Group</span>
+      <span class="qc-name">TYPE REQUIRED<br>BLOOD GROUP</span>
+      <span class="qc-meta"><span class="qc-eta">Tap to select O+, B+, A+, AB-...</span></span>
+    </div>
+    <div class="quick-card" id="nearest-card" onclick="selectNearestHospital()">
+      <span class="qc-tag govt">🏥 Nearest</span>
+      <span class="qc-name">NEAREST<br>HOSPITAL</span>
+      <div class="qc-meta"><span class="qc-beds" id="qc-nearest-beds">— beds</span><span class="qc-eta" id="qc-nearest-eta">— min</span></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       3. TOP TOAST BANNER (When 15-Min Hold is Active)
-  ════════════════════════════════════════ -->
-  <div id="active-hold-toast" class="fixed top-14 left-0 right-0 z-40 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-300 hidden">
-    <div class="bg-[#0e1726]/98 backdrop-blur-2xl border-2 border-[#E2FF4D] ring-1 ring-[#E2FF4D]/50 rounded-2xl p-3 shadow-[0_12px_40px_rgba(0,0,0,0.95)] text-white">
-      <div class="flex items-center justify-between border-b border-[#1e3a5f] pb-2 mb-2">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-[#E2FF4D] animate-ping"></span>
-          <div>
-            <span class="text-[11px] font-black text-[#E2FF4D] tracking-wider uppercase flex items-center gap-1">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> BED RESERVED • 15-MIN HOLD ACTIVE
-            </span>
-            <span id="toast-hosp-name" class="text-[10px] text-[#8ab4f8] font-bold">
-              Cardiac ICU at North City Baguiati
-            </span>
-          </div>
-        </div>
-        <button id="toast-close-btn" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      </div>
-
-      <div class="flex items-center justify-between bg-black/60 border border-[#1e3a5f] rounded-xl p-2.5">
-        <div>
-          <span class="text-[9px] font-bold text-[#8ab4f8] block uppercase tracking-wider">
-            GATE CHECK-IN OTP
-          </span>
-          <span class="text-[10px] font-mono font-black text-white">
-            Code: <strong id="toast-otp-code" class="text-[#E2FF4D] text-sm">9420</strong>
-          </span>
-        </div>
-        <button id="toast-copy-otp-btn" class="px-2.5 py-1 rounded-lg bg-[#1e3455] text-xs font-bold text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black transition-colors cursor-pointer flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy
-        </button>
-      </div>
+  <!-- Search Bar -->
+  <div id="search-bar">
+    <div class="search-icon-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════
-       4. TOP HEADER BAR
-  ════════════════════════════════════════ -->
-  <div class="top-header-bar" style="display:none;">
-    <button class="header-menu-btn" id="header-menu-btn" title="Emergency Menu">
-      <div class="hamburger-line"></div>
-      <div class="hamburger-line"></div>
-      <div class="hamburger-line"></div>
+    <input id="symptom-input" type="text" placeholder="Type symptoms (e.g. chest pain, stroke, bleeding...)" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button id="search-clear-btn" style="display:none" onclick="clearSearch()">✕</button>
+    <button id="lang-btn" title="Language">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
     </button>
-
-    <div class="dynamic-island-status">
-      <span class="status-dot-green"></span>
-      <span class="status-text">ASHA EMERGENCY ACTIVE</span>
-    </div>
-
-    <div class="header-logo-badge" title="ASHA">
-      <div class="logo-breathe-ring"></div>
-      <div class="logo-circle">A</div>
-    </div>
+    <button id="mic-btn" onclick="toggleMic()" title="Voice Input">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button id="search-submit-btn" onclick="submitSearch()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       5. FLOATING SEARCH CONTAINER & STACKED CARDS (1:1 React Layout)
-  ════════════════════════════════════════ -->
-  <div class="fixed left-0 right-0 z-40 px-3.5 max-w-md mx-auto pointer-events-auto transition-all duration-500 bottom-6" id="search-container">
+  <!-- Recenter FAB -->
+  <button id="recenter-fab" onclick="recenterMap()" title="Recenter on my location">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
 
-    <!-- Stacked Action Cards (Visible when initial view) -->
-    <div id="initial-stacked-controls" class="space-y-2 mb-2 select-none">
-      <!-- 70/30 Ratio Cards: Blood Group (70%) + Nearest Hospital (30%) -->
-      <div class="flex items-stretch gap-2 w-full select-none">
-        <button id="blood-card-btn" type="button" class="w-[70%] flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group active:scale-[0.98]">
-          <span class="w-7 h-7 rounded-xl bg-[#ff334b]/20 border border-[#ff334b]/40 flex items-center justify-center flex-shrink-0 text-[#ff334b] group-hover:scale-110 transition-transform">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,51,75,0.2)" stroke="#ff334b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-          </span>
-          <div class="text-left min-w-0 flex-1">
-            <span class="block text-[10px] font-black text-white group-hover:text-[#E2FF4D] tracking-wider uppercase truncate">
-              TYPE REQUIRED BLOOD GROUP
-            </span>
-            <span class="block text-[8px] text-[#888888] font-medium truncate">
-              Tap to select O+, B+, A+, AB-...
-            </span>
-          </div>
-        </button>
-
-        <button id="nearest-hosp-btn" type="button" class="w-[30%] flex flex-col items-center justify-center px-2 py-2 rounded-2xl bg-[#121212]/95 backdrop-blur-xl border border-[#2a2a2a] hover:border-[#E2FF4D] text-white shadow-[0_8px_24px_rgba(0,0,0,0.8)] transition-all cursor-pointer group active:scale-[0.98]">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#E2FF4D] group-hover:scale-110 transition-transform mb-0.5"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
-          <span class="text-[9px] font-black text-white group-hover:text-[#E2FF4D] tracking-tight uppercase text-center leading-tight">
-            NEAREST HOSPITAL
-          </span>
-        </button>
-      </div>
-
-      <!-- Quick Blood Group Selector Bar (Toggled by Blood Card) -->
-      <div id="blood-picker-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 px-2.5 rounded-xl bg-[#161616]/95 border border-[#333333] shadow-2xl hidden">
-        <span class="text-[9px] font-bold text-[#E2FF4D] uppercase px-1 flex-shrink-0">SELECT:</span>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="O+">O+</button>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="B+">B+</button>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="A+">A+</button>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="AB+">AB+</button>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="O-">O-</button>
-        <button class="blood-chip-btn px-2.5 py-1 rounded-lg bg-[#222222] hover:bg-[#E2FF4D] hover:text-black text-white text-[10px] font-black tracking-wide border border-[#333333] transition-colors cursor-pointer flex-shrink-0" data-group="A-">A-</button>
-      </div>
-    </div>
-
-    <!-- Live Symptom Autocomplete Suggestions Dropdown -->
-    <div id="symptom-autocomplete-dropdown" class="mb-2 max-h-56 overflow-y-auto rounded-2xl border border-[#1e3a5f] bg-[#0e1726]/98 backdrop-blur-xl shadow-2xl divide-y divide-[#1e3a5f] hidden">
-      <div class="px-3.5 py-2 bg-[#0a121f] text-[10px] font-black text-[#E2FF4D] tracking-wider uppercase flex items-center justify-between">
-        <span>MATCHING CLINICAL SYMPTOMS (5)</span>
-        <span class="text-[#8ab4f8]">TAP TO TRIAGE</span>
-      </div>
-      <div id="symptom-autocomplete-list" class="divide-y divide-[#1e3a5f]">
-        <!-- Inserted via JS -->
-      </div>
-    </div>
-
-    <!-- Main Search Input Bar (Green Volt Border) -->
-    <div id="search-wrap" class="flex items-center backdrop-blur-xl rounded-full px-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.85)] border h-12 bg-[#111111]/95 border-[#2a2a2a] ring-1 ring-[#E2FF4D]/30 gap-2.5 transition-all">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#E2FF4D] flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-      <input
-        id="symptom-input"
-        class="flex-1 min-w-0 bg-transparent text-xs sm:text-sm text-white font-sans font-medium placeholder-[#777777] focus:outline-none"
-        type="search"
-        enterkeyhint="search"
-        placeholder="Type symptoms (e.g. chest pain) & press Enter..."
-        autocomplete="off"
-      >
-      <!-- Submit Arrow Button -->
-      <button id="symptom-submit-btn" title="Submit Triage Search" class="w-7 h-7 rounded-full bg-[#E2FF4D] text-black hover:bg-white flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer active:scale-95 shadow-md hidden">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-      </button>
-      <!-- Clear button -->
-      <button id="symptom-clear-btn" title="Clear Search" class="text-[#888888] hover:text-white p-1 rounded-full transition-colors flex-shrink-0 cursor-pointer hidden">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-      </button>
-      <!-- Voice Mic button -->
-      <button id="voice-mic-btn" class="flex-shrink-0 w-8 h-8 rounded-full bg-[#1e1e1e] text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black border border-[#2a2a2a] flex items-center justify-center transition-all cursor-pointer" title="Voice Dictation">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#E2FF4D]"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-      </button>
-    </div>
+  <!-- Bottom Drawer -->
+  <div id="drawer" class="hidden">
+    <div id="drawer-handle-area" onclick="toggleDrawerExpand()"><div class="drawer-handle"></div></div>
+    <div id="drawer-scroll"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       6. SLIDABLE BOTTOM SHEET DRAWER (30% to 72% Height Flow)
-  ════════════════════════════════════════ -->
-  <div class="bottom-sheet hidden state-hidden" id="bottom-sheet">
-    <div class="sheet-handle-zone" id="bottom-sheet-handle" title="Drag or click to expand / collapse details">
-      <div class="sheet-handle-bar"></div>
-    </div>
+  <!-- Full Protocol Sheet -->
+  <div id="protocol-sheet" class="hidden"></div>
 
-    <!-- Triage Filter Bar Header -->
-    <div class="px-4 pb-2 flex items-center justify-between border-b border-[#1e3a5f]">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#00FF87] animate-ping"></span>
-        <span id="drawer-triage-tag" class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00FF87" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> TRIAGE ACTIVE
+  <!-- Location Modal -->
+  <div id="loc-modal" class="hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Adjust My Location
+        </div>
+        <button class="modal-close" onclick="closeLocModal()">✕</button>
+      </div>
+      <div class="modal-input-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="modal-input" id="address-input" type="text" placeholder="Search street, area, locality..." autocomplete="off"/>
+        <span id="addr-searching" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-9-9"/></svg>
         </span>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="drawer-govt-filter-btn" class="px-2.5 py-1 rounded-full bg-[#1e3455] border border-[#38bdf8]/50 text-[#38bdf8] text-[10px] font-black tracking-wide uppercase hover:bg-[#38bdf8] hover:text-black transition-colors cursor-pointer flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/></svg> GOVT VS NEAREST
+      <div id="suggestions"></div>
+      <div class="modal-actions">
+        <button class="modal-gps-btn" onclick="useGPSAndClose()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Use Live GPS
         </button>
-        <button id="drawer-what-to-do-btn" class="px-2.5 py-1 rounded-full bg-[#E2FF4D]/15 border border-[#E2FF4D]/40 text-[#E2FF4D] text-[10px] font-black tracking-wide uppercase hover:bg-[#E2FF4D] hover:text-black transition-colors cursor-pointer flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> WHAT TO DO
-        </button>
-        <button id="drawer-close-btn" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="sheet-content-scroll tactical-scroll" id="sheet-content">
-      <!-- Hospital Cards & Detailed Telemetry Container -->
-      <div class="cards-col" id="cards-col"></div>
-    </div>
-
-    <!-- Sticky Post-Booking & Action Bar (Pinned 1:1 at Bottom) -->
-    <div id="sticky-drawer-action-bar" class="flex-shrink-0 px-4 pt-2.5 pb-4 bg-[#0a121f] border-t border-[#1e3a5f] shadow-[0_-8px_20px_rgba(0,0,0,0.6)]">
-      <!-- Normal Booking View -->
-      <div id="normal-booking-actions" class="space-y-2">
-        <button id="inline-book-slot-btn" class="w-full py-2.5 px-4 rounded-full bg-[#E2FF4D] text-black font-black text-xs sm:text-sm tracking-tight hover:bg-white transition-colors flex items-center justify-center gap-2 uppercase shadow-xl cursor-pointer active:scale-[0.98]">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> BOOK MY SLOT AND START <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </button>
-
-        <div class="grid grid-cols-2 gap-2">
-          <a id="inline-call-amb-btn" href="tel:108" class="py-2 px-3 rounded-xl bg-[#141f33] border border-[#ff334b]/40 hover:bg-[#ff334b] hover:text-white text-[#ff334b] font-black text-[11px] uppercase tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-3-4h-5v10h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg> Ambulance (108)
-          </a>
-          <a id="inline-call-hosp-btn" href="tel:102" class="py-2 px-3 rounded-xl bg-[#141f33] border border-[#1e3a5f] hover:bg-white hover:text-black text-white font-black text-[11px] uppercase tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call Hospital
-          </a>
-        </div>
-      </div>
-
-      <!-- Active Hold Booking View -->
-      <div id="active-hold-actions" class="flex gap-2 hidden">
-        <button id="release-hold-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-[#1e293b] border border-[#ff334b]/40 text-[#ff334b] text-xs font-black tracking-wider hover:bg-[#ff334b] hover:text-white transition-colors uppercase cursor-pointer text-center flex items-center justify-center gap-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> RELEASE 15-MIN HOLD
-        </button>
-        <a id="call-er-btn" href="tel:102" class="py-2.5 px-5 rounded-xl bg-[#E2FF4D] text-black text-xs font-black tracking-tight hover:bg-white transition-colors uppercase flex items-center justify-center gap-1.5 cursor-pointer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> CALL ER
-        </a>
+        <button class="modal-set-btn" id="modal-set-btn" disabled onclick="geocodeInput()">Set Location</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       7. LOCATION ADJUSTMENT MODAL WITH GEOCODING AUTOCOMPLETE
-  ════════════════════════════════════════ -->
-  <div id="location-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
-    <div class="relative w-full max-w-md bg-[#121212] border border-[#2a2a2a] ring-1 ring-[#E2FF4D]/30 rounded-2xl shadow-2xl p-4 text-white">
-      <div class="flex items-center justify-between pb-3 border-b border-[#222222]">
-        <div class="flex items-center gap-2">
-          <span class="text-[#E2FF4D]">📍</span>
-          <h3 class="font-bold text-sm text-white">Adjust My Location</h3>
+  <!-- Honesty Strip -->
+  <div class="honesty"><span>Simulated Capacity Data • Demo Only • Smart India Hackathon 2026</span></div>
+
+</div><!-- #app -->
+
+<!-- Leaflet JS — local for instant load, CDN fallback -->
+<script src="/js/leaflet.js"></script>
+<script>if(typeof L==='undefined'){document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""><\/script>')}</script>
+
+<style>
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PULSEGRID — Complete Vanilla JS App
+   Indian Tricolor Theme | V2 Feature Parity
+═══════════════════════════════════════════════════════════ */
+
+// ── Hospital Data (from V2 React source) ──────────────────
+const HOSPITALS = [
+  {
+    id:'hosp-tmc-newtown', name:'Tata Medical Center, New Town', short_name:'Tata Medical Center',
+    area:'Action Area II / New Town', corridor_name:'Action Area II • Rapid Arterial Response Corridor',
+    lat:22.5882, lng:88.4774, phone:'+91 33 6605 7000',
+    is_govt:false, is_trauma:true, has_cath:true, has_picu:true, rating:4.9,
+    trauma_level:'Level-1 Tertiary Critical Care',
+    distance_km:0.5, eta_minutes:3,
+    wards:[
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:22,total_physical:26,occupied:16,held_now:1,available_now:5,ghost_gap:4},
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:12,total_physical:14,occupied:8,held_now:1,available_now:3,ghost_gap:2},
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:10,total_physical:12,occupied:6,held_now:0,available_now:4,ghost_gap:2},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:38,total_physical:45,occupied:28,held_now:1,available_now:9,ghost_gap:7}
+    ]
+  },
+  {
+    id:'hosp-neotia-newtown', name:'Bhagirathi Neotia Woman & Child Care', short_name:'Neotia New Town',
+    area:'Action Area II / New Town', corridor_name:'Kadampukur - Amity University Healthway',
+    lat:22.5866, lng:88.4715, phone:'+91 33 6640 5000',
+    is_govt:false, is_trauma:true, has_cath:false, has_picu:true, rating:4.8,
+    trauma_level:'Apex Pediatric ICU/NICU & Emergency OB',
+    distance_km:0.6, eta_minutes:3,
+    wards:[
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:18,total_physical:22,occupied:11,held_now:1,available_now:6,ghost_gap:4},
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:12,total_physical:16,occupied:8,held_now:0,available_now:4,ghost_gap:4},
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:6,total_physical:8,occupied:4,held_now:0,available_now:2,ghost_gap:2},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:26,total_physical:32,occupied:17,held_now:1,available_now:8,ghost_gap:6}
+    ]
+  },
+  {
+    id:'hosp-ohio-newtown', name:'Ohio Hospital & Medical Centre', short_name:'Ohio Hospital New Town',
+    area:'Action Area I / New Town', corridor_name:'Major Arterial Road • Eco Park Emergency Link',
+    lat:22.5935, lng:88.4682, phone:'+91 33 6633 4455',
+    is_govt:false, is_trauma:true, has_cath:true, has_picu:true, rating:4.7,
+    trauma_level:'Level-1 Emergency Trauma & Cath Lab',
+    distance_km:1.4, eta_minutes:5,
+    wards:[
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:14,total_physical:16,occupied:9,held_now:1,available_now:4,ghost_gap:2},
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:20,total_physical:24,occupied:15,held_now:1,available_now:4,ghost_gap:4},
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:6,total_physical:8,occupied:4,held_now:0,available_now:2,ghost_gap:2},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:32,total_physical:40,occupied:23,held_now:1,available_now:8,ghost_gap:8}
+    ]
+  },
+  {
+    id:'hosp-cnci-newtown', name:'Chittaranjan National Cancer Institute (CNCI)', short_name:'CNCI Govt New Town',
+    area:'Action Area I / New Town', corridor_name:'Street 299 Civic Emergency Rapid Access',
+    lat:22.5840, lng:88.4625, phone:'+91 33 2476 5101',
+    is_govt:true, is_trauma:true, has_cath:false, has_picu:true, rating:4.5,
+    trauma_level:'Apex Central Govt Critical Care',
+    distance_km:1.5, eta_minutes:5,
+    wards:[
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:24,total_physical:30,occupied:19,held_now:1,available_now:4,ghost_gap:6},
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:10,total_physical:12,occupied:8,held_now:0,available_now:2,ghost_gap:2},
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:10,total_physical:14,occupied:7,held_now:0,available_now:3,ghost_gap:4},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:48,total_physical:60,occupied:36,held_now:2,available_now:10,ghost_gap:12}
+    ]
+  },
+  {
+    id:'hosp-ils-nagerbazar', name:'ILS Hospitals, Dum Dum', short_name:'ILS Nagerbazar',
+    area:'Nagerbazar / Dum Dum', corridor_name:'Nagerbazar Flyover • Primary Emergency Corridor',
+    lat:22.6235, lng:88.4238, phone:'+91 33 4031 5000',
+    is_govt:false, is_trauma:true, has_cath:true, has_picu:true, rating:4.8,
+    trauma_level:'Level-1 Trauma & 24/7 Primary Cardiac Bay',
+    distance_km:7.2, eta_minutes:18,
+    wards:[
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:12,total_physical:14,occupied:7,held_now:1,available_now:4,ghost_gap:2},
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:16,total_physical:20,occupied:13,held_now:1,available_now:2,ghost_gap:4},
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:6,total_physical:8,occupied:4,held_now:0,available_now:2,ghost_gap:2},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:24,total_physical:30,occupied:17,held_now:1,available_now:6,ghost_gap:6}
+    ]
+  },
+  {
+    id:'hosp-dumdum-municipal', name:'Dum Dum Municipal Specialized Hospital', short_name:'Dum Dum Municipal',
+    area:'Dum Dum Cantonment', corridor_name:'Dum Dum Cantonment Civic Emergency Bay',
+    lat:22.6280, lng:88.4190, phone:'+91 33 2579 1234',
+    is_govt:true, is_trauma:false, has_cath:false, has_picu:false, rating:4.3,
+    trauma_level:'High-Flow Oxygen & Civic Stabilization',
+    distance_km:7.8, eta_minutes:20,
+    wards:[
+      {ward_code:'cardiac_icu',label:'Cardiac ICU',total_staffed:4,total_physical:6,occupied:4,held_now:0,available_now:0,ghost_gap:2},
+      {ward_code:'adult_icu',label:'Adult ICU',total_staffed:10,total_physical:14,occupied:7,held_now:2,available_now:1,ghost_gap:4},
+      {ward_code:'pediatric_icu',label:'Pediatric ICU',total_staffed:4,total_physical:6,occupied:3,held_now:0,available_now:1,ghost_gap:2},
+      {ward_code:'general_oxygen',label:'General Oxygen',total_staffed:28,total_physical:36,occupied:19,held_now:1,available_now:8,ghost_gap:8}
+    ]
+  }
+];
+
+// ── AI Triage Classifier (ported from triageClassifier.ts) ─
+function classifyEmergency(query) {
+  const q = (query||'').toLowerCase().trim();
+  const bloodMatch = q.match(/\b(o-|o\+|a-|a\+|b-|b\+|ab-|ab\+)\b/i);
+  const bloodKeyword = q.includes('blood')||q.includes('prbc')||q.includes('platelet')||q.includes('plasma')||q.includes('rokto')||q.includes('khoon');
+  let bloodNeeded = null;
+  if(bloodMatch||bloodKeyword) bloodNeeded={group:bloodMatch?bloodMatch[1].toUpperCase():'O-',component:q.includes('platelet')?'PLATELETS':q.includes('plasma')?'PLASMA':'PRBC'};
+
+  const isNegated=q.includes('no chest pain')||q.includes('not breathless')||q.includes('fine now')||q.includes('normal');
+  if(isNegated&&!q.includes('severe')&&!q.includes('unresponsive')) return{severity:'GREEN',ward:'general_oxygen',protocol:'respiratory',keywords:['ruled out'],score:15,explanation:'No critical flags detected. Safe for outpatient evaluation.',offer_hold:false};
+
+  if(q.includes('cardiac arrest')||q.includes('no pulse')||q.includes('stopped breathing')||q.includes('unresponsive')||q.includes('cpr')||q.includes('collapsed')||q.includes('behosh')||q.includes('behoshi'))
+    return{severity:'RED',ward:'adult_icu',protocol:'arrest',keywords:['cardiac arrest','no pulse'],score:100,explanation:'Loss of responsiveness requires immediate CPR & Level-1 Resuscitation Bay.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('chest pain')||q.includes('heart attack')||q.includes('angina')||q.includes('cardiac')||q.includes('left arm pain')||q.includes('jaw pain')||q.includes('seene mein')||q.includes('chhati'))
+    return{severity:'RED',ward:'cardiac_icu',protocol:'cardiac',keywords:['chest pain','cardiac symptoms'],score:95,explanation:'Acute coronary syndrome. Requires urgent Cath Lab & Cardiac ICU monitored bed.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('stroke')||q.includes('paralysis')||q.includes('face droop')||q.includes('slurred speech')||q.includes('arm weakness')||q.includes('brain attack'))
+    return{severity:'RED',ward:'adult_icu',protocol:'stroke',keywords:['stroke','FAST positive'],score:95,explanation:'Acute neurological deficit within thrombolysis window. Emergency CT Brain priority.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('bleeding')||q.includes('blood loss')||q.includes('accident')||q.includes('stab')||q.includes('trauma')||q.includes('khoon')||q.includes('rokto'))
+    return{severity:'RED',ward:'adult_icu',protocol:'trauma',keywords:['arterial bleeding','trauma shock'],score:90,explanation:'Critical vascular compromise. Massive Transfusion Protocol (MTP) alerted.',offer_hold:true,blood:bloodNeeded||{group:'O-',component:'PRBC'}};
+
+  if(q.includes('child')||q.includes('baby')||q.includes('baccha')||q.includes('pediatric')||q.includes('shishu'))
+    return{severity:'RED',ward:'pediatric_icu',protocol:'pediatric',keywords:['pediatric emergency'],score:88,explanation:'Pediatric urgent distress. Auto-routed to dedicated Pediatric ICU.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('asthma')||q.includes('breathless')||q.includes('breathing')||q.includes('shortness of breath')||q.includes('wheezing')||q.includes('oxygen')||q.includes('choking')||q.includes('saans'))
+    return{severity:'RED',ward:'general_oxygen',protocol:'respiratory',keywords:['respiratory distress','hypoxia'],score:85,explanation:'Acute airway constriction. High-flow oxygen & continuous SpO2 monitoring required.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('burn')||q.includes('fire')||q.includes('scald')||q.includes('acid')||q.includes('electrocution'))
+    return{severity:'RED',ward:'adult_icu',protocol:'burn',keywords:['thermal injury','burns'],score:85,explanation:'Thermal shock risk. Fluid resuscitation (Parkland formula) in sterile burn bay required.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('fracture')||q.includes('broken bone')||q.includes('dislocation')||q.includes('fall from height'))
+    return{severity:'YELLOW',ward:'adult_icu',protocol:'trauma',keywords:['orthopedic trauma'],score:75,explanation:'Acute skeletal trauma requiring X-ray, neurovascular check, and limb splinting.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('pregnancy')||q.includes('pregnant')||q.includes('labor')||q.includes('delivery')||q.includes('contractions'))
+    return{severity:'RED',ward:'general_oxygen',protocol:'maternity',keywords:['active labor','obstetric emergency'],score:88,explanation:'Active labor. Emergency delivery suite with neonatal resuscitation prep required.',offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('snake')||q.includes('poison')||q.includes('overdose')||q.includes('toxic'))
+    return{severity:'RED',ward:'adult_icu',protocol:'arrest',keywords:['toxic ingestion'],score:92,explanation:'Acute toxidrome. Immediate antivenom/gastric lavage & ICU monitoring required.',offer_hold:true,blood:bloodNeeded};
+
+  if(bloodNeeded)
+    return{severity:'YELLOW',ward:'adult_icu',protocol:'trauma',keywords:[`Blood ${bloodNeeded.group}`,'transfusion'],score:80,explanation:`Immediate transfusion need for group ${bloodNeeded.group}. Filtering crossmatched hospitals.`,offer_hold:true,blood:bloodNeeded};
+
+  if(q.includes('nearest')||q.includes('hospital')||q.includes('emergency')||q.includes('doctor'))
+    return{severity:'YELLOW',ward:'adult_icu',protocol:'cardiac',keywords:['closest emergency'],score:70,explanation:'Proximity-optimized routing to nearest hospital with 24/7 emergency triage.',offer_hold:true};
+
+  return{severity:'YELLOW',ward:'adult_icu',protocol:'cardiac',keywords:['acute symptoms'],score:70,explanation:'Clinical symptoms require urgent bedside assessment and diagnostic imaging.',offer_hold:true,blood:bloodNeeded};
+}
+
+// Protocol content
+const PROTOCOLS = {
+  cardiac:{name:'Acute Coronary Syndrome (ACS)',title:'Crushing Substernal Chest Pain (Radiation to Left Arm / Jaw)',ward_label:'Cardiac ICU',esi:'RED • ESI-1',do_now:'Sit patient upright at 45° (Semi-Fowler). Unbutton collar & loosen belt immediately.',steps:['Chew one 300mg Soluble Aspirin if conscious and not allergic.','Use sublingual Nitroglycerin spray under tongue if prescribed.','Keep patient still — prohibit walking or exertion.','Open windows for maximum room ventilation.','Continuously monitor radial pulse and breathing.']},
+  stroke:{name:'Acute Stroke (FAST Protocol)',title:'Facial Droop, Arm Weakness, Speech Slurring — Brain Attack',ward_label:'Adult ICU / Stroke Unit',esi:'RED • ESI-1',do_now:'Lay on side in Recovery Position, head elevated 15–30°. Record EXACT symptom onset time.',steps:['Apply FAST: Face, Arms, Speech, Time of onset.','Check blood glucose (hypoglycemia mimics stroke).','Turn head to side if saliva/drooling.','Gather patient medication list for stroke team.','Transport to Stroke-Ready Centre with CT Scan.']},
+  trauma:{name:'Trauma / Hemorrhage Protocol',title:'Arterial Bleeding / Major Trauma / Skeletal Fracture',ward_label:'Adult ICU / Trauma Bay',esi:'RED • ESI-1',do_now:'Apply direct heavy pressure over wound. Elevate limb above heart. Call 108.',steps:['Press firm sterile cloth over wound.','Apply tourniquet 5cm ABOVE wound if arterial bleed — note time.','Pack groin/armpit wounds with clean cloth, hold pressure.','Keep patient warm to prevent hypothermic shock.','Trauma ER blood bank alerted with O- Negative reserve.']},
+  arrest:{name:'Cardiac Arrest / CPR Protocol',title:'Loss of Pulse & Consciousness — Immediate Resuscitation',ward_label:'Adult ICU / Resuscitation Bay',esi:'RED • ESI-1',do_now:'Lay flat on hard floor. Begin high-quality chest compressions at 100-120/min.',steps:['Call 108 and request AED immediately.','Compress chest hard & fast: 2 inches depth, allow full recoil.','30 compressions : 2 rescue breaths if trained.','Apply AED pads as soon as available, follow voice prompts.','Do NOT stop CPR until resuscitation team takes over.']},
+  respiratory:{name:'Respiratory Emergency Protocol',title:'Acute Airway Constriction / Asthma / Pulmonary Edema',ward_label:'General Oxygen / ICU',esi:'RED • ESI-1',do_now:'Sit patient strictly upright leaning slightly forward (Tripod Position). Open all windows.',steps:['Administer Salbutamol inhaler (2-4 puffs every 5 mins).','Remove surrounding crowd, open doors and windows.','Pursed-lip breathing: In 2s, Out 4s.','Unbutton collar, tie, and tight chest clothing.','High-flow oxygen ICU bed reserved at target hospital.']},
+  pediatric:{name:'Pediatric Emergency Protocol',title:'High Fever / Febrile Convulsion in Child',ward_label:'Pediatric ICU / NICU',esi:'RED • ESI-1',do_now:'Lay child on soft surface on side. Remove heavy blankets. Tepid sponge cooling.',steps:['Wipe chest, arms, legs with lukewarm water (NOT ice).','Time the convulsion duration.','Give Paracetamol syrup ONLY after child is fully alert.','Ensure mouth is clear of saliva.','Transport to Pediatric ER for fever evaluation.']},
+  burn:{name:'Burn / Thermal Injury Protocol',title:'Severe Burns / Thermal Shock / Chemical Exposure',ward_label:'Burn ICU / Adult ICU',esi:'RED • ESI-1',do_now:'Cool burn under cool running water for 20 minutes immediately.',steps:['Remove heat source immediately.','Run cool water over burn 20 mins continuously.','Remove loose clothing around burn (NOT stuck clothing).','Remove rings/watch before swelling starts.','Cover loosely with clean plastic wrap. Transport to Burn Unit.']},
+  maternity:{name:'Obstetric Emergency Protocol',title:'Active Labor / Precipitous Delivery / Obstetric Complication',ward_label:'Delivery Suite / NICU',esi:'RED • ESI-1',do_now:'Lay mother on back, knees bent. Prepare clean towels & warm blankets.',steps:['Do NOT hold baby\'s head back.','Support emerging head gently — do NOT pull.','Dry baby, wipe mouth, rub back to stimulate cry.','Place skin-to-skin on mother under warm blanket.','Do NOT cut or pull umbilical cord until doctor arrives.']}
+};
+
+// ── App State ─────────────────────────────────────────────
+let userLat = 22.6186, userLng = 88.4190;
+let userAddress = 'Detecting GPS...';
+let isLocating = false;
+let hospitals = JSON.parse(JSON.stringify(HOSPITALS));
+let selectedHospital = null;
+let isSearchActive = false;
+let currentQuery = '';
+let classification = classifyEmergency('');
+let activeHold = null;
+let holdTimer = null;
+let drawerExpanded = false;
+let map = null, userMarker = null, routeLine = null;
+let hospitalMarkers = {};
+let isDark = false;
+
+// ── Distance Utils ─────────────────────────────────────────
+function haversineKm(lat1,lng1,lat2,lng2) {
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function etaMin(km) { return Math.max(1,Math.round(km/0.35)); }
+
+// ── Recompute ETAs ─────────────────────────────────────────
+function recomputeHospitals() {
+  hospitals = hospitals.map(h=>{
+    const km=haversineKm(userLat,userLng,h.lat,h.lng);
+    return {...h,distance_km:+km.toFixed(1),eta_minutes:etaMin(km)};
+  });
+  hospitals.sort((a,b)=>a.eta_minutes-b.eta_minutes);
+}
+
+// ── Map Init ──────────────────────────────────────────────
+function initMap() {
+  if(typeof L==='undefined'){setTimeout(initMap,200);return;}
+  const mapEl=document.getElementById('map');
+  map=L.map(mapEl,{center:[userLat,userLng],zoom:16,zoomControl:false,attributionControl:false});
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'}).addTo(map);
+  // Critical: invalidate after layout settles
+  setTimeout(()=>map.invalidateSize(),50);
+  setTimeout(()=>map.invalidateSize(),300);
+  if(typeof ResizeObserver!=='undefined') new ResizeObserver(()=>map.invalidateSize()).observe(mapEl);
+  window.addEventListener('resize',()=>map.invalidateSize());
+  placeUserMarker();
+  placeHospitalMarkers();
+  updateQuickCards();
+}
+
+// ── User Marker ───────────────────────────────────────────
+function placeUserMarker() {
+  if(!map)return;
+  if(userMarker) userMarker.remove();
+  const icon=L.divIcon({className:'',html:`
+    <div style="position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;background:rgba(255,107,53,.2);animation:ping 1.5s ease-in-out infinite"></div>
+      <div style="position:absolute;inset:8px;border-radius:50%;background:rgba(255,107,53,.15)"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:#FF6B35;border:3px solid white;box-shadow:0 2px 8px rgba(255,107,53,.7)"></div>
+    </div>`,iconSize:[48,48],iconAnchor:[24,24]});
+  userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000}).addTo(map);
+}
+
+// ── Hospital Markers ──────────────────────────────────────
+function placeHospitalMarkers() {
+  if(!map)return;
+  Object.values(hospitalMarkers).forEach(m=>m.remove());
+  hospitalMarkers={};
+  hospitals.forEach(h=>{
+    const col=h.is_govt?'#138808':'#FF6B35';
+    const icon=L.divIcon({className:'',html:`
+      <div style="position:relative">
+        <div style="background:${col};color:white;border:2.5px solid white;border-radius:8px;padding:3px 7px;font-size:10px;font-weight:800;font-family:Inter,sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+          ${h.short_name.split(' ')[0].toUpperCase()}
         </div>
-        <button id="location-modal-close" class="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer">✕</button>
-      </div>
+        <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid ${col};margin:0 auto"></div>
+      </div>`,iconSize:[null,null],iconAnchor:[0,28]});
+    const m=L.marker([h.lat,h.lng],{icon}).addTo(map);
+    m.on('click',()=>selectHospital(h));
+    hospitalMarkers[h.id]=m;
+  });
+}
 
-      <form id="location-search-form" class="mt-3">
-        <label class="block text-xs font-bold text-[#E2FF4D] uppercase tracking-wider mb-1.5">
-          Search Your Address / Locality:
-        </label>
-        <div class="relative flex items-center gap-2 bg-[#181818] border border-[#2e2e2e] focus-within:border-[#E2FF4D] focus-within:ring-1 focus-within:ring-[#E2FF4D]/30 rounded-xl px-3 py-2.5 transition-all">
-          <span class="text-[#E2FF4D]">🔍</span>
-          <input
-            id="location-search-input"
-            type="text"
-            placeholder="Type street, building, area (e.g. Bangur, Salt Lake...)"
-            class="w-full bg-transparent text-sm text-white focus:outline-none placeholder:text-gray-500"
-          />
-        </div>
+// ── GPS & Location ────────────────────────────────────────
+function requestGPS() {
+  if(isLocating)return;
+  isLocating=true;
+  const btn=document.getElementById('gps-btn');
+  btn.style.animation='spin .8s linear infinite';
+  if(!navigator.geolocation){isLocating=false;btn.style.animation='';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+    isLocating=false; btn.style.animation='';
+    recomputeHospitals();
+    placeUserMarker();
+    placeHospitalMarkers();
+    updateQuickCards();
+    if(map) map.setView([userLat,userLng],16,{animate:true});
+    reverseGeocode(userLat,userLng).then(addr=>{
+      userAddress=addr||`${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
+      document.getElementById('loc-address').textContent=userAddress;
+      localStorage.setItem('pg_loc',JSON.stringify({lat:userLat,lng:userLng,addr:userAddress}));
+    });
+  },err=>{
+    console.warn('GPS error',err);
+    isLocating=false; btn.style.animation='';
+    userAddress='Rodkol Rd, Nagerbazar, Kolkata';
+    document.getElementById('loc-address').textContent=userAddress;
+  },{enableHighAccuracy:true,timeout:6000,maximumAge:60000});
+}
 
-        <div id="location-suggestions-dropdown" class="mt-2 max-h-56 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[#161616] shadow-2xl divide-y divide-[#222222] hidden">
-          <!-- Inserted via JS -->
-        </div>
+async function reverseGeocode(lat,lng) {
+  try {
+    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`,{headers:{'Accept-Language':'en'},signal:AbortSignal.timeout?AbortSignal.timeout(4000):undefined});
+    if(res.ok){const d=await res.json();if(d.display_name)return d.display_name.split(',').slice(0,3).map(s=>s.trim()).join(', ');}
+  }catch{}return null;
+}
 
-        <div class="mt-3 flex items-center justify-between gap-2">
-          <button id="modal-use-gps-btn" type="button" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#E2FF4D]/15 border border-[#E2FF4D]/40 text-xs font-bold text-[#E2FF4D] hover:bg-[#E2FF4D] hover:text-black transition-all cursor-pointer shadow-sm active:scale-95">
-            🎯 Use Live GPS
-          </button>
-          <button type="submit" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E2FF4D] text-black text-xs font-black hover:bg-[#f5ff80] transition-all cursor-pointer shadow-md active:scale-95">
-            Set Location
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+function recenterMap() {
+  if(map) map.setView([userLat,userLng],16,{animate:true});
+}
 
-  <!-- ═══════════════════════════════════════
-       5. EMERGENCY AMBULANCE DISPATCH MODAL
-  ════════════════════════════════════════ -->
-  <div class="amb-modal-overlay" id="amb-modal-overlay">
-    <div class="amb-modal-card">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <div>
-          <div style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; color:#ffffff;">🚑 Dispatch Ambulance</div>
-          <div style="font-size:0.78rem; color:var(--text-2);">Select emergency ambulance hotline for Kolkata:</div>
-        </div>
-        <button id="amb-modal-close" style="background:none; border:none; color:var(--text-2); font-size:1.4rem; cursor:pointer;">✕</button>
-      </div>
+// ── Search ────────────────────────────────────────────────
+const searchInput=document.getElementById('symptom-input');
+searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')submitSearch();});
+searchInput.addEventListener('input',e=>{
+  const v=e.target.value.trim();
+  document.getElementById('search-clear-btn').style.display=v?'block':'none';
+  document.getElementById('search-submit-btn').style.display=v?'flex':'none';
+  currentQuery=v;
+  if(!v&&isSearchActive) clearSearch();
+});
 
-      <a class="amb-option-card" href="tel:108" id="inline-call-amb-btn">
-        <div>
-          <div style="font-weight:700; font-size:0.95rem; color:#f43f5e;">🚑 108 — National Emergency Response</div>
-          <div style="font-size:0.75rem; color:var(--text-2);">Govt Free Emergency Ambulance • 24/7</div>
-        </div>
-        <span style="font-weight:800; color:#10b981; font-size:0.85rem;">DIAL 108</span>
-      </a>
+function submitSearch() {
+  const q=searchInput.value.trim();
+  if(!q)return;
+  currentQuery=q;
+  classification=classifyEmergency(q);
+  isSearchActive=true;
+  document.getElementById('search-bar').classList.add('active');
+  document.getElementById('quick-cards').classList.add('hidden');
+  sortAndSelectHospital();
+}
 
-      <a class="amb-option-card" href="tel:102" id="inline-call-hosp-btn">
-        <div>
-          <div style="font-weight:700; font-size:0.95rem; color:#38bdf8;">🚑 102 — WB Health Emergency Hotline</div>
-          <div style="font-size:0.75rem; color:var(--text-2);">State Medical Emergency Dispatch</div>
-        </div>
-        <span style="font-weight:800; color:#38bdf8; font-size:0.85rem;">DIAL 102</span>
-      </a>
-    </div>
-  </div>
+function sortAndSelectHospital() {
+  hospitals=hospitals.map(h=>{
+    const km=haversineKm(userLat,userLng,h.lat,h.lng);
+    return{...h,distance_km:+km.toFixed(1),eta_minutes:etaMin(km)};
+  });
+  if(classification.severity==='RED') {
+    hospitals.sort((a,b)=>{
+      const aw=a.wards.find(w=>w.ward_code===classification.ward);
+      const bw=b.wards.find(w=>w.ward_code===classification.ward);
+      const aHas=(aw?.available_now||0)>0, bHas=(bw?.available_now||0)>0;
+      if(aHas&&!bHas)return-1; if(!aHas&&bHas)return 1;
+      return a.eta_minutes-b.eta_minutes;
+    });
+  } else hospitals.sort((a,b)=>a.eta_minutes-b.eta_minutes);
+  selectHospital(hospitals[0]);
+  placeHospitalMarkers();
+}
 
-  <!-- Hidden cockpit element IDs for test compatibility -->
-  <div style="display:none;">
-    <button id="cockpit-lock-btn">Lock</button>
-    <a id="cockpit-call-hosp-btn" href="tel:102">Call Hosp</a>
-    <a id="cockpit-call-amb-btn" href="tel:108">Call Amb</a>
-  </div>
+function clearSearch() {
+  currentQuery=''; isSearchActive=false;
+  searchInput.value='';
+  document.getElementById('search-clear-btn').style.display='none';
+  document.getElementById('search-submit-btn').style.display='none';
+  document.getElementById('search-bar').classList.remove('active');
+  document.getElementById('quick-cards').classList.remove('hidden');
+  closeDrawer();
+  if(routeLine){routeLine.remove();routeLine=null;}
+}
 
-  <script src="js/api.js"></script>
-  <script>
-  /* ================================================================
-     PulseGrid — Apple Liquid Glass Emergency Web App
-  ================================================================ */
+// ── Hospital Selection ────────────────────────────────────
+function selectHospital(h) {
+  selectedHospital=h;
+  openDrawer(h);
+  drawRoute(userLat,userLng,h.lat,h.lng);
+  if(map) {
+    const bounds=L.latLngBounds([[userLat,userLng],[h.lat,h.lng]]);
+    map.fitBounds(bounds.pad(.25),{animate:true});
+  }
+}
 
-  /* ── 18-Category Doctor-Grade Clinical Emergency Database ("Things to Check & DO") ── */
-  const CLINICAL_DATABASE = {
-    cardiac_arrest: {
-      category: "Cardiac Arrest / CPR",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🫀 Cardiac Arrest / CPR — Resuscitation Protocol",
-      struggling: "Check carotid pulse & chest movement (max 10s). Agonal gasping is NOT breathing.",
-      doNow: "Lay patient flat on hard floor immediately. Begin high-quality chest compressions.",
-      steps: [
-        "Call 108 emergency line & request AED (Automated External Defibrillator).",
-        "Compress chest hard & fast in center (100-120 bpm, depth 2 inches / 5 cm).",
-        "Allow chest to recoil completely after each compression.",
-        "Perform 30 compressions followed by 2 rescue breaths if trained.",
-        "Apply AED pads as soon as available and follow voice prompts.",
-        "Continue compressions without stopping until ER resuscitation team arrives."
-      ],
-      doNotDo: "❌ Do NOT elevate head with pillows. ❌ Do NOT give liquids. ❌ Do NOT stop compressions to check pulse over 10s.",
-      calmingScript: "🗣️ Bystanders: 'Stay back! Giving CPR to keep blood flowing to the brain. Ambulance is en route!'"
-    },
-    chest_pain: {
-      category: "Severe Chest Pain",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "❤️ Severe Chest Pain / Heart Attack — Emergency Protocol",
-      struggling: "Assess crushing chest pain radiating to left arm/jaw, cold sweating, dyspnea, nausea.",
-      doNow: "Sit patient upright at 45° angle (Semi-Fowler). Unbutton collar & loosen belt immediately.",
-      steps: [
-        "Chew one 300mg Soluble Aspirin (Disprin) if conscious and not allergic.",
-        "Use sublingual Nitroglycerin spray/tablet under tongue if prescribed.",
-        "Keep patient completely still; prohibit walking or physical exertion.",
-        "Open windows for maximum room ventilation.",
-        "Continuously monitor radial pulse rate and breathing.",
-        "ER Resuscitation Bay & Cath Lab auto-notified with live GPS ETA."
-      ],
-      doNotDo: "❌ Do NOT lie patient flat (causes fluid backup in lungs). ❌ Do NOT allow walking or stairs. ❌ Do NOT give heavy food/drinks.",
-      calmingScript: "🗣️ Bystanders: 'Breathe slowly: In through nose, out through mouth. Emergency cardiac bed is prepped.'"
-    },
-    stroke: {
-      category: "Acute Stroke",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🧠 Acute Stroke (FAST Protocol) — Brain Attack Triage",
-      struggling: "Apply FAST: Facial droop, Arm weakness, Speech slurring, Time of symptom onset.",
-      doNow: "Lay patient on side in Recovery Position with head elevated 15-30° to protect airway.",
-      steps: [
-        "Record EXACT time symptom onset began (vital for 4.5-hour thrombolysis window).",
-        "Check blood glucose level if diabetic (hypoglycemia mimics stroke).",
-        "Turn head to side if saliva/drooling occurs.",
-        "Do not leave patient unattended.",
-        "Gather patient medication list & history for stroke team.",
-        "Transport directly to Stroke-Ready Center with CT Scan."
-      ],
-      doNotDo: "❌ Do NOT give Aspirin or blood thinners (can cause fatal brain hemorrhage). ❌ Do NOT give food, water, or pills.",
-      calmingScript: "🗣️ Bystanders: 'Keep calm. Head is turned safely on side. Exact stroke time recorded for neuro-doctor.'"
-    },
-    bleeding: {
-      category: "Heavy Bleeding",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🩹 Heavy Bleeding / Arterial Hemorrhage — Emergency Protocol",
-      struggling: "Check if blood is spurting bright red (arterial). Look for cold pale skin & rapid pulse.",
-      doNow: "Apply direct continuous heavy pressure over wound with clean cloth. Elevate limb above heart.",
-      steps: [
-        "Press down firmly over wound using thick sterile towel/glove.",
-        "If bleeding continues on limb, apply Tourniquet 2-3 inches ABOVE wound (never over joint).",
-        "Tighten tourniquet until bleeding stops completely; write exact time on forehead ('T=14:30').",
-        "Pack deep groin/armpit wounds with clean cloth and hold continuous pressure.",
-        "Keep patient warm with blankets to prevent hypothermic shock.",
-        "Trauma ER blood bank prepped with universal O- Negative blood."
-      ],
-      doNotDo: "❌ Do NOT remove blood-soaked cloths (disrupts initial clot); layer new cloths ON TOP. ❌ Do NOT loosen tourniquet.",
-      calmingScript: "🗣️ Bystanders: 'Holding firm continuous pressure. Tourniquet applied. Trauma blood team notified.'"
-    },
-    breathing: {
-      category: "Severe Respiratory Distress",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🫁 Severe Breathing Difficulty / Asthma / Pulmonary Edema",
-      struggling: "Assess lip blueness (cyanosis), chest rib retractions, inability to speak full sentences.",
-      doNow: "Sit patient strictly upright leaning slightly forward (Tripod Position). Open all windows.",
-      steps: [
-        "Administer Salbutamol/Albuterol inhaler (2-4 puffs via spacer every 5 mins).",
-        "Open doors and windows; remove surrounding crowd.",
-        "Practice pursed-lip breathing (In for 2s, Out through pursed lips for 4s).",
-        "Unbutton collar, necktie, and tight chest wear.",
-        "Keep patient warm, still, and calm.",
-        "High-Flow Oxygen ICU bed reserved at target hospital."
-      ],
-      doNotDo: "❌ Do NOT force patient to lie flat. ❌ Do NOT crowd patient in enclosed room.",
-      calmingScript: "🗣️ Bystanders: 'Breathe with me: In... two... Out... two... three... four. High-flow oxygen bed is locked.'"
-    },
-    anaphylaxis: {
-      category: "Anaphylaxis",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🐝 Severe Allergic Reaction / Anaphylaxis Protocol",
-      struggling: "Check throat tightness, swollen tongue/lips, hives, sudden dizziness, raspy voice.",
-      doNow: "Inject EpiPen (Epinephrine auto-injector) into outer middle thigh immediately through clothing.",
-      steps: [
-        "Press EpiPen firmly into outer thigh; hold in place for 3 seconds.",
-        "Lay patient flat with legs raised (if no breathing difficulty).",
-        "If breathing is hard, keep patient seated upright.",
-        "Prepare second EpiPen dose if no improvement in 5-10 mins.",
-        "Scrape off bee stinger or remove allergen source if visible.",
-        "Transport urgently to ER with Adult/Pediatric ICU."
-      ],
-      doNotDo: "❌ Do NOT allow patient to stand up or walk after EpiPen (causes lethal BP collapse). ❌ Do NOT give oral pills if swallowing is hard.",
-      calmingScript: "🗣️ Bystanders: 'EpiPen injected. Patient lying still. ER resuscitation team ready.'"
-    },
-    seizure: {
-      category: "Seizure / Fits",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "⚡ Seizure / Convulsions / Epilepsy — First-Aid Protocol",
-      struggling: "Identify body jerking, unconsciousness, clenched teeth, eye deviation.",
-      doNow: "Cushion head with jacket/pillow immediately. Move sharp objects away.",
-      steps: [
-        "Time the duration of the seizure (>5 mins requires emergency IV drugs).",
-        "Roll patient onto side in Recovery Position as soon as jerking stops.",
-        "Loosen neckwear, tie, and eyeglasses.",
-        "Stay with patient until fully conscious and alert.",
-        "Talk quietly; expect temporary confusion (post-ictal state).",
-        "Monitor breathing continuously until ambulance arrives."
-      ],
-      doNotDo: "❌ Do NOT put spoon, fingers, or anything in mouth. ❌ Do NOT physically hold or restrain limbs.",
-      calmingScript: "🗣️ Bystanders: 'Clear the area! Do not hold them down. Timing seizure duration now.'"
-    },
-    unconscious: {
-      category: "Unconsciousness / Fainting",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "💫 Unconsciousness / Syncope / Fainting Triage",
-      struggling: "Verify airway is open and patient is breathing. Check radial pulse.",
-      doNow: "Lay flat on back and elevate legs 12 inches (30 cm) above heart level.",
-      steps: [
-        "Tap shoulders firmly & shout to check responsiveness.",
-        "Perform Head-Tilt Chin-Lift to maintain open airway.",
-        "Loosen tight neckwear, belt, and shirt buttons.",
-        "Turn onto side into Recovery Position if vomiting occurs.",
-        "Check head/body for injuries from collapse.",
-        "Keep patient lying down for 10 mins after waking up."
-      ],
-      doNotDo: "❌ Do NOT splash cold water. ❌ Do NOT force patient to sit up immediately.",
-      calmingScript: "🗣️ Bystanders: 'Legs elevated to bring blood to brain. Breathing normally. Fresh air circulating.'"
-    },
-    snake_bite: {
-      category: "Snake Bite",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🐍 Venomous Snake Bite — Emergency Anti-Venom Protocol",
-      struggling: "Look for fang marks, rapid spreading swelling, drooping eyelids (ptosis), dark urine.",
-      doNow: "Immobilize limb using splint/sling below heart level. Keep patient 100% still.",
-      steps: [
-        "Keep patient completely calm; physical movement speeds venom spread.",
-        "Remove rings, watch, shoes before limb swelling starts.",
-        "Gently rinse bite area with water (do not scrub).",
-        "Apply broad firm bandage if krait/cobra bite suspected.",
-        "Note snake features from safe distance (do NOT catch snake).",
-        "Transport to Anti-Snake Venom (ASV) equipped hospital."
-      ],
-      doNotDo: "❌ Do NOT cut wound or suck venom. ❌ Do NOT apply tight arterial tourniquet (causes limb loss). ❌ Do NOT apply ice.",
-      calmingScript: "🗣️ Bystanders: 'Stay completely still. Leg immobilized below heart level. Anti-venom hospital notified.'"
-    },
-    febrile_fit: {
-      category: "Pediatric Febrile Seizure",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "👶 High Fever Convulsion in Children — Pediatric Protocol",
-      struggling: "Child temp >102°F (38.9°C) with eye rolling, limb jerking, unresponsiveness.",
-      doNow: "Lay child on side on soft surface. Remove heavy blankets & warm clothes.",
-      steps: [
-        "Tepid sponging: Wipe chest, arms, legs with lukewarm water (NOT ice).",
-        "Loosen all neck and chest clothing.",
-        "Time the convulsion duration.",
-        "Ensure mouth is clear of saliva.",
-        "Give Paracetamol syrup/suppository ONLY after child is fully alert.",
-        "Transport to Pediatric ER for fever evaluation."
-      ],
-      doNotDo: "❌ Do NOT put child in cold ice bath (causes shivering & core temp spike). ❌ Do NOT put anything in mouth.",
-      calmingScript: "🗣️ Bystanders: 'Febrile seizures usually pass in 2 mins. Tepid lukewarm water cooling child down.'"
-    },
-    burns: {
-      category: "Severe Burns",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "🔥 Severe Thermal / Chemical Burn Protocol",
-      struggling: "Assess burn depth, skin blistering, facial/airway involvement, raspy voice.",
-      doNow: "Cool burn immediately under cool running tap water for 15-20 minutes.",
-      steps: [
-        "Remove heat source immediately.",
-        "Run cool water over burn for 20 minutes continuously.",
-        "Remove loose clothing around burn (do NOT pull stuck clothing).",
-        "Remove rings/watch before swelling starts.",
-        "Cover burn loosely with clean sterile plastic wrap or towel.",
-        "Transport to Burn Unit with IV fluid resuscitation."
-      ],
-      doNotDo: "❌ Do NOT apply ice or ice water. ❌ Do NOT apply toothpaste, butter, or oil. ❌ Do NOT pop blisters.",
-      calmingScript: "🗣️ Bystanders: 'Cool running water applied 20 mins. Covered loosely. Burn unit ready.'"
-    },
-    head_trauma: {
-      category: "Traumatic Head/Spinal Injury",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🪖 Traumatic Head & Spinal Injury — C-Spine Protocol",
-      struggling: "Check loss of consciousness, fluid from nose/ears, unequal pupils, spinal tenderness.",
-      doNow: "Manually stabilize head & neck in neutral position. Do NOT move head/neck.",
-      steps: [
-        "Kneel at patient head and hold head firmly with both hands.",
-        "Keep patient completely flat on back.",
-        "If vomiting occurs, Log-Roll with 3 helpers keeping spine aligned.",
-        "Apply neck collar if trained.",
-        "Apply gentle direct pressure to scalp bleeding.",
-        "Transport to Neuro Trauma Center with CT Scanner."
-      ],
-      doNotDo: "❌ Do NOT twist, bend, or move neck/spine. ❌ Do NOT remove motorcycle helmet unless breathing stops.",
-      calmingScript: "🗣️ Bystanders: 'Do not touch or move them! Holding head still. Trauma spine team en route.'"
-    },
-    choking: {
-      category: "Choking",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🥖 Choking / Foreign Body Airway Obstruction (Heimlich)",
-      struggling: "Patient clutching throat, unable to speak or breathe, face turning blue.",
-      doNow: "Give 5 sharp Back Blows between shoulder blades, then 5 Abdominal Thrusts (Heimlich).",
-      steps: [
-        "Stand behind patient and lean them slightly forward.",
-        "Deliver 5 firm back blows with heel of hand between shoulder blades.",
-        "Place fist above navel below ribcage; pull inward and upward 5 times.",
-        "Alternate 5 back blows and 5 Heimlich thrusts until object clears.",
-        "If patient collapses, begin CPR & check mouth for visible object before breaths.",
-        "For infants (<1 yr): 5 back slaps & 5 chest thrusts (2 fingers on sternum)."
-      ],
-      doNotDo: "❌ Do NOT perform blind finger sweeps in mouth. ❌ Do NOT give water while choking.",
-      calmingScript: "🗣️ Bystanders: 'Lean forward! Delivering abdominal thrusts now to dislodge object.'"
-    },
-    poisoning: {
-      category: "Poisoning / Overdose",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🧪 Poisoning / Chemical Ingestion / Overdose Triage",
-      struggling: "Locate chemical bottle, check pupil size, mouth chemical burns, altered consciousness.",
-      doNow: "Keep chemical container label for ER doctor. Place patient in Recovery Position.",
-      steps: [
-        "Identify chemical name, dose, and time of ingestion.",
-        "Flush skin/eyes with water for 15 mins if exposed.",
-        "Place unconscious patient on left side in Recovery Position.",
-        "Rinse mouth with water if corrosive swallowed (do NOT induce vomiting).",
-        "Call Poison Control / Emergency helpline.",
-        "Transport to ER with ICU Toxicological support."
-      ],
-      doNotDo: "❌ Do NOT induce vomiting (corrosives burn esophagus twice). ❌ Do NOT give raw eggs or vinegar.",
-      calmingScript: "🗣️ Bystanders: 'Chemical container secured for ER doctor. Patient in safe recovery position.'"
-    },
-    hypoglycemia: {
-      category: "Low Blood Sugar",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "🍬 Severe Hypoglycemia (Diabetic Low Sugar Crisis)",
-      struggling: "Assess cold sweating, shakiness, slurred speech, confusion, rapid heart rate.",
-      doNow: "Administer 15-20g simple fast sugar (fruit juice, sugar cubes, glucose powder) if alert.",
-      steps: [
-        "Measure blood sugar with glucometer if available (<70 mg/dL).",
-        "Give 15g simple sugar orally if conscious and swallowing safely.",
-        "Wait 15 mins and re-check blood glucose level.",
-        "Repeat with 15g sugar if glucose remains below 70 mg/dL.",
-        "Provide complex carb snack (sandwich, bread, milk) once alert.",
-        "If unconscious: Seek immediate IV Dextrose (D50W) at hospital."
-      ],
-      doNotDo: "❌ Do NOT pour liquids/sugar into mouth of unconscious or seizing patient. ❌ Do NOT give insulin.",
-      calmingScript: "🗣️ Bystanders: 'Drinking glucose water now. Sugar level rising. Shaking will stop in 5 mins.'"
-    },
-    heat_stroke: {
-      category: "Heat Stroke",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "☀️ Heat Stroke / Hyperthermia — Active Cooling Protocol",
-      struggling: "Body temp >104°F (40°C), delirium/confusion, hot red dry skin, severe dizziness.",
-      doNow: "Move to cool shade/AC room. Apply ice packs to groin, armpits, and neck immediately.",
-      steps: [
-        "Remove heavy clothing.",
-        "Apply ice packs / cold wet towels to neck, armpits, and groin.",
-        "Fan patient vigorously while spraying cool water on skin.",
-        "Give cold ORS water only if fully alert and conscious.",
-        "Lay patient flat with legs elevated slightly.",
-        "Transport to ER with IV fluid cooling protocol."
-      ],
-      doNotDo: "❌ Do NOT delay active cooling. ❌ Do NOT give caffeinated or alcoholic drinks.",
-      calmingScript: "🗣️ Bystanders: 'Ice packs placed on major neck/armpit arteries. Active cooling in progress.'"
-    },
-    fracture: {
-      category: "Bone Fracture",
-      esi: "ESI-3 MODERATE",
-      esiClass: "esi-blue",
-      title: "🦴 Fractures & Bone Dislocation — Immobilization Triage",
-      struggling: "Visible limb deformity, abnormal bone angle, open wound with exposed bone, extreme pain.",
-      doNow: "Splint and immobilize limb in position found using rolled cardboard/board.",
-      steps: [
-        "Control bleeding around wound with sterile dressing.",
-        "Apply rigid splint above and below fracture joint.",
-        "Secure splint gently with cloth ties (do NOT tie over fracture).",
-        "Check finger/toe color, pulse, and sensation every 15 mins.",
-        "Apply ice pack wrapped in towel to reduce swelling.",
-        "Transport to Orthopedic Trauma Facility."
-      ],
-      doNotDo: "❌ Do NOT attempt to push bone back into place. ❌ Do NOT massage injured limb.",
-      calmingScript: "🗣️ Bystanders: 'Limb splinted securely in place. Orthopedic trauma team notified.'"
-    },
-    childbirth: {
-      category: "Emergency Childbirth",
-      esi: "ESI-1 CRITICAL",
-      esiClass: "esi-red",
-      title: "🤱 Emergency Childbirth / Precipitous Labor Protocol",
-      struggling: "Contractions <2 mins apart, urge to push, baby head visible at vaginal opening (crowning).",
-      doNow: "Lay mother on back with knees bent & feet flat. Prepare clean towels & warm blankets.",
-      steps: [
-        "Do NOT hold baby's head back or stop delivery.",
-        "Support emerging baby head gently as it delivers (do NOT pull).",
-        "Wipe baby mouth & nose with clean cloth; rub back to stimulate crying.",
-        "Dry baby thoroughly & place skin-to-skin on mother's chest under warm blanket.",
-        "Do NOT cut or pull umbilical cord (leave attached until doctor arrives).",
-        "Allow placenta to deliver naturally; save in plastic bag for doctor inspection."
-      ],
-      doNotDo: "❌ Do NOT pull umbilical cord. ❌ Do NOT wash off white coating (vernix) from baby. ❌ Do NOT let mother go to toilet.",
-      calmingScript: "🗣️ Bystanders: 'Breathe smoothly through contractions. Baby head supported gently. Warm blankets ready.'"
-    },
-    general: {
-      category: "Emergency Triage",
-      esi: "ESI-2 URGENT",
-      esiClass: "esi-amber",
-      title: "🩺 Emergency Clinical Guidance & Triage Protocol",
-      struggling: "Check airway, breathing, pulse, and level of consciousness (AVPU scale).",
-      doNow: "Keep patient comfortable, warm, quiet, and seated or lying in safe recovery posture.",
-      steps: [
-        "Call emergency response line (108/102) immediately.",
-        "Check airway for obstructions and verify steady breathing.",
-        "Loosen tight collars, ties, belts, and chest clothing.",
-        "Keep patient calm; talk gently and explain help is on the way.",
-        "Monitor pulse rate and vital signs continuously.",
-        "Hospital bed soft-locked and GPS navigation route activated."
-      ],
-      doNotDo: "❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.",
-      calmingScript: "🗣️ Bystanders: 'Patient is safe and monitored. Navigation active. Hospital bed reserved.'"
+function selectNearestHospital() {
+  recomputeHospitals();
+  selectHospital(hospitals[0]);
+  isSearchActive=true;
+  document.getElementById('quick-cards').classList.add('hidden');
+}
+
+// ── Route Drawing (OSRM) ──────────────────────────────────
+async function drawRoute(lat1,lng1,lat2,lng2) {
+  if(routeLine){routeLine.remove();routeLine=null;}
+  try {
+    const res=await fetch(`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`,{signal:AbortSignal.timeout?AbortSignal.timeout(5000):undefined});
+    if(!res.ok)throw new Error();
+    const d=await res.json();
+    if(d.routes&&d.routes[0]) {
+      const coords=d.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+      const distKm=+(d.routes[0].distance/1000).toFixed(1);
+      const etaMins=Math.max(1,Math.round(d.routes[0].duration/60));
+      if(selectedHospital) {
+        selectedHospital={...selectedHospital,distance_km:distKm,eta_minutes:etaMins};
+        refreshDrawer();
+      }
+      routeLine=L.polyline(coords,{color:'#FF6B35',weight:5,opacity:.85,lineCap:'round',lineJoin:'round'}).addTo(map);
     }
+  } catch {
+    // Straight line fallback
+    routeLine=L.polyline([[lat1,lng1],[lat2,lng2]],{color:'#FF6B35',weight:4,opacity:.6,dashArray:'8 6'}).addTo(map);
+  }
+}
+
+// ── Drawer ────────────────────────────────────────────────
+function openDrawer(h) {
+  const drawer=document.getElementById('drawer');
+  drawer.classList.remove('hidden');
+  drawerExpanded=false;
+  drawer.classList.remove('expanded');
+  renderDrawer(h);
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.add('hidden');
+  selectedHospital=null;
+  if(routeLine){routeLine.remove();routeLine=null;}
+}
+
+function toggleDrawerExpand() {
+  drawerExpanded=!drawerExpanded;
+  document.getElementById('drawer').classList.toggle('expanded',drawerExpanded);
+}
+
+function refreshDrawer() {
+  if(selectedHospital) renderDrawer(selectedHospital);
+}
+
+function renderDrawer(h) {
+  const scroll=document.getElementById('drawer-scroll');
+  const ward=h.wards.find(w=>w.ward_code===classification.ward)||h.wards[0];
+  const totalBeds=h.wards.reduce((a,w)=>a+w.available_now,0);
+  const govtH=hospitals.find(x=>x.is_govt), privH=hospitals.find(x=>!x.is_govt);
+
+  // severity badge
+  const sev=classification.severity||'YELLOW';
+  const sevCls=sev==='RED'?'badge-red':sev==='GREEN'?'badge-green':'badge-yellow';
+  const sevLabel=sev==='RED'?'🔴 RED ESI-1':sev==='GREEN'?'🟢 GREEN':'🟡 YELLOW ESI-2';
+
+  // Hold card
+  let holdHTML='';
+  if(activeHold&&activeHold.hospital_id===h.id) {
+    const mm=String(Math.floor(activeHold.seconds_left/60)).padStart(2,'0');
+    const ss=String(activeHold.seconds_left%60).padStart(2,'0');
+    const otpDigits=activeHold.otp_code.split('').map(c=>`<div class="otp-digit">${c}</div>`).join('');
+    holdHTML=`
+    <div class="hold-active-card">
+      <div class="hold-card-top">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="hold-pulse-dot"></div>
+          <div>
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--green)">15-MIN GPS SOFT LOCK ACTIVE</div>
+            <div style="font-size:10px;color:var(--text-muted)">Ward: ${activeHold.ward_label} • Bed Reserved</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="hold-timer">${mm}:${ss}</div>
+          <div class="hold-gps-tag">GPS TRACKED</div>
+        </div>
+      </div>
+      <div class="otp-display">
+        <div class="otp-label-block">
+          <div class="otp-label">Gate Check-In Code (OTP)</div>
+          <div class="otp-hint">Show to ER Nurse upon arrival</div>
+        </div>
+        <div class="otp-digits">
+          ${otpDigits}
+          <button class="otp-copy-btn" onclick="copyOtp('${activeHold.otp_code}')" title="Copy OTP">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Wards breakdown
+  const wardsHTML=h.wards.map(w=>`
+    <div class="ward-row">
+      <div><div class="ward-row-name">${w.label}</div><div class="ward-row-meta">Staffed: ${w.total_staffed} | Physical: ${w.total_physical}</div></div>
+      <div style="text-align:right">
+        <div class="ward-row-free ${w.available_now>0?'has-beds':'no-beds'}">${w.available_now} Free</div>
+        <div style="font-size:9px;color:var(--text-muted)">${w.held_now} Held</div>
+      </div>
+    </div>`).join('');
+
+  scroll.innerHTML=`
+    <!-- Header -->
+    <div class="dr-header">
+      <div>
+        <div class="dr-name">${h.short_name||h.name}</div>
+        <div class="dr-corridor">${h.corridor_name||''}</div>
+      </div>
+      <div class="dr-pills">
+        <span class="dr-pill dr-pill-eta">⚡ ${h.eta_minutes} MIN</span>
+        <span class="dr-pill dr-pill-dist">${h.distance_km} KM</span>
+        <button class="dr-close-btn" onclick="closeDrawer()">✕</button>
+      </div>
+    </div>
+
+    <!-- GOVT / PRIVATE Tabs -->
+    ${(govtH||privH)?`<div class="dr-tabs">
+      ${govtH?`<div class="dr-tab ${!h.is_govt?'':'active-govt'}" onclick="selectHospital(window.HMAP['${govtH.id}'])">
+        🏛️ GOVT (${govtH.eta_minutes}M)<span class="dr-tag">${govtH.is_govt?'FREE':''}</span>
+      </div>`:''}
+      ${privH?`<div class="dr-tab ${h.is_govt?'':'active-private'}" onclick="selectHospital(window.HMAP['${privH.id}'])">
+        🏥 PRIVATE (${privH.eta_minutes}M)
+      </div>`:''}
+    </div>`:''}
+
+    <!-- Tags -->
+    <div class="dr-tags">
+      <span class="badge ${sevCls}">${sevLabel}</span>
+      ${h.is_govt?'<span class="badge badge-green">GOVT / FREE</span>':'<span class="badge badge-orange">PRIVATE ER</span>'}
+      ${h.is_trauma?'<span class="badge badge-blue">TRAUMA CENTER</span>':''}
+      ${h.has_cath?'<span class="badge badge-gray">CATH LAB</span>':''}
+      <span class="badge badge-orange">${ward.label}: ${ward.available_now} Beds</span>
+    </div>
+
+    ${holdHTML}
+
+    <!-- Book / Action Buttons -->
+    ${activeHold&&activeHold.hospital_id===h.id?`
+    <div class="action-row">
+      <button class="action-btn ambulance" onclick="callAmbulance()">🚑 AMBULANCE (108)</button>
+      <button class="action-btn call" onclick="callHospital('${h.phone}')">📞 CALL ER</button>
+    </div>
+    <div class="action-row">
+      <button class="action-btn release" onclick="cancelHold()" style="flex:none;width:100%">🔓 RELEASE 15-MIN HOLD</button>
+    </div>`:`
+    <button class="book-btn" onclick="bookSlot()">🔒 BOOK MY SLOT AND START →</button>
+    <div class="action-row">
+      <button class="action-btn ambulance" onclick="callAmbulance()">🚑 AMBULANCE (108)</button>
+      <button class="action-btn call" onclick="callHospital('${h.phone}')">📞 CALL HOSPITAL</button>
+    </div>`}
+
+    <!-- Protocol / AI Triage Button -->
+    <button class="protocol-btn" onclick="openProtocol()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><path d="M12 3a9 9 0 1 0 0 18A9 9 0 0 0 12 3z"/></svg>
+      FULL PROTOCOL & AI TRIAGE ASSESSMENT →
+    </button>
+
+    <!-- Clinical Assessment (expanded) -->
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+        Simple AI Clinical Assessment
+      </div>
+      <span class="triage-live-tag">LIVE TRIAGE</span>
+    </div>
+    <div class="triage-card">
+      <div class="triage-title">${classification.keywords?classification.keywords.join(' • '):'General Emergency'}</div>
+      <div class="triage-body">${classification.explanation||'Clinical symptoms require urgent assessment.'}</div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val ${ward.available_now>0?'green':'orange'}">${ward.available_now}</div><div class="stat-label">${ward.label}</div></div>
+      <div class="stat-card"><div class="stat-val green">${totalBeds}</div><div class="stat-label">Total Free</div></div>
+      <div class="stat-card"><div class="stat-val">${h.is_trauma?'Level-1':'Civic'}</div><div class="stat-label">Trauma Level</div></div>
+    </div>
+
+    <!-- Ward Breakdown -->
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span class="section-title" style="font-size:10px">WARD CAPACITY BREAKDOWN</span>
+      <span style="font-size:9px;font-weight:700;color:var(--saffron)">LIVE TELEMETRY</span>
+    </div>
+    <div class="ward-breakdown">
+      <div class="ward-breakdown-header"><span>Ward</span><span>Free / Held</span></div>
+      ${wardsHTML}
+    </div>
+
+    <div style="font-size:10px;color:var(--text-muted);text-align:center;padding:8px 0">
+      Why ${h.short_name}? Confirmed ${ward.available_now} staffed bed(s) in ${ward.label}. ETA is only ${h.eta_minutes} min (${h.distance_km} km).
+    </div>
+  `;
+
+  // Map HMAP for tab clicks
+  window.HMAP={};
+  hospitals.forEach(x=>window.HMAP[x.id]=x);
+}
+
+// ── Hold Management ──────────────────────────────────────
+function bookSlot() {
+  if(!selectedHospital)return;
+  const ward=selectedHospital.wards.find(w=>w.ward_code===classification.ward)||selectedHospital.wards[0];
+  if(!ward||ward.available_now<=0){alert('No beds available in '+ward.label+'. Please choose another hospital.');return;}
+
+  ward.available_now=Math.max(0,ward.available_now-1);
+  ward.held_now=(ward.held_now||0)+1;
+
+  const otp=String(Math.floor(1000+Math.random()*9000));
+  activeHold={
+    hold_id:'hold_'+Date.now(),
+    hospital_id:selectedHospital.id,
+    hospital_name:selectedHospital.name,
+    ward_code:ward.ward_code,
+    ward_label:ward.label,
+    otp_code:otp,
+    seconds_left:900,
+    total_seconds:900,
+    status:'ACTIVE'
   };
 
-  let currentSearchQuery = '';
+  document.getElementById('hold-banner').classList.remove('hidden');
+  document.getElementById('hb-hosp-name').textContent=selectedHospital.short_name+' — '+ward.label;
+  document.getElementById('hb-otp').textContent=otp;
 
-  function getClinicalGuidance(query) {
-    if (!query) return CLINICAL_DATABASE.general;
-    const q = query.toLowerCase();
+  startHoldTimer();
+  renderDrawer(selectedHospital);
+  drawerExpanded=true;
+  document.getElementById('drawer').classList.add('expanded');
 
-    if (q.includes('cpr') || q.includes('cardiac arrest') || q.includes('no pulse') || q.includes('heart stopped') || q.includes('collapsed') || q.includes('unresponsive') || q.includes('কার্ডিয়াক') || q.includes('হার্ট বন্ধ') || q.includes('পালস নেই') || q.includes('cpr dorkar') || q.includes('heart bandho')) {
-      return CLINICAL_DATABASE.cardiac_arrest;
-    }
-    if (q.includes('chest') || q.includes('heart') || q.includes('angina') || q.includes('coronary') || q.includes('buke') || q.includes('বুকে') || q.includes('ব্যথা') || q.includes('বুক') || q.includes('হার্ট') || q.includes('buke betha') || q.includes('seene me dard') || q.includes('sine me dard') || q.includes('dil ka daura') || q.includes('सीने में दर्द')) {
-      return CLINICAL_DATABASE.chest_pain;
-    }
-    if (q.includes('stroke') || q.includes('paralysis') || q.includes('fast') || q.includes('slur') || q.includes('droop') || q.includes('numb') || q.includes('পক্ষাঘাত') || q.includes('প্যারালাইসিস') || q.includes('মুখ বেকে') || q.includes('pokkhaghat') || q.includes('mukh beke')) {
-      return CLINICAL_DATABASE.stroke;
-    }
-    if (q.includes('bleed') || q.includes('blood') || q.includes('cut') || q.includes('stab') || q.includes('wound') || q.includes('roktopat') || q.includes('রক্ত') || q.includes('রক্তপাত') || q.includes('কাটা') || q.includes('ropto') || q.includes('khun') || q.includes('khoon') || q.includes('खून')) {
-      return CLINICAL_DATABASE.bleeding;
-    }
-    if (q.includes('breath') || q.includes('asthma') || q.includes('wheez') || q.includes('shwas') || q.includes('respiratory') || q.includes('suffocat') || q.includes('শ্বাসকষ্ট') || q.includes('হাঁপানি') || q.includes('শ্বাস') || q.includes('shwas koshto') || q.includes('saans') || q.includes('sans') || q.includes('सांस')) {
-      return CLINICAL_DATABASE.breathing;
-    }
-    if (q.includes('allerg') || q.includes('anaphylax') || q.includes('hives') || q.includes('bee') || q.includes('swoll') || q.includes('এলার্জি') || q.includes('মৌমাছি') || q.includes('allergy')) {
-      return CLINICAL_DATABASE.anaphylaxis;
-    }
-    if (q.includes('seiz') || q.includes('fit') || q.includes('epilep') || q.includes('convuls') || q.includes('mirgi') || q.includes('ফিট') || q.includes('খিঁচুনি') || q.includes('মীরগী') || q.includes('khichuni') || q.includes('fit lagche')) {
-      return CLINICAL_DATABASE.seizure;
-    }
-    if (q.includes('unconscious') || q.includes('faint') || q.includes('pass out') || q.includes('blackout') || q.includes('agyan') || q.includes('অজ্ঞান') || q.includes('অচেতন') || q.includes('বেহুঁশ') || q.includes('behosh') || q.includes('acheton') || q.includes('बेहोश')) {
-      return CLINICAL_DATABASE.unconscious;
-    }
-    if (q.includes('snake') || q.includes('bite') || q.includes('viper') || q.includes('cobra') || q.includes('saap') || q.includes('সাপ') || q.includes('সাপের কামড়') || q.includes('saap keteche') || q.includes('saamp') || q.includes('सांप')) {
-      return CLINICAL_DATABASE.snake_bite;
-    }
-    if (q.includes('baby') || q.includes('child') || q.includes('kid') || q.includes('febrile') || q.includes('bacha jwar') || q.includes('বাচ্চার জ্বর') || q.includes('জ্বর') || q.includes('bukhar') || q.includes('jwar') || q.includes('jwor') || q.includes('बुखार')) {
-      return CLINICAL_DATABASE.febrile_fit;
-    }
-    if (q.includes('burn') || q.includes('fire') || q.includes('scald') || q.includes('acid') || q.includes('agun') || q.includes('আগুন') || q.includes('পুড়ে গেছে') || q.includes('pure geche') || q.includes('jalon')) {
-      return CLINICAL_DATABASE.burns;
-    }
-    if (q.includes('head') || q.includes('spine') || q.includes('neck') || q.includes('skull') || q.includes('accident') || q.includes('মাথায় আঘাত') || q.includes('অ্যাকসিডেন্ট') || q.includes('mathay aghat')) {
-      return CLINICAL_DATABASE.head_trauma;
-    }
-    if (q.includes('chok') || q.includes('throat') || q.includes('stuck') || q.includes('heimlich') || q.includes('atkecche') || q.includes('গলায় আটকে') || q.includes('golay atke')) {
-      return CLINICAL_DATABASE.choking;
-    }
-    if (q.includes('poison') || q.includes('toxic') || q.includes('chemical') || q.includes('overdose') || q.includes('vish') || q.includes('বিষ') || q.includes('bish') || q.includes('zahar')) {
-      return CLINICAL_DATABASE.poisoning;
-    }
-    if (q.includes('sugar') || q.includes('diabet') || q.includes('hypoglycem') || q.includes('insulin') || q.includes('shaky') || q.includes('সুগার') || q.includes('ডায়াবেটিস') || q.includes('sugar kam')) {
-      return CLINICAL_DATABASE.hypoglycemia;
-    }
-    if (q.includes('heat') || q.includes('sun stroke') || q.includes('hypertherm') || q.includes('gormer') || q.includes('সান স্ট্রোক') || q.includes('গরম') || q.includes('gormi')) {
-      return CLINICAL_DATABASE.heat_stroke;
-    }
-    if (q.includes('fracture') || q.includes('bone') || q.includes('dislocat') || q.includes('ankle') || q.includes('bhengeche') || q.includes('হাড় ভেঙে') || q.includes('হাত ভাঙা') || q.includes('har bhenge') || q.includes('haddi')) {
-      return CLINICAL_DATABASE.fracture;
-    }
-    if (q.includes('labor') || q.includes('pregnant') || q.includes('deliver') || q.includes('birth') || q.includes('hocche') || q.includes('প্রসব') || q.includes('গর্ভবতী') || q.includes('prosob') || q.includes('delivery')) {
-      return CLINICAL_DATABASE.childbirth;
-    }
+  // Also call backend if available
+  fetch('/api/holds/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hospital_id:selectedHospital.id,ward_code:ward.ward_code,hold_type:'CITIZEN',severity:classification.severity||'YELLOW',phone:'9999999999'})}).catch(()=>{});
+}
 
-    return CLINICAL_DATABASE.general;
+function startHoldTimer() {
+  if(holdTimer)clearInterval(holdTimer);
+  holdTimer=setInterval(()=>{
+    if(!activeHold){clearInterval(holdTimer);return;}
+    activeHold.seconds_left--;
+    if(activeHold.seconds_left<=0){clearInterval(holdTimer);releaseHoldInventory();activeHold=null;document.getElementById('hold-banner').classList.add('hidden');if(selectedHospital)renderDrawer(selectedHospital);}
+    else {
+      // Update timer in drawer if expanded
+      const timerEl=document.querySelector('.hold-timer');
+      if(timerEl){const mm=String(Math.floor(activeHold.seconds_left/60)).padStart(2,'0');const ss=String(activeHold.seconds_left%60).padStart(2,'0');timerEl.textContent=`${mm}:${ss}`;}
+    }
+  },1000);
+}
+
+function cancelHold() {
+  if(holdTimer)clearInterval(holdTimer);
+  releaseHoldInventory();
+  activeHold=null;
+  document.getElementById('hold-banner').classList.add('hidden');
+  if(selectedHospital)renderDrawer(selectedHospital);
+}
+
+function releaseHoldInventory() {
+  if(!activeHold)return;
+  const h=hospitals.find(x=>x.id===activeHold.hospital_id);
+  if(h){const w=h.wards.find(x=>x.ward_code===activeHold.ward_code);if(w){w.available_now++;w.held_now=Math.max(0,(w.held_now||0)-1);}}
+}
+
+function copyOtp(otp) {
+  navigator.clipboard?.writeText(otp).then(()=>alert('OTP '+otp+' copied!')).catch(()=>{});
+}
+
+// ── Protocol Sheet ────────────────────────────────────────
+function openProtocol() {
+  if(!selectedHospital)return;
+  const sheet=document.getElementById('protocol-sheet');
+  sheet.classList.remove('hidden');
+  const proto=PROTOCOLS[classification.protocol||'cardiac']||PROTOCOLS.cardiac;
+  const sev=classification.severity||'YELLOW';
+  const sevCls=sev==='RED'?'red':sev==='GREEN'?'green':'yellow';
+  const govtH=hospitals.find(x=>x.is_govt), privH=hospitals.find(x=>!x.is_govt);
+  const stepsHTML=(proto.steps||[]).map((s,i)=>`<li class="proto-step"><span class="proto-step-num">${i+1}</span><span class="proto-step-text">${s}</span></li>`).join('');
+  sheet.innerHTML=`
+    <div class="proto-header">
+      <button class="proto-close" onclick="closeProtocol()">✕</button>
+      <div class="proto-title">${proto.name}</div>
+      <span class="proto-severity ${sevCls}">${sev} • ESI-1</span>
+      <button onclick="openProtocol()" style="padding:4px 10px;border-radius:8px;border:none;background:var(--surface2);cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share
+      </button>
+    </div>
+    <div class="proto-body">
+      <div style="margin-bottom:14px">
+        <div style="font-size:16px;font-weight:900;color:var(--text-primary);margin-bottom:6px">${proto.title}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="badge badge-orange">🏥 Target Ward: ${proto.ward_label}</span>
+          <span class="badge badge-gray">Category: Emergency Medicine</span>
+        </div>
+      </div>
+
+      <!-- Hospital Options -->
+      ${(govtH||privH)?`
+      <div class="proto-section">
+        <div class="proto-section-title">Route Patient Immediately — <span style="color:var(--saffron)">2 Options</span></div>
+        <div class="proto-hospitals">
+          ${govtH?`<div class="proto-hosp-card govt-card">
+            <div class="proto-hosp-tag" style="color:var(--green)">🏛️ GOVT HOSPITAL ${govtH.eta_minutes}m</div>
+            <div class="proto-hosp-name">${govtH.short_name}</div>
+            <div class="proto-hosp-meta">${govtH.distance_km} km away</div>
+            <button class="proto-select-btn govt" onclick="selectHospital(window.HMAP['${govtH.id}']);closeProtocol()">SELECT →</button>
+          </div>`:''}
+          ${privH?`<div class="proto-hosp-card">
+            <div class="proto-hosp-tag" style="color:var(--saffron)">🏥 PRIVATE HOSPITAL ${privH.eta_minutes}m</div>
+            <div class="proto-hosp-name">${privH.short_name}</div>
+            <div class="proto-hosp-meta">${privH.distance_km} km away</div>
+            <button class="proto-select-btn private" onclick="selectHospital(window.HMAP['${privH.id}']);closeProtocol()">SELECT →</button>
+          </div>`:''}
+        </div>
+      </div>`:''}
+
+      <!-- Section 1: Overview -->
+      <div class="proto-section">
+        <div class="proto-section-title">1. What Kind of Problem Are We Facing? (Overview)</div>
+        <div class="proto-section-box"><p>${classification.explanation||proto.title}</p></div>
+      </div>
+
+      <!-- Section 2: Do Now -->
+      <div class="proto-section">
+        <div class="proto-section-title">2. Do Immediately</div>
+        <div class="proto-do-now">
+          <div class="proto-do-now-label">Action Required NOW</div>
+          <div class="proto-do-now-text">${proto.do_now}</div>
+        </div>
+        <ul class="proto-steps-list">
+          ${stepsHTML}
+        </ul>
+      </div>
+
+      <!-- Book CTA -->
+      ${selectedHospital?`<button class="proto-book-btn" onclick="closeProtocol();bookSlot()">
+        ${activeHold?'🔒 SLOT ALREADY BOOKED':'🔒 BOOK MY SLOT AND START →'}
+      </button>`:''}
+    </div>
+  `;
+  window.HMAP={};hospitals.forEach(x=>window.HMAP[x.id]=x);
+}
+
+function closeProtocol() {
+  document.getElementById('protocol-sheet').classList.add('hidden');
+}
+
+// ── Location Modal ────────────────────────────────────────
+let suggestTimer=null, geocodeAbort=null;
+function openLocModal() {
+  document.getElementById('loc-modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('address-input').focus(),100);
+}
+function closeLocModal() {
+  document.getElementById('loc-modal').classList.add('hidden');
+  document.getElementById('suggestions').style.display='none';
+  document.getElementById('address-input').value='';
+}
+function useGPSAndClose() {
+  closeLocModal();
+  requestGPS();
+}
+
+const addrInput=document.getElementById('address-input');
+addrInput.addEventListener('input',e=>{
+  const v=e.target.value.trim();
+  document.getElementById('modal-set-btn').disabled=!v;
+  clearTimeout(suggestTimer);
+  if(v.length<2){document.getElementById('suggestions').style.display='none';return;}
+  document.getElementById('addr-searching').style.display='flex';
+  suggestTimer=setTimeout(()=>fetchSuggestions(v),300);
+});
+
+async function fetchSuggestions(q) {
+  try {
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=5&countrycodes=in`,{headers:{'Accept-Language':'en'}});
+    document.getElementById('addr-searching').style.display='none';
+    if(!res.ok)return;
+    const data=await res.json();
+    const box=document.getElementById('suggestions');
+    if(!data.length){box.style.display='none';return;}
+    box.innerHTML=data.map(item=>{
+      const parts=(item.display_name||'').split(',').map(s=>s.trim());
+      return`<div class="suggestion-item" onclick="applyCoords(${item.lat},${item.lon},'${encodeURIComponent(parts.slice(0,3).join(', '))}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <div><div class="suggestion-title">${parts.slice(0,2).join(', ')}</div><div class="suggestion-sub">${parts.slice(2,5).join(', ')}</div></div>
+      </div>`;
+    }).join('');
+    box.style.display='block';
+  } catch { document.getElementById('addr-searching').style.display='none'; }
+}
+
+function applyCoords(lat,lng,encodedAddr) {
+  userLat=+lat; userLng=+lng;
+  userAddress=decodeURIComponent(encodedAddr);
+  document.getElementById('loc-address').textContent=userAddress;
+  closeLocModal();
+  recomputeHospitals();
+  placeUserMarker();
+  placeHospitalMarkers();
+  updateQuickCards();
+  if(map)map.setView([userLat,userLng],16,{animate:true});
+  localStorage.setItem('pg_loc',JSON.stringify({lat:userLat,lng:userLng,addr:userAddress}));
+}
+
+async function geocodeInput() {
+  const q=document.getElementById('address-input').value.trim();
+  if(!q)return;
+  document.getElementById('modal-set-btn').textContent='Locating...';
+  try {
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,{headers:{'Accept-Language':'en'}});
+    const data=await res.json();
+    if(data.length) applyCoords(data[0].lat,data[0].lon,encodeURIComponent(data[0].display_name.split(',').slice(0,3).join(', ')));
+    else alert('Address not found. Try a more specific name.');
+  } catch { alert('Geocoding failed. Check internet connection.'); }
+  document.getElementById('modal-set-btn').textContent='Set Location';
+}
+
+// ── Quick Cards ───────────────────────────────────────────
+function updateQuickCards() {
+  recomputeHospitals();
+  const nearest=hospitals[0];
+  if(nearest){
+    document.getElementById('qc-nearest-beds').textContent=nearest.wards.reduce((a,w)=>a+w.available_now,0)+' beds free';
+    document.getElementById('qc-nearest-eta').textContent=nearest.eta_minutes+' min away';
   }
+}
 
-  /* ── State ── */
-  let allHospitals         = [];
-  let markers              = {};
-  let activeFilter         = 'all';
-  let activeBloodFilter    = null;
-  let userLat              = 22.5726; // Default Kolkata center
-  let userLng              = 88.3639;
-  let userMarker           = null;
-  let routePolyline        = null;
-  let activeTargetHospital = null;
-  let currentSheetState    = 'hidden'; // 'hidden', 'peek', 'expanded'
-  let activeHoldId         = null;
-  let holdHospital         = null;
+// ── Voice Input ───────────────────────────────────────────
+let recognition=null, isListening=false;
+(function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  recognition=new SR();
+  recognition.continuous=false;recognition.interimResults=false;recognition.lang='en-IN';
+  recognition.onstart=()=>{isListening=true;document.getElementById('mic-btn').classList.add('listening');};
+  recognition.onend=()=>{isListening=false;document.getElementById('mic-btn').classList.remove('listening');};
+  recognition.onerror=()=>{isListening=false;document.getElementById('mic-btn').classList.remove('listening');};
+  recognition.onresult=e=>{const t=e.results[0][0].transcript;if(t){searchInput.value=t;submitSearch();}};
+})();
 
-  /* ── Leaflet Map init (Clean Multi-Tier CDN Tiles — ZERO API Key Watermark!) ── */
-  let map = null;
-  let currentTileLayer = null;
-  const tileSources = [
-    { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'] },
-    { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c', 'd'] },
-    { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', subdomains: [] },
-    { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c', 'd'] }
-  ];
-  let currentTileIndex = 0;
+function toggleMic() {
+  if(!recognition){alert('Voice input supported in Chrome, Edge, Safari.');return;}
+  if(isListening){recognition.stop();}else{try{recognition.start();}catch{}}
+}
 
-  function loadTileLayerSource(index) {
-    if (!map || typeof L === 'undefined' || index >= tileSources.length) return;
-    if (currentTileLayer) {
-      try { map.removeLayer(currentTileLayer); } catch(e) {}
-    }
-    const src = tileSources[index];
-    const opts = { maxZoom: 19 };
-    if (src.subdomains && src.subdomains.length > 0) opts.subdomains = src.subdomains;
-    
-    currentTileLayer = L.tileLayer(src.url, opts).addTo(map);
+// ── Theme Toggle ──────────────────────────────────────────
+function toggleTheme() {
+  isDark=!isDark;
+  document.getElementById('app').setAttribute('data-theme',isDark?'dark':'light');
+  const icon=document.getElementById('theme-icon');
+  icon.innerHTML=isDark
+    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    :'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
 
-    currentTileLayer.on('tileerror', function() {
-      if (currentTileIndex === index && index + 1 < tileSources.length) {
-        currentTileIndex = index + 1;
-        console.warn(`Tile layer ${index} network warning, transitioning to fallback tier ${currentTileIndex}`);
-        loadTileLayerSource(currentTileIndex);
-      }
+// ── Call Helpers ──────────────────────────────────────────
+function callAmbulance(){window.location.href='tel:108';}
+function callHospital(phone){window.location.href='tel:'+phone.replace(/\s+/g,'');}
+
+// ── Restore Saved Location ────────────────────────────────
+(function restoreLocation(){
+  try{const s=localStorage.getItem('pg_loc');if(s){const d=JSON.parse(s);userLat=d.lat;userLng=d.lng;userAddress=d.addr;document.getElementById('loc-address').textContent=userAddress;}}catch{}
+})();
+
+// ── Boot ──────────────────────────────────────────────────
+recomputeHospitals();
+initMap();
+requestGPS();
+updateQuickCards();
+
+// Fetch from backend if available
+fetch('/api/facilities').then(r=>r.ok?r.json():null).then(data=>{
+  if(data&&Array.isArray(data)&&data.length){
+    // Merge backend beds into our hospital list
+    data.forEach(bh=>{
+      const local=hospitals.find(h=>h.id===bh.id||h.name===bh.name);
+      if(local&&bh.wards){local.wards=bh.wards;}
     });
+    updateQuickCards();
+    if(selectedHospital)renderDrawer(selectedHospital);
   }
-
-  if (typeof L !== 'undefined') {
-    try {
-      map = L.map('map', {
-        center: [userLat, userLng],
-        zoom: 13,
-        zoomControl: false,
-        attributionControl: false,
-      });
-
-      loadTileLayerSource(0);
-
-      // Force map layout recalculation to ensure tiles load seamlessly
-      setTimeout(() => { if (map) map.invalidateSize(); }, 100);
-      setTimeout(() => { if (map) map.invalidateSize(); }, 500);
-      setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
-      window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
-      window.addEventListener('load', () => { if (map) map.invalidateSize(); });
-      document.addEventListener('DOMContentLoaded', () => { if (map) map.invalidateSize(); });
-    } catch (err) {
-      console.warn('Leaflet map initialization warning:', err);
-    }
-  } else {
-    console.warn('Leaflet library (L) is not defined; map tile canvas will be dormant while search and cards operate.');
-  }
-
-  /* ── Initialize GPS Geolocation ── */
-  function initGPS() {
-    if (!map || typeof L === 'undefined') return;
-
-    const bluePulseIcon = L.divIcon({
-      className: '',
-      html: `<div style="position:relative; width:24px; height:24px;">
-               <div style="position:absolute; top:0; left:0; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #00f0ff, #0087ff); border:2.5px solid rgba(255,255,255,0.9); box-shadow:0 0 18px rgba(0,240,255,0.9), 0 0 36px rgba(0,240,255,0.5); z-index:2;"></div>
-               <div style="position:absolute; top:-10px; left:-10px; width:44px; height:44px; border-radius:50%; background:rgba(0,240,255,0.18); animation:ping-slow 2s cubic-bezier(0,0,0.2,1) infinite; z-index:1;"></div>
-               <div style="position:absolute; top:-18px; left:-18px; width:60px; height:60px; border-radius:50%; background:rgba(0,240,255,0.07); animation:ping-slow 2.6s cubic-bezier(0,0,0.2,1) 0.4s infinite; z-index:0;"></div>
-             </div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    });
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
-          if (!userMarker) {
-            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Your Current Location</b>", { autoClose: false });
-          } else {
-            userMarker.setLatLng([userLat, userLng]);
-          }
-          if (map) map.setView([userLat, userLng], 14);
-        },
-        (err) => {
-          if (!userMarker && map) {
-            userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-            userMarker.bindPopup("<b>📍 Kolkata Center</b>", { autoClose: false });
-          }
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
-  }
-
-  /* ── Draw OSRM Driving Route Line ── */
-  async function updateRouteToHospital(h) {
-    if (!h || !h.latitude || !h.longitude) return;
-    activeTargetHospital = h;
-
-    // Update sticky phone button
-    const hospCallBtn = document.getElementById('inline-call-hosp-btn');
-    if (hospCallBtn) {
-      hospCallBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
-    }
-
-    if (!map || typeof L === 'undefined') return;
-
-    // Hide all other markers so only target hospital pin and route line stand out clearly!
-    Object.keys(markers).forEach(hid => {
-      if (hid === h.id || (h.id && String(hid) === String(h.id))) {
-        if (markers[hid] && !map.hasLayer(markers[hid])) map.addLayer(markers[hid]);
-      } else {
-        if (markers[hid] && map.hasLayer(markers[hid])) map.removeLayer(markers[hid]);
-      }
-    });
-
-    if (routePolyline) {
-      map.removeLayer(routePolyline);
-      routePolyline = null;
-    }
-
-    try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${h.longitude},${h.latitude}?overview=full&geometries=geojson`;
-      const resp = await fetch(osrmUrl);
-      const data = await resp.json();
-
-      if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const roadCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-
-        routePolyline = L.polyline(roadCoords, {
-          color: '#00F0FF',
-          weight: 5,
-          opacity: 0.95,
-          lineCap: 'round',
-          lineJoin: 'round',
-          className: 'neon-route-path'
-        }).addTo(map);
-
-        map.fitBounds(routePolyline.getBounds(), { padding: [60, 60], animate: true, duration: 1 });
-        return;
-      }
-    } catch (err) {
-      console.warn('OSRM routing fallback:', err);
-    }
-
-    routePolyline = L.polyline([[userLat, userLng], [h.latitude, h.longitude]], {
-      color: '#00F0FF',
-      weight: 4,
-      dashArray: '10, 8',
-      opacity: 0.85
-    }).addTo(map);
-    map.fitBounds(routePolyline.getBounds(), { padding: [60, 60], animate: true, duration: 1 });
-  }
-
-  function makeIcon(color, name, distKm = '2.4', etaMin = '12', availBeds = 5, isSelected = false) {
-    if (typeof L === 'undefined') return null;
-    const shortName = name ? (name.split(' ').slice(0, 2).join(' ').substring(0, 14)) : 'HOSPITAL';
-    const borderStyle = isSelected ? 'background:#141414; border:2px solid #E2FF4D; color:#ffffff; box-shadow:0 0 20px rgba(226,255,77,0.6);' : 'background:rgba(24,24,24,0.95); border:1px solid #333333; color:#e2e8f0;';
-    const dotColor = availBeds > 0 ? '#00e676' : '#ff334b';
-    const stemColor = isSelected ? '#E2FF4D' : '#666666';
-
-    return L.divIcon({
-      className: 'custom-hospital-marker',
-      html: `
-        <div style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:120px; transition:transform 0.3s ease; ${isSelected ? 'transform:scale(1.1); z-index:30;' : 'opacity:0.95; z-index:10;'}">
-          <div style="position:relative; display:flex; align-items:center; justify-content:center; padding:3px 8px; border-radius:10px; font-family:var(--font-body); font-size:10px; font-weight:800; box-shadow:0 12px 36px rgba(0,0,0,0.9); ${borderStyle}">
-            <div style="display:flex; align-items:center; gap:5px;">
-              <span style="width:6px; height:6px; border-radius:50%; background:${dotColor}; box-shadow:0 0 8px ${dotColor};"></span>
-              <span style="max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:-0.2px; font-weight:900;">${shortName}</span>
-            </div>
-          </div>
-          <div style="margin-top:2px; padding:1.5px 6px; border-radius:6px; background:#101010; border:1px solid #2a2a2a; font-size:9px; font-weight:800; color:${isSelected ? '#E2FF4D' : '#94a3b8'}; white-space:nowrap;">
-            ${distKm} km • ${etaMin}
-          </div>
-          <div style="width:2px; height:8px; background:${stemColor};"></div>
-          <div style="width:5px; height:5px; border-radius:50%; background:${stemColor};"></div>
-        </div>
-      `,
-      iconSize: [120, 50],
-      iconAnchor: [60, 50],
-      popupAnchor: [0, -45],
-    });
-  }
-
-  function staffedAvail(ward) {
-    return Math.max(0, (ward.total || 0) - (ward.occupied || 0) - (ward.held || 0));
-  }
-
-  function totalAvail(h) {
-    let total = 0;
-    if (h.wards) Object.values(h.wards).forEach(w => { total += staffedAvail(w); });
-    return total;
-  }
-
-  function triggerStickyHold() {
-    const sorted = getSortedHospitals(allHospitals);
-    if (activeTargetHospital) {
-      openHoldModal(activeTargetHospital);
-    } else if (sorted && sorted.length > 0) {
-      openHoldModal(sorted[0]);
-    }
-  }
-
-  function getSortedHospitals(list) {
-    if (!list || !list.length) return [];
-    return [...list].sort((a, b) => {
-      const dA = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, a.latitude, a.longitude) : 999;
-      const dB = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, b.latitude, b.longitude) : 999;
-      return dA - dB;
-    });
-  }
-
-  /* ── Render Hospital Card (Matching User Photo Mockup) ── */
-  function renderCard(h) {
-    const userDist = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-    const distKm = typeof userDist === 'number' ? userDist.toFixed(1) : userDist;
-    const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
-    const totalA = totalAvail(h);
-
-    const guidance = getClinicalGuidance(currentSearchQuery);
-
-    const blood = h.blood_stock_summary || { "A+": "6u", "A-": "1u", "AB+": "3u", "AB-": "0u", "B+": "8u", "B-": "2u", "O+": "12u", "O-": "2u" };
-    const bloodTilesHtml = Object.entries(blood).map(([t, v]) => `
-      <div class="blood-unit-chip">
-        <span class="b-type">${t}</span>
-        <span class="b-vol">${v}</span>
-      </div>
-    `).join('');
-
-    const card = document.createElement('div');
-    card.className = 'gmaps-hosp-card';
-    card.dataset.id = h.id;
-    card.innerHTML = `
-      <!-- 0. TOP TAG ROW (Matching Image 1 EXACTLY) -->
-      <div class="hosp-peek-tag-row">
-        <span class="hosp-peek-tag-red">⚠️ Level-1 Trauma & Cardiac Bay Ready</span>
-        <span class="hosp-peek-tag-verified">TRAUMA VERIFIED</span>
-      </div>
-
-      <!-- 1. HOSPITAL TITLE & RATING BADGE -->
-      <div class="hosp-peek-title-row">
-        <div>
-          <div class="hosp-peek-name">${h.name} <span class="hosp-verified-check">✔</span></div>
-          <div class="hosp-peek-address">${h.address || 'VIP Rd Crossing • Dum Dum Medical Corridor'}</div>
-        </div>
-        <div class="hosp-rating-badge">⭐ 4.8</div>
-      </div>
-
-      <!-- 2. METRICS GRID (3 CARDS) -->
-      <div class="hosp-metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">DISTANCE</div>
-          <div class="metric-value">[ ${distKm} KM ]</div>
-          <div class="metric-sub">DIRECT RADIAL</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E2FF4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg> ETA</div>
-          <div class="metric-value">[ ${etaStr} ]</div>
-          <div class="metric-sub">• LIVE SYNCED</div>
-        </div>
-        <div class="metric-card metric-card-green">
-          <div class="metric-label">OPEN 24/7</div>
-          <div class="metric-value">🛏 ${totalA} Beds Available!</div>
-          <div class="metric-sub">ICU RESERVED</div>
-        </div>
-      </div>
-
-      <!-- 3. PRIMARY & SECONDARY ACTION BUTTONS (Matching Image 1 EXACTLY!) -->
-      <div class="gmaps-action-row" style="margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
-        <button class="sticky-book-btn" onclick="openHoldModal(allHospitals.find(item => String(item.id) === '${h.id}') || activeTargetHospital)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-black"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>BOOK MY SLOT AND START <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block ml-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-        </button>
-        <div class="sticky-call-row">
-          <a class="sticky-amb-btn" href="tel:108">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-[#ff334b]"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-3-4h-5v10h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
-            <span>Ambulance (108)</span>
-          </a>
-          <a class="sticky-hosp-btn" href="tel:${h.emergency_phone || h.phone || '102'}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-white"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span>Call Hospital</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- 4. EXPANDED CLINICAL PROTOCOL & GUIDANCE (Visible when scrolling down) -->
-      <!-- Red Priority Banner -->
-      <div class="photo-esi-banner" style="margin-top: 14px;">
-        🚨 ESI-1 CRITICAL PRIORITY (IMMEDIATE CARDIAC ICU TRIAGE)
-      </div>
-
-      <!-- Headline Title & Action Code & TTS Listen Button -->
-      <div class="photo-headline-box">
-        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px;">
-          <div class="photo-main-title">${guidance.title || '❤️ Severe Chest Pain / Heart Attack'}</div>
-          <button class="tts-speak-btn" onclick="toggleTTSGuidance('${h.id}')" title="Listen to Emergency Protocol Out Loud">
-            <span class="tts-icon">🔊</span><span class="tts-text">LISTEN</span>
-          </button>
-        </div>
-        <div class="photo-action-code">CLINICAL ACTION PRIORITY CODE: ACS-STEMI-STAT</div>
-      </div>
-
-      <!-- CHECK PATIENT STATUS 2x2 Grid -->
-      <div class="photo-status-box">
-        <div class="photo-box-header">
-          <span>🔍 CHECK PATIENT STATUS</span>
-          <span class="photo-tag-scan">RAPID SCAN</span>
-        </div>
-        <div class="photo-status-grid">
-          <div class="photo-status-card"><span>🛑</span> Crushing jaw/arm pain</div>
-          <div class="photo-status-card"><span>🫁</span> Severe breathlessness</div>
-          <div class="photo-status-card"><span>💧</span> Cold diaphoresis (sweat)</div>
-          <div class="photo-status-card"><span>⚠️</span> Sudden dizziness</div>
-        </div>
-      </div>
-
-      <!-- IMMEDIATE ACTION Box -->
-      <div class="photo-action-box">
-        <div class="photo-box-header">
-          <span>⚡ IMMEDIATE ACTION: SEMI-FOWLER 45° POSITION</span>
-          <span class="photo-tag-stat">STAT</span>
-        </div>
-        <div class="photo-action-content">
-          <div class="photo-angle-box">
-            <div style="font-size:1.15rem; font-weight:900; color:#00FF87; line-height:1;">45°</div>
-            <div style="font-size:0.6rem; color:#94a3b8; font-weight:700;">ANGLE</div>
-          </div>
-          <div>
-            <div style="font-weight:800; color:#ffffff; font-size:0.92rem;">Elevate Torso with Bent Knees</div>
-            <div style="font-size:0.78rem; color:#94a3b8; line-height:1.35; margin-top:3px;">
-              ${guidance.doNow || 'Seat patient upright leaning back at 45° with bent knees. This minimizes cardiac workload and eases thoracic congestion instantly.'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- EMERGENCY PROTOCOL STEPS List -->
-      <div class="photo-protocol-section">
-        <div class="photo-protocol-header">
-          <span>⚫ EMERGENCY PROTOCOL STEPS</span>
-          <span style="color:#00F0FF; font-size:0.75rem; font-weight:700;">${guidance.steps ? guidance.steps.length : 6} CLINICAL POINTS</span>
-        </div>
-        <div class="photo-steps-list">
-          ${(guidance.steps || []).map((step, idx) => `
-            <div class="photo-step-card">
-              <span class="photo-step-num">${idx + 1}.</span>
-              <span>${step}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- CRITICAL DO NOT DOs -->
-      <div class="photo-donts-box">
-        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-          <span>⚠️</span> CRITICAL DO NOT DOs
-        </div>
-        <div style="font-size:0.78rem; color:#fda4af; margin-top:5px; line-height:1.4;">
-          ${guidance.doNotDo || '❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.'}
-        </div>
-      </div>
-
-      <!-- Bystander Calming Script -->
-      <div class="photo-calming-box">
-        <div style="font-weight:800; color:#38bdf8; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-          <span>🧘</span> Bystander Calming & De-escalation Script
-        </div>
-        <div style="font-size:0.78rem; color:#93c5fd; font-style:italic; margin-top:5px; line-height:1.4;">
-          ${guidance.calmingScript || '🗣️ Bystanders: \'Patient is safe and monitored. Navigation active. Hospital bed reserved.\''}
-        </div>
-      </div>
-
-      <!-- Live Blood Stock Available -->
-      <div class="photo-blood-box">
-        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <span>🩸</span> Live Blood Stock Available:
-        </div>
-        <div class="photo-blood-grid">
-          ${bloodTilesHtml}
-        </div>
-      </div>
-    `;0FF; font-size:0.75rem; font-weight:700;">${guidance.steps ? guidance.steps.length : 6} CLINICAL POINTS</span>
-        </div>
-        <div class="photo-steps-list">
-          ${(guidance.steps || []).map((step, idx) => `
-            <div class="photo-step-card">
-              <span class="photo-step-num">${idx + 1}.</span>
-              <span>${step}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- 7. CRITICAL DO NOT DOs -->
-      <div class="photo-donts-box">
-        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-          <span>⚠️</span> CRITICAL DO NOT DOs
-        </div>
-        <div style="font-size:0.78rem; color:#fda4af; margin-top:5px; line-height:1.4;">
-          ${guidance.doNotDo || '❌ Do NOT leave patient alone. ❌ Do NOT give food or drinks if unalert.'}
-        </div>
-      </div>
-
-      <!-- 8. Bystander Calming Script -->
-      <div class="photo-calming-box">
-        <div style="font-weight:800; color:#38bdf8; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-          <span>🧘</span> Bystander Calming & De-escalation Script
-        </div>
-        <div style="font-size:0.78rem; color:#93c5fd; font-style:italic; margin-top:5px; line-height:1.4;">
-          ${guidance.calmingScript || '🗣️ Bystanders: \'Patient is safe and monitored. Navigation active. Hospital bed reserved.\''}
-        </div>
-      </div>
-
-      <!-- 9. Live Blood Stock Available -->
-      <div class="photo-blood-box">
-        <div style="font-weight:800; color:#f43f5e; font-size:0.85rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <span>🩸</span> Live Blood Stock Available:
-        </div>
-        <div class="photo-blood-grid">
-          ${bloodTilesHtml}
-        </div>
-      </div>
-    `;
-
-    return card;
-  }
-
-  function renderCards(hospitals) {
-    const col = document.getElementById('cards-col');
-    if (!col) return;
-    col.innerHTML = '';
-    hospitals.forEach(h => {
-      col.appendChild(renderCard(h));
-    });
-    if (window.lucide) {
-      setTimeout(() => {
-        try { window.lucide.createIcons(); } catch(e) {}
-      }, 50);
-    }
-  }
-
-  function placeMarkers(hospitals) {
-    if (map && typeof L !== 'undefined') {
-      Object.values(markers).forEach(m => {
-        if (m && map.hasLayer(m)) map.removeLayer(m);
-      });
-    }
-    markers = {};
-
-    if (!map || typeof L === 'undefined') return;
-
-    hospitals.forEach(h => {
-      if (!h.latitude || !h.longitude) return;
-      const userDist = (API.calcDistance && userLat && userLng) ? API.calcDistance(userLat, userLng, h.latitude, h.longitude) : 4.2;
-      const distKm = typeof userDist === 'number' ? userDist.toFixed(1) : userDist;
-      const etaStr = API.calcETA ? API.calcETA(distKm) : '15 Min';
-      const avail = totalAvail(h);
-      const isSelected = activeTargetHospital ? (String(activeTargetHospital.id) === String(h.id)) : false;
-
-      const icon = makeIcon(avail > 0 ? 'green' : 'red', h.name, distKm, etaStr, avail, isSelected);
-      if (!icon) return;
-      const marker = L.marker([h.latitude, h.longitude], { icon: icon }).addTo(map);
-
-      marker.bindPopup(`
-        <div style="font-family:'Inter',sans-serif; padding:4px;">
-          <div style="font-weight:800; font-size:0.95rem; color:#ffffff;">${h.name}</div>
-          <div style="font-size:0.80rem; color:#00e676; font-weight:700; margin-top:2px;">🛏 ${avail} Beds Available • ${distKm} km</div>
-        </div>
-      `);
-
-      markers[h.id] = marker;
-      marker.on('click', () => {
-        updateRouteToHospital(h);
-        showBottomSheet();
-      });
-    });
-  }
-
-  /* ── Transition & Drawer Controls (Drawings 1 -> 2 -> 3) ── */
-  function showBottomSheet() {
-    const sheet = document.getElementById('bottom-sheet');
-    const searchContainer = document.getElementById('search-container');
-    if (!sheet) return;
-
-    // Move search bar to top with animation (Drawing 2)
-    if (searchContainer) {
-      searchContainer.classList.remove('mode-bottom', 'mode-hidden');
-      searchContainer.classList.add('mode-top');
-    }
-
-    // Reveal bottom sheet (remove hidden and state-hidden!)
-    sheet.classList.remove('hidden', 'state-hidden', 'state-expanded');
-    sheet.classList.add('state-peek');
-    currentSheetState = 'peek';
-  }
-
-  function setSheetState(state) {
-    const sheet = document.getElementById('bottom-sheet');
-    const searchContainer = document.getElementById('search-container');
-    if (!sheet) return;
-
-    sheet.classList.remove('hidden', 'state-hidden', 'state-peek', 'state-expanded');
-    sheet.classList.add(`state-${state}`);
-    currentSheetState = state;
-
-    if (searchContainer) {
-      if (state === 'expanded') {
-        // Search Bar Hides Away when sliding high up (Drawing 3)
-        searchContainer.classList.remove('mode-top', 'mode-bottom');
-        searchContainer.classList.add('mode-hidden');
-      } else if (state === 'peek') {
-        searchContainer.classList.remove('mode-hidden', 'mode-bottom');
-        searchContainer.classList.add('mode-top');
-      } else {
-        searchContainer.classList.remove('mode-top', 'mode-hidden');
-        searchContainer.classList.add('mode-bottom');
-      }
-    }
-  }
-
-  /* ── 60fps Mobile Touch Drag & Scroll Controller (Google Maps Style) ── */
-  function initTouchDrawer() {
-    const handle = document.getElementById('bottom-sheet-handle');
-    const sheet = document.getElementById('bottom-sheet');
-    const sheetContent = document.getElementById('sheet-content');
-    if (!sheet || !sheetContent) return;
-
-    let touchStartY = 0;
-    let isTracking = false;
-
-    sheet.addEventListener('touchstart', (e) => {
-      touchStartY = e.touches[0].clientY;
-      isTracking = true;
-    }, { passive: true });
-
-    sheet.addEventListener('touchmove', (e) => {
-      if (!isTracking) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchStartY;
-
-      if (currentSheetState === 'peek') {
-        // Swiping UP anywhere on drawer expands to full height
-        if (deltaY < -12) {
-          setSheetState('expanded');
-          isTracking = false;
-        }
-      } else if (currentSheetState === 'expanded') {
-        // Swiping DOWN when scrolled to top collapses drawer to peek
-        if (sheetContent.scrollTop <= 0 && deltaY > 25) {
-          setSheetState('peek');
-          isTracking = false;
-        }
-      }
-    }, { passive: true });
-
-    sheet.addEventListener('touchend', () => {
-      isTracking = false;
-    }, { passive: true });
-
-    if (handle) {
-      handle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentSheetState === 'peek') {
-          setSheetState('expanded');
-        } else {
-          setSheetState('peek');
-        }
-      });
-    }
-  }
-
-  /* ── Open Hold Modal & Launch Google Maps Turn-by-Turn Navigation ── */
-  function openHoldModal(h) {
-    if (!h) {
-      const sorted = getSortedHospitals(allHospitals);
-      h = sorted[0];
-    }
-    if (!h) return;
-
-    holdHospital = h;
-    const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.latitude + ',' + h.longitude)}`;
-
-    try {
-      window.open(gmapsUrl, '_blank');
-    } catch (e) {
-      console.log("Could not launch Google Maps:", e);
-    }
-
-    API.createHold(h.id, 'general_ward', 'CITIZEN', '9999999999', 'YELLOW').then(res => {
-      activeHoldId = res.hold_id || 'HOLD-101';
-      const otp = res.otp_code || '9420';
-
-      // Update Top Active Hold Toast Banner
-      const toast = document.getElementById('active-hold-toast');
-      const toastHosp = document.getElementById('toast-hosp-name');
-      const toastOtp = document.getElementById('toast-otp-code');
-      const normalActions = document.getElementById('normal-booking-actions');
-      const activeActions = document.getElementById('active-hold-actions');
-
-      if (toastHosp) toastHosp.innerText = `${h.name}`;
-      if (toastOtp) toastOtp.innerText = otp;
-      if (toast) toast.classList.remove('hidden');
-
-      if (normalActions) normalActions.classList.add('hidden');
-      if (activeActions) activeActions.classList.remove('hidden');
-
-      // Update call ER button
-      const callErBtn = document.getElementById('call-er-btn');
-      if (callErBtn) callErBtn.href = `tel:${h.emergency_phone || h.phone || '102'}`;
-    }).catch(err => {
-      console.warn('Hold creation fallback:', err);
-    });
-  }
-
-  /* ── Release Hold ── */
-  function releaseActiveHold() {
-    if (activeHoldId && API.releaseHold) {
-      API.releaseHold(activeHoldId).catch(console.warn);
-    }
-    activeHoldId = null;
-
-    const toast = document.getElementById('active-hold-toast');
-    const normalActions = document.getElementById('normal-booking-actions');
-    const activeActions = document.getElementById('active-hold-actions');
-
-    if (toast) toast.classList.add('hidden');
-    if (normalActions) normalActions.classList.remove('hidden');
-    if (activeActions) activeActions.classList.add('hidden');
-
-    loadHospitals();
-  }
-
-  /* ── Government vs All Hospitals Filter Toggle ── */
-  let isGovtOnlyFilter = false;
-
-  function toggleGovtFilter() {
-    isGovtOnlyFilter = !isGovtOnlyFilter;
-    const btn = document.getElementById('drawer-govt-filter-btn');
-
-    let filtered = getSortedHospitals(allHospitals);
-    if (isGovtOnlyFilter) {
-      if (btn) {
-        btn.classList.add('bg-[#38bdf8]', 'text-black');
-        btn.classList.remove('bg-[#1e3455]', 'text-[#38bdf8]');
-        btn.innerText = '🏢 GOVT ONLY (ACTIVE)';
-      }
-      filtered = filtered.filter(h => h.is_government || (h.type && h.type.toLowerCase().includes('govt')) || (h.name && (h.name.toLowerCase().includes('govt') || h.name.toLowerCase().includes('medical college') || h.name.toLowerCase().includes('municipal'))));
-    } else {
-      if (btn) {
-        btn.classList.remove('bg-[#38bdf8]', 'text-black');
-        btn.classList.add('bg-[#1e3455]', 'text-[#38bdf8]');
-        btn.innerText = '🏢 GOVT VS NEAREST';
-      }
-    }
-
-    renderCards(filtered);
-    placeMarkers(filtered);
-  }
-
-  /* ── Triage Search ── */
-  async function runTriage(text) {
-    if (!text.trim()) return;
-    currentSearchQuery = text;
-
-    // Hide autocomplete dropdown
-    const drop = document.getElementById('symptom-autocomplete-dropdown');
-    if (drop) drop.classList.add('hidden');
-
-    try {
-      const result = await API.triage(text);
-      let filtered = getSortedHospitals(allHospitals);
-
-      if (result.recommended_ward) {
-        activeFilter = result.recommended_ward;
-      }
-
-      if (filtered.length > 0) {
-        const targetHosp = filtered[0];
-        updateRouteToHospital(targetHosp);
-        renderCards([targetHosp]);
-      } else {
-        renderCards(filtered);
-      }
-
-      showBottomSheet();
-    } catch (err) {
-      console.error('Triage error:', err);
-    }
-  }
-
-  /* ── Symptom Autocomplete Matcher ── */
-  function handleSymptomAutocomplete(query) {
-    const dropdown = document.getElementById('symptom-autocomplete-dropdown');
-    const list = document.getElementById('symptom-autocomplete-list');
-    const submitBtn = document.getElementById('symptom-submit-btn');
-    const clearBtn = document.getElementById('symptom-clear-btn');
-
-    if (!query || query.trim().length < 2) {
-      if (dropdown) dropdown.classList.add('hidden');
-      if (submitBtn) submitBtn.classList.add('hidden');
-      if (clearBtn) clearBtn.classList.add('hidden');
-      return;
-    }
-
-    if (submitBtn) submitBtn.classList.remove('hidden');
-    if (clearBtn) clearBtn.classList.remove('hidden');
-
-    const q = query.toLowerCase();
-    const matches = [];
-
-    Object.keys(CLINICAL_DATABASE).forEach(key => {
-      const db = CLINICAL_DATABASE[key];
-      if (db.category.toLowerCase().includes(q) || db.title.toLowerCase().includes(q) || db.struggling.toLowerCase().includes(q)) {
-        matches.push(db);
-      }
-    });
-
-    if (matches.length === 0) {
-      if (dropdown) dropdown.classList.add('hidden');
-      return;
-    }
-
-    if (list) {
-      list.innerHTML = matches.slice(0, 5).map(m => `
-        <div class="symptom-item px-3.5 py-2.5 hover:bg-[#1e3455]/60 cursor-pointer flex items-center justify-between transition-colors" data-title="${m.category}">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="text-sm flex-shrink-0">🩺</span>
-            <span class="text-xs font-bold text-white truncate">${m.category}</span>
-          </div>
-          <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${m.esiClass === 'esi-red' ? 'bg-[#ff334b]/20 text-[#ff334b] border border-[#ff334b]/40' : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/40'} flex-shrink-0">
-            ${m.esi.split(' ')[0]}
-          </span>
-        </div>
-      `).join('');
-
-      // Add click listeners to items
-      list.querySelectorAll('.symptom-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const title = item.dataset.title;
-          const input = document.getElementById('symptom-input');
-          if (input) input.value = title;
-          runTriage(title);
-        });
-      });
-
-      if (dropdown) dropdown.classList.remove('hidden');
-    }
-  }
-
-  /* ── Location Geocoding Search (Nominatim API) ── */
-  let geocodeTimeout = null;
-
-  function searchGeocodingAddress(query) {
-    const dropdown = document.getElementById('location-suggestions-dropdown');
-    if (!dropdown) return;
-
-    if (!query || query.trim().length < 3) {
-      dropdown.classList.add('hidden');
-      return;
-    }
-
-    clearTimeout(geocodeTimeout);
-    geocodeTimeout = setTimeout(async () => {
-      try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Kolkata')}&viewbox=88.2,22.4,88.6,22.7&bounded=1&limit=5`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-
-        if (data && data.length > 0) {
-          dropdown.innerHTML = data.map(place => `
-            <div class="geo-item px-3.5 py-2.5 hover:bg-[#222222] cursor-pointer flex items-center gap-2 text-xs text-gray-200 transition-colors" data-lat="${place.lat}" data-lon="${place.lon}" data-name="${place.display_name.split(',')[0]}">
-              <span class="text-[#E2FF4D]">📍</span>
-              <span class="truncate font-medium">${place.display_name}</span>
-            </div>
-          `).join('');
-
-          dropdown.querySelectorAll('.geo-item').forEach(item => {
-            item.addEventListener('click', () => {
-              const lat = parseFloat(item.dataset.lat);
-              const lon = parseFloat(item.dataset.lon);
-              const name = item.dataset.name;
-
-              setUserPosition(lat, lon, name);
-              const modal = document.getElementById('location-modal');
-              if (modal) modal.classList.add('hidden');
-              dropdown.classList.add('hidden');
-            });
-          });
-
-          dropdown.classList.remove('hidden');
-        } else {
-          dropdown.classList.add('hidden');
-        }
-      } catch (e) {
-        console.warn('Geocoding search failed:', e);
-      }
-    }, 300);
-  }
-
-  function setUserPosition(lat, lng, labelText = 'Selected Location') {
-    userLat = lat;
-    userLng = lng;
-
-    const textEl = document.getElementById('current-location-text');
-    if (textEl) textEl.innerText = labelText;
-
-    if (map && typeof L !== 'undefined') {
-      if (!userMarker) {
-        const bluePulseIcon = L.divIcon({
-          className: '',
-          html: `<div style="position:relative; width:24px; height:24px;">
-                   <div style="position:absolute; top:0; left:0; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #00f0ff, #0087ff); border:2.5px solid rgba(255,255,255,0.9); box-shadow:0 0 18px rgba(0,240,255,0.9), 0 0 36px rgba(0,240,255,0.5); z-index:2;"></div>
-                   <div style="position:absolute; top:-10px; left:-10px; width:44px; height:44px; border-radius:50%; background:rgba(0,240,255,0.18); animation:ping-slow 2s cubic-bezier(0,0,0.2,1) infinite; z-index:1;"></div>
-                 </div>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
-        });
-        userMarker = L.marker([userLat, userLng], { icon: bluePulseIcon }).addTo(map);
-      } else {
-        userMarker.setLatLng([userLat, userLng]);
-      }
-      map.setView([userLat, userLng], 14);
-    }
-
-    const sorted = getSortedHospitals(allHospitals);
-    renderCards(sorted);
-    placeMarkers(sorted);
-  }
-
-  /* ── Load Facilities ── */
-  async function loadHospitals() {
-    try {
-      const raw = await API.getFacilities();
-      const list = (raw && Array.isArray(raw) && raw.length > 0) ? raw : (window.API && window.API.FALLBACK_HOSPITALS ? window.API.FALLBACK_HOSPITALS : []);
-      allHospitals = getSortedHospitals(list);
-      initGPS();
-      placeMarkers(allHospitals);
-      renderCards(allHospitals);
-      showBottomSheet();
-    } catch (err) {
-      console.warn('Network facilities load warning, rendering built-in Kolkata dataset:', err);
-      const list = (window.API && window.API.FALLBACK_HOSPITALS) ? window.API.FALLBACK_HOSPITALS : [];
-      allHospitals = getSortedHospitals(list);
-      initGPS();
-      placeMarkers(allHospitals);
-      renderCards(allHospitals);
-      showBottomSheet();
-    }
-  }
-
-  /* ── Event Listeners Registration ── */
-  function setupEventListeners() {
-    // 1) Location Pill & Modal
-    const locBtn = document.getElementById('my-location-btn');
-    const locModal = document.getElementById('location-modal');
-    const locModalClose = document.getElementById('location-modal-close');
-    const locSearchInput = document.getElementById('location-search-input');
-    const modalGpsBtn = document.getElementById('modal-use-gps-btn');
-    const locForm = document.getElementById('location-search-form');
-
-    if (locBtn && locModal) {
-      locBtn.addEventListener('click', (e) => {
-        if (e.target.closest('#loc-crosshair-btn')) return;
-        locModal.classList.remove('hidden');
-      });
-    }
-
-    if (locModalClose && locModal) {
-      locModalClose.addEventListener('click', () => {
-        locModal.classList.add('hidden');
-      });
-    }
-
-    if (locSearchInput) {
-      locSearchInput.addEventListener('input', (e) => {
-        searchGeocodingAddress(e.target.value);
-      });
-    }
-
-    if (locForm) {
-      locForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const val = locSearchInput ? locSearchInput.value : '';
-        if (val.trim()) {
-          searchGeocodingAddress(val);
-        }
-      });
-    }
-
-    if (modalGpsBtn && locModal) {
-      modalGpsBtn.addEventListener('click', () => {
-        initGPS();
-        const textEl = document.getElementById('current-location-text');
-        if (textEl) textEl.innerText = 'Live GPS Location';
-        locModal.classList.add('hidden');
-      });
-    }
-
-    // Map Crosshair Mode Button
-    const crosshairBtn = document.getElementById('loc-crosshair-btn');
-    if (crosshairBtn && map) {
-      crosshairBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        alert('🎯 Click anywhere on the map to set your current location pin!');
-        map.once('click', (ev) => {
-          setUserPosition(ev.latlng.lat, ev.latlng.lng, 'Pinned Map Location');
-        });
-      });
-    }
-
-    // 2) Top Active Hold Toast Banner Buttons
-    const toastCloseBtn = document.getElementById('toast-close-btn');
-    const toastCopyBtn = document.getElementById('toast-copy-otp-btn');
-    const releaseHoldBtn = document.getElementById('release-hold-btn');
-
-    if (toastCloseBtn) {
-      toastCloseBtn.addEventListener('click', () => {
-        const toast = document.getElementById('active-hold-toast');
-        if (toast) toast.classList.add('hidden');
-      });
-    }
-
-    if (toastCopyBtn) {
-      toastCopyBtn.addEventListener('click', () => {
-        const otpEl = document.getElementById('toast-otp-code');
-        if (otpEl && navigator.clipboard) {
-          navigator.clipboard.writeText(otpEl.innerText).then(() => {
-            toastCopyBtn.innerText = '✓ Copied!';
-            setTimeout(() => { toastCopyBtn.innerText = '📋 Copy'; }, 2000);
-          });
-        }
-      });
-    }
-
-    if (releaseHoldBtn) {
-      releaseHoldBtn.addEventListener('click', releaseActiveHold);
-    }
-
-    // 3) Blood Group Card & Quick Picker Bar
-    const bloodCardBtn = document.getElementById('blood-card-btn');
-    const bloodPickerBar = document.getElementById('blood-picker-bar');
-
-    if (bloodCardBtn && bloodPickerBar) {
-      bloodCardBtn.addEventListener('click', () => {
-        bloodPickerBar.classList.toggle('hidden');
-      });
-    }
-
-    document.querySelectorAll('.blood-chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const grp = btn.dataset.group;
-        const input = document.getElementById('symptom-input');
-        const query = `${grp} blood group required`;
-        if (input) input.value = query;
-        runTriage(query);
-      });
-    });
-
-    // 4) Nearest Hospital & Directory Buttons
-    const nearestBtn = document.getElementById('nearest-hosp-btn');
-    if (nearestBtn) {
-      nearestBtn.addEventListener('click', () => {
-        const sorted = getSortedHospitals(allHospitals);
-        if (sorted.length > 0) {
-          updateRouteToHospital(sorted[0]);
-          showBottomSheet();
-        }
-      });
-    }
-
-    const directoryBtn = document.getElementById('symptom-directory-btn');
-    if (directoryBtn) {
-      directoryBtn.addEventListener('click', () => {
-        showBottomSheet();
-        setSheetState('expanded');
-      });
-    }
-
-    // 5) Drawer Buttons
-    const drawerGovtBtn = document.getElementById('drawer-govt-filter-btn');
-    if (drawerGovtBtn) {
-      drawerGovtBtn.addEventListener('click', toggleGovtFilter);
-    }
-
-    const drawerCloseBtn = document.getElementById('drawer-close-btn');
-    if (drawerCloseBtn) {
-      drawerCloseBtn.addEventListener('click', () => {
-        const sheet = document.getElementById('bottom-sheet');
-        if (sheet) sheet.classList.add('state-hidden');
-      });
-    }
-
-    const drawerWhatToDoBtn = document.getElementById('drawer-what-to-do-btn');
-    if (drawerWhatToDoBtn) {
-      drawerWhatToDoBtn.addEventListener('click', () => {
-        setSheetState('expanded');
-        const firstCardProtocol = document.querySelector('.photo-protocol-section');
-        if (firstCardProtocol) {
-          firstCardProtocol.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    }
-
-    // 6) Sticky Action Bar Book Slot Button
-    const inlineBookSlotBtn = document.getElementById('inline-book-slot-btn');
-    if (inlineBookSlotBtn) {
-      inlineBookSlotBtn.addEventListener('click', () => {
-        openHoldModal(activeTargetHospital);
-      });
-    }
-
-    // 7) Symptom Search Input Handlers
-    const symptomInput = document.getElementById('symptom-input');
-    const submitBtn = document.getElementById('symptom-submit-btn');
-    const clearBtn = document.getElementById('symptom-clear-btn');
-
-    if (symptomInput) {
-      symptomInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          runTriage(e.target.value);
-        }
-      });
-
-      symptomInput.addEventListener('input', (e) => {
-        handleSymptomAutocomplete(e.target.value);
-      });
-    }
-
-    if (submitBtn) {
-      submitBtn.addEventListener('click', () => {
-        if (symptomInput) runTriage(symptomInput.value);
-      });
-    }
-
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        if (symptomInput) symptomInput.value = '';
-        const dropdown = document.getElementById('symptom-autocomplete-dropdown');
-        if (dropdown) dropdown.classList.add('hidden');
-        if (submitBtn) submitBtn.classList.add('hidden');
-        if (clearBtn) clearBtn.classList.add('hidden');
-        const sorted = getSortedHospitals(allHospitals);
-        renderCards(sorted);
-        placeMarkers(sorted);
-      });
-    }
-
-    // 8) Recenter Map FAB Button
-    const myLocFab = document.getElementById('my-location-fab');
-    if (myLocFab && map) {
-      myLocFab.addEventListener('click', () => {
-        initGPS();
-        map.setView([userLat, userLng], 14);
-      });
-    }
-  }
-
-  /* ── Multilingual Language & Speech Synthesis Engine (TTS & STT) ── */
-  let currentLang = 'multi'; // 'multi', 'bn-IN', 'hi-IN', 'en-IN'
-  let isSpeakingTTS = false;
-
-  function setLanguage(lang) {
-    currentLang = lang;
-    const flagEl = document.getElementById('lang-flag');
-    const codeEl = document.getElementById('lang-code');
-    const inputEl = document.getElementById('symptom-input');
-
-    if (codeEl) codeEl.innerText = '';
-
-    if (lang === 'multi') {
-      if (flagEl) flagEl.innerText = '🌐';
-      if (inputEl) inputEl.placeholder = 'Say symptoms in English / বাংলা / हिंदी...';
-    } else if (lang === 'bn-IN') {
-      if (flagEl) flagEl.innerText = '🇧🇩';
-      if (inputEl) inputEl.placeholder = 'আপনার লক্ষণ বলুন (যেমন: বুকে ব্যথা)...';
-    } else if (lang === 'hi-IN') {
-      if (flagEl) flagEl.innerText = '🇮🇳';
-      if (inputEl) inputEl.placeholder = 'अपने लक्षण कहें (जैसे: सीने में दर्द)...';
-    } else if (lang === 'en-IN') {
-      if (flagEl) flagEl.innerText = '🇬🇧';
-      if (inputEl) inputEl.placeholder = 'Say YOUR SYMPTOM HERE...';
-    }
-  }
-
-  function initLangSwitcher() {
-    const btn = document.getElementById('lang-toggle-btn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      if (currentLang === 'multi') {
-        setLanguage('bn-IN');
-      } else if (currentLang === 'bn-IN') {
-        setLanguage('hi-IN');
-      } else if (currentLang === 'hi-IN') {
-        setLanguage('en-IN');
-      } else {
-        setLanguage('multi');
-      }
-    });
-  }
-
-  function speakText(text, langCode = currentLang) {
-    if (!('speechSynthesis' in window)) {
-      alert('Text-to-speech read aloud is not supported on this browser.');
-      return;
-    }
-    window.speechSynthesis.cancel();
-
-    // Clean text of emojis & HTML markup
-    const cleanText = (text || '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/<[^>]*>?/gm, '');
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.92;
-    utterance.pitch = 1.0;
-    utterance.lang = langCode;
-
-    const voices = window.speechSynthesis.getVoices();
-    const langPrefix = langCode.split('-')[0];
-    const preferredVoice = voices.find(v => v.lang.startsWith(langPrefix) || v.lang === langCode);
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-
-    utterance.onstart = () => {
-      isSpeakingTTS = true;
-      updateTTSButtons(true);
-    };
-
-    utterance.onend = () => {
-      isSpeakingTTS = false;
-      updateTTSButtons(false);
-    };
-
-    utterance.onerror = () => {
-      isSpeakingTTS = false;
-      updateTTSButtons(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function stopTTS() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    isSpeakingTTS = false;
-    updateTTSButtons(false);
-  }
-
-  function toggleTTSGuidance(hospId) {
-    if (isSpeakingTTS) {
-      stopTTS();
-      return;
-    }
-
-    const h = allHospitals.find(item => String(item.id) === String(hospId)) || activeTargetHospital || allHospitals[0];
-    if (!h) return;
-
-    const guidance = getClinicalGuidance(currentSearchQuery);
-    let speechStr = '';
-    if (currentLang === 'bn-IN') {
-      speechStr = `জরুরী স্বাস্থ্য নির্দেশিকা: ${h.name}। ${guidance.title}। অবিলম্বে করণীয়: ${guidance.doNow}। নিয়মাবলী: ${(guidance.steps || []).join('। ')}`;
-    } else if (currentLang === 'hi-IN') {
-      speechStr = `आपत्कालीन निर्देश: ${h.name}। ${guidance.title}। तुरंत कदम उठाएं: ${guidance.doNow}। चरण: ${(guidance.steps || []).join('. ')}`;
-    } else {
-      speechStr = `Emergency protocol for ${guidance.category || 'Emergency'}. Recommended hospital: ${h.name}. Immediate action: ${guidance.doNow}. Steps: ${(guidance.steps || []).join('. ')}`;
-    }
-
-    speakText(speechStr, currentLang);
-  }
-
-  function updateTTSButtons(speaking) {
-    document.querySelectorAll('.tts-speak-btn').forEach(btn => {
-      if (speaking) {
-        btn.classList.add('speaking');
-        btn.innerHTML = `<span class="tts-icon">⏹️</span><span class="tts-text">STOP</span>`;
-      } else {
-        btn.classList.remove('speaking');
-        btn.innerHTML = `<span class="tts-icon">🔊</span><span class="tts-text">LISTEN</span>`;
-      }
-    });
-  }
-
-  function initVoiceTriage() {
-    const micBtn = document.getElementById('voice-mic-btn');
-    const input = document.getElementById('symptom-input');
-    const waveform = document.getElementById('audio-waveform');
-    if (!micBtn || !input) return;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      micBtn.addEventListener('click', () => {
-        alert('Voice search is not supported in this browser. Please type your symptoms into the search bar.');
-      });
-      return;
-    }
-
-    let recognition = null;
-    let isListening = false;
-
-    micBtn.addEventListener('click', () => {
-      if (isListening && recognition) {
-        recognition.stop();
-      } else {
-        try {
-          recognition = new SpeechRecognition();
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.lang = (currentLang === 'multi') ? 'en-IN' : currentLang;
-
-          recognition.onstart = () => {
-            isListening = true;
-            micBtn.classList.add('listening');
-            if (waveform) waveform.style.display = 'flex';
-            if (currentLang === 'bn-IN') {
-              input.placeholder = '🔴 শুনছি... আপনার লক্ষণ বলুন';
-            } else if (currentLang === 'hi-IN') {
-              input.placeholder = '🔴 सुन रहे हैं... लक्षण बोलें';
-            } else {
-              input.placeholder = '🔴 Listening... Speak symptoms or blood group';
-            }
-          };
-
-          recognition.onresult = (event) => {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              transcript += event.results[i][0].transcript;
-            }
-            input.value = transcript;
-            if (event.results[0].isFinal) {
-              runTriage(transcript);
-            }
-          };
-
-          recognition.onerror = () => {
-            isListening = false;
-            micBtn.classList.remove('listening');
-            if (waveform) waveform.style.display = 'none';
-            setLanguage(currentLang);
-          };
-
-          recognition.onend = () => {
-            isListening = false;
-            micBtn.classList.remove('listening');
-            if (waveform) waveform.style.display = 'none';
-            setLanguage(currentLang);
-          };
-
-          recognition.start();
-        } catch (err) {
-          console.log('Mic error:', err);
-        }
-      }
-    });
-  }
-
-  function highlightCard(id, autoScroll = false) {
-    document.querySelectorAll('.gmaps-hosp-card').forEach(c => c.style.background = 'rgba(255, 255, 255, 0.03)');
-    const card = document.querySelector(`.gmaps-hosp-card[data-id="${id}"]`);
-    if (card) {
-      card.style.background = 'rgba(0, 131, 143, 0.2)';
-      if (autoScroll) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }
-  }
-
-  function autoRouteNearest(wardKey = 'all') {
-    if (!allHospitals || !allHospitals.length) return;
-    const match = API.findNearestHospital ? API.findNearestHospital(userLat, userLng, wardKey, allHospitals) : null;
-    if (match && match.hospital) {
-      updateRouteToHospital(match.hospital);
-      highlightCard(match.hospital.id, false);
-    }
-  }
-
-  /* ── Boot ── */
-  initGPS();
-  initTouchDrawer();
-  initLangSwitcher();
-  setupEventListeners();
-
-  // Instant zero-delay initial render from fallback dataset so UI is NEVER blank or off-screen!
-  if (window.API && window.API.FALLBACK_HOSPITALS && window.API.FALLBACK_HOSPITALS.length > 0) {
-    allHospitals = getSortedHospitals(window.API.FALLBACK_HOSPITALS);
-    placeMarkers(allHospitals);
-    renderCards(allHospitals);
-    showBottomSheet();
-  }
-
-  loadHospitals();
-  initVoiceTriage();
-  if (window.lucide) {
-    setTimeout(() => { try { window.lucide.createIcons(); } catch(e) {} }, 100);
-  }
-  // Auto-refresh every 60s
-  setInterval(loadHospitals, 60000);
-  </script>
+}).catch(()=>{});
+</script>
 </body>
 </html>
-

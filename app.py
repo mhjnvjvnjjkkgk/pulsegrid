@@ -10,7 +10,7 @@
 # ============================================================
 
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -22,8 +22,8 @@ import ttl_worker
 # Load environment variables from .env file
 load_dotenv()
 
-# Create the Flask app
-app = Flask(__name__)
+# Create the Flask app — serve frontend from public/ directory
+app = Flask(__name__, static_folder='public', static_url_path='')
 
 # Enable CORS so the frontend (on a different URL like Vercel)
 # can make API calls to this backend without browser blocking
@@ -37,11 +37,15 @@ ttl_worker.start_ttl_worker(database)
 
 
 # ============================================================
-# ROUTE: Health Check
-# GET /
-# Returns: server status and version
+# ROUTE: Frontend — Serve index.html
+# GET / and GET /<path> (catch-all for SPA routing)
 # ============================================================
 @app.route("/", methods=["GET"])
+def serve_index():
+    """Serve the main frontend app (public/index.html)."""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route("/health", methods=["GET"])
 def health_check():
     """Simple health check to verify the API is running."""
     return jsonify({
